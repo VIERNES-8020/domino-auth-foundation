@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,9 +55,10 @@ export default function AuthForm() {
 
   const onSubmit = async (values: any) => {
     const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as
-      | string
-      | undefined;
+    const anonKey = (
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    ) as string | undefined;
 
     if (!url || !anonKey) {
       toast.error(
@@ -70,7 +71,7 @@ export default function AuthForm() {
       return;
     }
 
-    const supabase = createClient(url, anonKey);
+    const supabase = getSupabaseClient();
 
     try {
       if (mode === "signup") {
