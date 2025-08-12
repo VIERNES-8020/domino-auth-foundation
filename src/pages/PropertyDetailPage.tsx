@@ -67,8 +67,26 @@ export default function PropertyDetailPage() {
 
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [mapToken, setMapToken] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadToken() {
+      try {
+        const { data, error } = await sb.functions.invoke("mapbox-public-token");
+        if (!cancelled) {
+          if (!error && (data as any)?.token) setMapToken((data as any).token as string);
+          else setMapToken(undefined);
+        }
+      } catch (_) {
+        if (!cancelled) setMapToken(undefined);
+      }
+    }
+    loadToken();
+    return () => { cancelled = true; };
+  }, [sb]);
 
   useEffect(() => {
     if (!id) return;

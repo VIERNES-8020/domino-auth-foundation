@@ -61,6 +61,7 @@ export default function PropertiesPage() {
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
+  const [bathrooms, setBathrooms] = useState<string>("");
   const [propertyType, setPropertyType] = useState<string>("");
   const [lifestyle, setLifestyle] = useState<string>("");
   const [amenities, setAmenities] = useState<{ id: string; name: string }[]>([]);
@@ -72,8 +73,8 @@ export default function PropertiesPage() {
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
-    () => [city, priceMin, priceMax, bedrooms, propertyType, lifestyle, selectedAmenities.sort().join(",")].join("|"),
-    [city, priceMin, priceMax, bedrooms, propertyType, lifestyle, selectedAmenities]
+    () => [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(",")].join("|"),
+    [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities]
   );
 
   // Load amenities once
@@ -144,6 +145,9 @@ export default function PropertiesPage() {
         if (bedrooms.trim() && !isNaN(Number(bedrooms))) {
           query = query.gte("bedrooms", Number(bedrooms));
         }
+        if (bathrooms.trim() && !isNaN(Number(bathrooms))) {
+          query = query.gte("bathrooms", Number(bathrooms));
+        }
         if (propertyType) {
           query = query.eq("property_type", propertyType);
         }
@@ -179,31 +183,36 @@ export default function PropertiesPage() {
           <p className="mt-2 text-muted-foreground">
             Filtra por ciudad, presupuesto, habitaciones y más. Todas las propiedades están verificadas por DOMINIO.
           </p>
-        </header>
+          </header>
 
         {/* Filters */}
         <section aria-labelledby="filters-heading" className="mb-8">
           <h2 id="filters-heading" className="sr-only">Filtros</h2>
-          <Card className="shadow-sm">
-            <CardContent className="p-4 md:p-6">
+          <Card className="shadow-sm" role="region" aria-labelledby="filters-heading">
+            <CardContent className="p-4 md:p-6" aria-live="polite">
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="city">Ciudad / Zona</Label>
-                  <Input id="city" placeholder="Ej. La Paz, Equipetrol" value={city} onChange={(e) => setCity(e.target.value)} />
+                  <Input id="city" placeholder="Ej. La Paz, Equipetrol" value={city} onChange={(e) => setCity(e.target.value)} aria-describedby="results-heading" />
                 </div>
 
                 <div>
                   <Label htmlFor="priceMin">Precio mín.</Label>
-                  <Input id="priceMin" type="number" min={0} placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+                  <Input id="priceMin" type="number" min={0} placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} inputMode="numeric" />
                 </div>
                 <div>
                   <Label htmlFor="priceMax">Precio máx.</Label>
-                  <Input id="priceMax" type="number" min={0} placeholder="500000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
+                  <Input id="priceMax" type="number" min={0} placeholder="500000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} inputMode="numeric" />
                 </div>
 
                 <div>
                   <Label htmlFor="bedrooms">Habitaciones</Label>
                   <Input id="bedrooms" type="number" min={0} placeholder="2" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
+                </div>
+
+                <div>
+                  <Label htmlFor="bathrooms">Baños</Label>
+                  <Input id="bathrooms" type="number" min={0} placeholder="1" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
                 </div>
 
                 <div>

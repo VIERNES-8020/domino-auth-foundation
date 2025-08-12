@@ -26,6 +26,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="/dashboard/agent" element={<AgentDashboard />} />
           <Route path="/dashboard/franchise/:franchiseId/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/properties/:id" element={<PropertyDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
