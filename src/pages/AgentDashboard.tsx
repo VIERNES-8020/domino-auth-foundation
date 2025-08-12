@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { Home, Cog, MapPin, Images } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useQuery } from "@tanstack/react-query";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -89,6 +91,17 @@ export default function AgentDashboard() {
   const [hasGarage, setHasGarage] = useState<boolean>(false);
   const [petFriendly, setPetFriendly] = useState<boolean>(false);
   const [hasGarden, setHasGarden] = useState<boolean>(false);
+  // Amenidades dinámicas
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [otherAmenities, setOtherAmenities] = useState<string>("");
+  const { data: amenities, isLoading: amenitiesLoading } = useQuery({
+    queryKey: ["amenities"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("amenities").select("id, name, icon_svg");
+      if (error) throw error;
+      return data as { id: string; name: string; icon_svg: string | null }[];
+    },
+  });
 
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
@@ -155,6 +168,14 @@ export default function AgentDashboard() {
     if (!user) return;
 
     try {
+      const selectedNames = (amenities ?? [])
+        .filter((a) => selectedAmenities.includes(a.id))
+        .map((a) => a.name);
+      const has_pool = selectedNames.includes("Piscina");
+      const has_garage = selectedNames.includes("Garaje");
+      const has_garden = selectedNames.includes("Jardín");
+      const pet_friendly = selectedNames.includes("Acepta Mascotas");
+
       const payload: any = {
         title: title.trim(),
         description: description.trim() || null,
@@ -165,16 +186,34 @@ export default function AgentDashboard() {
         bedrooms: bedrooms ? Number(bedrooms) : undefined,
         bathrooms: bathrooms ? Number(bathrooms) : undefined,
         area_m2: area ? Number(area) : undefined,
-        has_pool: hasPool,
-        has_garage: hasGarage,
-        pet_friendly: petFriendly,
+        has_pool,
+        has_garage,
+        pet_friendly,
         image_urls: imageUrls.length ? imageUrls : null,
         video_url: videoUrl || null,
         plans_url: plansUrls.length ? plansUrls : null,
         agent_id: user.id,
+        other_amenities: otherAmenities.trim() ? otherAmenities.trim() : null,
       };
 
-      const { error } = await supabase.from("properties").insert(payload);
+      const { data: inserted, error } = await supabase
+        .from("properties")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      const newPropertyId = (inserted as any)?.id as string | undefined;
+      if (newPropertyId && selectedAmenities.length > 0) {
+        const rows = selectedAmenities.map((amenityId) => ({
+          property_id: newPropertyId,
+          amenity_id: amenityId,
+        }));
+        const { error: linkError } = await supabase.from("property_amenities").insert(rows);
+        if (linkError) {
+          console.error("No se pudieron vincular amenidades", linkError);
+        }
+      }
+
       if (error) throw error;
 
       toast.success("¡Propiedad creada exitosamente!");
@@ -199,6 +238,8 @@ export default function AgentDashboard() {
       setPlansUrls([]);
       setNewPlanUrl("");
       setVideoUrl("");
+      setSelectedAmenities([]);
+      setOtherAmenities("");
 
       await fetchProperties(user.id);
     } catch (err: any) {
@@ -346,6 +387,14 @@ export default function AgentDashboard() {
                           onClick={async () => {
                             try {
                               setIsGenerating(true);
+                              const selectedNames = (amenities ?? [])
+                                .filter((a) => selectedAmenities.includes(a.id))
+                                .map((a) => a.name);
+                              const has_pool = selectedNames.includes("Piscina");
+                              const has_garage = selectedNames.includes("Garaje");
+                              const has_garden = selectedNames.includes("Jardín");
+                              const pet_friendly = selectedNames.includes("Acepta Mascotas");
+
                               const { data, error } = await supabase.functions.invoke('aura-generate-description', {
                                 body: {
                                   property: {
@@ -357,10 +406,10 @@ export default function AgentDashboard() {
                                     bedrooms: bedrooms ? Number(bedrooms) : null,
                                     bathrooms: bathrooms ? Number(bathrooms) : null,
                                     area_m2: area ? Number(area) : null,
-                                    has_pool: hasPool,
-                                    has_garage: hasGarage,
-                                    has_garden: hasGarden,
-                                    pet_friendly: petFriendly,
+                                    has_pool,
+                                    has_garage,
+                                    has_garden,
+                                    pet_friendly,
                                     lat: lat || null,
                                     lng: lng || null,
                                   },
@@ -461,20 +510,39 @@ export default function AgentDashboard() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox checked={hasPool} onCheckedChange={(v) => setHasPool(!!v)} /> Piscina
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox checked={hasGarage} onCheckedChange={(v) => setHasGarage(!!v)} /> Garaje
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox checked={petFriendly} onCheckedChange={(v) => setPetFriendly(!!v)} /> Acepta mascotas
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <Checkbox checked={hasGarden} onCheckedChange={(v) => setHasGarden(!!v)} /> Jardín
-                      </label>
+                    <div className="space-y-2">
+                      <Label>Amenidades</Label>
+                      {amenitiesLoading ? (
+                        <p className="text-sm text-muted-foreground">Cargando amenidades…</p>
+                      ) : (amenities && amenities.length > 0 ? (
+                        <ToggleGroup
+                          type="multiple"
+                          value={selectedAmenities}
+                          onValueChange={(v) => setSelectedAmenities(v as string[])}
+                          className="flex flex-wrap gap-2"
+                        >
+                          {amenities.map((a) => (
+                            <ToggleGroupItem key={a.id} value={a.id} aria-label={a.name}>
+                              {a.name}
+                            </ToggleGroupItem>
+                          ))}
+                        </ToggleGroup>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No hay amenidades configuradas.</p>
+                      ))}
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="otherAmenities">Otras Características Especiales</Label>
+                      <Textarea
+                        id="otherAmenities"
+                        value={otherAmenities}
+                        onChange={(e) => setOtherAmenities(e.target.value)}
+                        placeholder="Ej: vista al mar, domótica, paneles solares..."
+                        rows={3}
+                      />
+                    </div>
+
                   </TabsContent>
 
                   <TabsContent value="location" className="space-y-4 animate-fade-in">
