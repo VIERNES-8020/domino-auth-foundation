@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_performance: {
+        Row: {
+          agent_id: string
+          average_rating: number | null
+          franchise_rank: number | null
+          global_rank: number | null
+          id: string
+          last_updated: string | null
+          properties_sold_month: number | null
+          total_ratings: number | null
+        }
+        Insert: {
+          agent_id: string
+          average_rating?: number | null
+          franchise_rank?: number | null
+          global_rank?: number | null
+          id?: string
+          last_updated?: string | null
+          properties_sold_month?: number | null
+          total_ratings?: number | null
+        }
+        Update: {
+          agent_id?: string
+          average_rating?: number | null
+          franchise_rank?: number | null
+          global_rank?: number | null
+          id?: string
+          last_updated?: string | null
+          properties_sold_month?: number | null
+          total_ratings?: number | null
+        }
+        Relationships: []
+      }
+      agent_ratings: {
+        Row: {
+          agent_id: string
+          asesoramiento_rating: number
+          client_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          trato_rating: number
+        }
+        Insert: {
+          agent_id: string
+          asesoramiento_rating: number
+          client_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          trato_rating: number
+        }
+        Update: {
+          agent_id?: string
+          asesoramiento_rating?: number
+          client_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          trato_rating?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          franchise_id: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          franchise_id?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          franchise_id?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string
@@ -79,7 +166,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_franchise_leaderboard: {
+        Args: { franchise_id_param: string }
+        Returns: {
+          rank: number
+          name: string
+          average_rating: number
+          sales_month: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
