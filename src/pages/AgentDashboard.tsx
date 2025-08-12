@@ -114,8 +114,8 @@ export default function AgentDashboard() {
     },
   });
 
-  const [lat, setLat] = useState<string>("");
-  const [lng, setLng] = useState<string>("");
+  const [lat, setLat] = useState<string>("-17.39");
+  const [lng, setLng] = useState<string>("-66.15");
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -849,11 +849,11 @@ const [videoUrl, setVideoUrl] = useState("");
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="lat">Latitud</Label>
-                        <Input id="lat" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-16.5" />
+                        <Input id="lat" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-17.39" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lng">Longitud</Label>
-                        <Input id="lng" value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-68.15" />
+                        <Input id="lng" value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-66.15" />
                       </div>
                     </div>
 

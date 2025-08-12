@@ -152,12 +152,12 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
         <Tabs defaultValue="house">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
-            <TabsTrigger value="house">Casas</TabsTrigger>
-            <TabsTrigger value="apartment">Departamentos</TabsTrigger>
-            <TabsTrigger value="land">Terrenos</TabsTrigger>
-            <TabsTrigger value="office">Oficinas</TabsTrigger>
-          </TabsList>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
+          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Casas</TabsTrigger>
+          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Departamentos</TabsTrigger>
+          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Terrenos</TabsTrigger>
+          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Oficinas</TabsTrigger>
+        </TabsList>
 
           <TabsContent value="house">
             <Carousel>
