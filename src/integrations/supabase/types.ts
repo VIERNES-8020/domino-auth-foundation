@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_notifications: {
+        Row: {
+          created_at: string
+          from_agent_id: string
+          id: string
+          message: string
+          property_id: string
+          read: boolean
+          to_agent_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_agent_id: string
+          id?: string
+          message: string
+          property_id: string
+          read?: boolean
+          to_agent_id: string
+        }
+        Update: {
+          created_at?: string
+          from_agent_id?: string
+          id?: string
+          message?: string
+          property_id?: string
+          read?: boolean
+          to_agent_id?: string
+        }
+        Relationships: []
+      }
       agent_performance: {
         Row: {
           agent_id: string
@@ -126,24 +156,39 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agent_code: string | null
+          bio: string | null
+          corporate_phone: string | null
           created_at: string
+          experience_summary: string | null
           franchise_id: string | null
           full_name: string | null
           id: string
+          identity_card: string | null
           updated_at: string
         }
         Insert: {
+          agent_code?: string | null
+          bio?: string | null
+          corporate_phone?: string | null
           created_at?: string
+          experience_summary?: string | null
           franchise_id?: string | null
           full_name?: string | null
           id: string
+          identity_card?: string | null
           updated_at?: string
         }
         Update: {
+          agent_code?: string | null
+          bio?: string | null
+          corporate_phone?: string | null
           created_at?: string
+          experience_summary?: string | null
           franchise_id?: string | null
           full_name?: string | null
           id?: string
+          identity_card?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -779,6 +824,43 @@ export type Database = {
       geomfromewkt: {
         Args: { "": string }
         Returns: unknown
+      }
+      get_agent_properties_secure: {
+        Args: { _agent_id: string }
+        Returns: {
+          address: string
+          agent_id: string
+          area_m2: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          created_at: string | null
+          description: string | null
+          franchise_id: string | null
+          fts_column: unknown | null
+          geolocation: unknown | null
+          has_garage: boolean | null
+          has_pool: boolean | null
+          id: string
+          image_urls: string[] | null
+          other_amenities: string | null
+          pet_friendly: boolean | null
+          plans_url: string[] | null
+          price: number
+          price_currency: string
+          property_type: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          transaction_type: string | null
+          video_url: string | null
+        }[]
+      }
+      get_agent_public_stats: {
+        Args: { _agent_id: string }
+        Returns: {
+          average_rating: number
+          total_ratings: number
+        }[]
       }
       get_franchise_leaderboard: {
         Args: { franchise_id_param: string }
