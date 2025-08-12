@@ -77,6 +77,24 @@ export type Database = {
         }
         Relationships: []
       }
+      amenities: {
+        Row: {
+          icon_svg: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          icon_svg?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          icon_svg?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -117,9 +135,11 @@ export type Database = {
           has_pool: boolean | null
           id: string
           image_urls: string[] | null
+          other_amenities: string | null
           pet_friendly: boolean | null
           plans_url: string[] | null
           price: number
+          price_currency: string
           property_type: string | null
           status: string
           tags: string[] | null
@@ -142,9 +162,11 @@ export type Database = {
           has_pool?: boolean | null
           id?: string
           image_urls?: string[] | null
+          other_amenities?: string | null
           pet_friendly?: boolean | null
           plans_url?: string[] | null
           price: number
+          price_currency?: string
           property_type?: string | null
           status?: string
           tags?: string[] | null
@@ -167,9 +189,11 @@ export type Database = {
           has_pool?: boolean | null
           id?: string
           image_urls?: string[] | null
+          other_amenities?: string | null
           pet_friendly?: boolean | null
           plans_url?: string[] | null
           price?: number
+          price_currency?: string
           property_type?: string | null
           status?: string
           tags?: string[] | null
@@ -178,6 +202,36 @@ export type Database = {
           video_url?: string | null
         }
         Relationships: []
+      }
+      property_amenities: {
+        Row: {
+          amenity_id: string
+          property_id: string
+        }
+        Insert: {
+          amenity_id: string
+          property_id: string
+        }
+        Update: {
+          amenity_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       spatial_ref_sys: {
         Row: {
