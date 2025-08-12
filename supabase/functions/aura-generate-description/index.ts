@@ -84,7 +84,7 @@ serve(async (req) => {
     console.log("[AURA] Built user prompt:", userPrompt);
 
     const openaiBody = {
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

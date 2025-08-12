@@ -88,6 +88,7 @@ export default function AgentDashboard() {
   const [hasPool, setHasPool] = useState<boolean>(false);
   const [hasGarage, setHasGarage] = useState<boolean>(false);
   const [petFriendly, setPetFriendly] = useState<boolean>(false);
+  const [hasGarden, setHasGarden] = useState<boolean>(false);
 
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
@@ -190,6 +191,7 @@ export default function AgentDashboard() {
       setHasPool(false);
       setHasGarage(false);
       setPetFriendly(false);
+      setHasGarden(false);
       setLat("");
       setLng("");
       setImageUrls([]);
@@ -237,7 +239,7 @@ export default function AgentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
       <header className="container mx-auto py-10">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               Panel del Agente Inmobiliario
@@ -297,7 +299,7 @@ export default function AgentDashboard() {
             <CardContent>
               <form onSubmit={handleCreateProperty} className="space-y-4">
                 <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="grid grid-cols-4 w-full rounded-lg shadow-md">
+                  <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md">
                     <TabsTrigger value="general" className="gap-2">
                       <Home className="h-4 w-4" aria-hidden="true" />
                       General
@@ -335,7 +337,7 @@ export default function AgentDashboard() {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <Label htmlFor="description">Descripción</Label>
                         <Button
                           type="button"
@@ -357,6 +359,7 @@ export default function AgentDashboard() {
                                     area_m2: area ? Number(area) : null,
                                     has_pool: hasPool,
                                     has_garage: hasGarage,
+                                    has_garden: hasGarden,
                                     pet_friendly: petFriendly,
                                     lat: lat || null,
                                     lng: lng || null,
@@ -414,7 +417,7 @@ export default function AgentDashboard() {
                       <div className="space-y-2">
                         <Label>Tipo de Propiedad</Label>
                         <Select value={propertyType} onValueChange={setPropertyType}>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Selecciona" />
                           </SelectTrigger>
                           <SelectContent>
@@ -429,7 +432,7 @@ export default function AgentDashboard() {
                       <div className="space-y-2">
                         <Label>Tipo de Transacción</Label>
                         <Select value={transactionType} onValueChange={setTransactionType}>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Selecciona" />
                           </SelectTrigger>
                           <SelectContent>
@@ -458,7 +461,7 @@ export default function AgentDashboard() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox checked={hasPool} onCheckedChange={(v) => setHasPool(!!v)} /> Piscina
                       </label>
@@ -467,6 +470,9 @@ export default function AgentDashboard() {
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox checked={petFriendly} onCheckedChange={(v) => setPetFriendly(!!v)} /> Acepta mascotas
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={hasGarden} onCheckedChange={(v) => setHasGarden(!!v)} /> Jardín
                       </label>
                     </div>
                   </TabsContent>
@@ -517,7 +523,7 @@ export default function AgentDashboard() {
                     </Alert>
                     <div className="space-y-2">
                       <Label>Fotos (URLs por ahora)</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input placeholder="https://..." value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} />
                         <Button type="button" variant="secondary" onClick={() => {
                           if (!newImageUrl.trim()) return;
@@ -544,7 +550,7 @@ export default function AgentDashboard() {
 
                     <div className="space-y-2">
                       <Label>Planos (URLs por ahora)</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input placeholder="https://.../plano.pdf" value={newPlanUrl} onChange={(e) => setNewPlanUrl(e.target.value)} />
                         <Button type="button" variant="secondary" onClick={() => {
                           if (!newPlanUrl.trim()) return;
