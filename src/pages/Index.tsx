@@ -12,9 +12,12 @@ const Index = () => {
         <p className="mt-3 text-muted-foreground max-w-2xl">
           Regístrate o inicia sesión para acceder al panel de gestión.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex gap-3">
           <Button asChild>
             <Link to="/dashboard/agent">Ir al Panel del Agente</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to="/">Ir al Portal Público</Link>
           </Button>
         </div>
       </header>
