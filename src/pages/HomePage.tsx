@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import PropertyCard from "@/components/PropertyCard";
+import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/cover.jpg";
+import { ArrowRight } from "lucide-react";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -37,102 +36,117 @@ function usePageSEO(options: { title: string; description: string; canonicalPath
   }, [title, description, canonicalPath]);
 }
 
-const supabase = getSupabaseClient();
-
-interface Property {
-  id: string;
-  title: string;
-  description?: string | null;
-  price?: number | null;
-  image_urls?: string[] | null;
-  status?: string | null;
-}
-
 export default function HomePage() {
   usePageSEO({
-    title: "Búsqueda por Estilo de Vida | Inmobiliaria DOMIN10",
-    description: "Encuentra propiedades por estilo de vida con AURA: busca cerca de parques, cafés y más.",
+    title: "Encuentra tu Hogar Ideal | DOMIN10 Inmobiliaria",
+    description:
+      "La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas y agentes certificados.",
     canonicalPath: "/",
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [results, setResults] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    if (!q) return;
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("properties")
-      .select("id, title, price, image_urls, status")
-      .textSearch("fts_column", q, { type: "websearch", config: "spanish" })
-      .eq("status", "approved");
-
-    if (error) {
-      toast.error("No se pudo realizar la búsqueda", { description: error.message });
-      setLoading(false);
-      return;
-    }
-
-    setResults((data ?? []) as Property[]);
-    setLoading(false);
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "DOMIN10 Inmobiliaria",
+    url: typeof window !== "undefined" ? window.location.origin : "",
+    logo: typeof window !== "undefined" ? `${window.location.origin}/favicon.ico` : "/favicon.ico",
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
-      <header className="relative">
-        <div className="absolute inset-0 overflow-hidden">
-          <img
-            src={heroImage}
-            alt="Portada Inmobiliaria DOMIN10 mostrando un estilo de vida urbano confortable"
-            className="h-[60vh] w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 to-background" />
-        </div>
-        <div className="relative container mx-auto flex min-h-[60vh] flex-col items-center justify-center text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Encuentra más que una casa, descubre tu hogar
-          </h1>
-          <p className="mt-4 max-w-2xl text-muted-foreground">
-            Dile a AURA qué estás buscando. Sé tan específico como quieras.
-          </p>
-          <form onSubmit={handleSearch} className="mt-8 w-full max-w-2xl">
-            <div className="flex gap-3">
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Ej: cerca de parques y cafés, ideal para teletrabajo"
-                aria-label="Búsqueda por estilo de vida"
-              />
-              <Button type="submit" disabled={loading}>
-                {loading ? "Buscando…" : "Buscar"}
+      {/* Header / Top Navigation */}
+      <header className="container mx-auto py-5">
+        <nav className="flex items-center justify-between" aria-label="Principal">
+          <Link to="/" className="flex items-center gap-2 hover-scale" aria-label="DOMIN10 Inicio">
+            <span className="text-xl font-bold tracking-tight">DOMIN10</span>
+          </Link>
+          <div className="flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-6 text-sm">
+              <Link to="/" className="story-link">Inicio</Link>
+              <Link to="/properties" className="story-link">Propiedades</Link>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/auth">Iniciar Sesión</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/auth">Registrarse</Link>
               </Button>
             </div>
-          </form>
-        </div>
+          </div>
+        </nav>
       </header>
 
-      <main className="container mx-auto py-12">
-        <section aria-labelledby="results-title">
-          <h2 id="results-title" className="text-2xl font-semibold tracking-tight">
-            Resultados de la búsqueda
-          </h2>
-          {loading ? (
-            <p className="mt-3 text-muted-foreground">Buscando…</p>
-          ) : results.length === 0 ? (
-            <p className="mt-3 text-muted-foreground">No hay resultados aún. Prueba una búsqueda de estilo de vida.</p>
-          ) : (
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {results.map((p) => (
-                <PropertyCard key={p.id} property={p} />
-              ))}
-            </div>
-          )}
+      {/* Hero Section */}
+      <section className="relative">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <img
+            src={heroImage}
+            alt="Hogares de DOMIN10 en Bolivia, fotografía inmobiliaria profesional"
+            className="h-[72vh] w-full object-cover"
+            loading="eager"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background" />
+        </div>
+
+        <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            Encuentra tu Hogar Ideal
+          </h1>
+          <p className="mt-4 max-w-3xl text-muted-foreground">
+            La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas,
+            agentes certificados y el respaldo de DOMIN10.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
+            <Button size="lg" asChild>
+              <Link to="/properties">Explorar Propiedades</Link>
+            </Button>
+            <Link to="/auth" className="inline-flex items-center gap-2 text-primary hover-scale">
+              <span>Únete como Franquicia</span>
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Metrics Section */}
+      <main>
+        <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
+          <h2 id="metrics-heading" className="sr-only">Métricas de DOMIN10</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <Card className="shadow-sm">
+              <CardContent className="p-6 text-center">
+                <div className="text-3xl font-bold tracking-tight">1,200+</div>
+                <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="p-6 text-center">
+                <div className="text-3xl font-bold tracking-tight">25</div>
+                <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="p-6 text-center">
+                <div className="text-3xl font-bold tracking-tight">9</div>
+                <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-sm">
+              <CardContent className="p-6 text-center">
+                <div className="text-3xl font-bold tracking-tight">150+</div>
+                <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
+              </CardContent>
+            </Card>
+          </div>
         </section>
       </main>
+
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+      />
     </div>
   );
 }
