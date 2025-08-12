@@ -1,1 +1,4 @@
 project_id = "rzsailqcijraplggryyy"
+
+[functions.generate-agent-code]
+verify_jwt = true

@@ -33,6 +33,8 @@ const baseSchema = z.object({
 const signupSchema = baseSchema.extend({
   full_name: z.string().min(2, { message: "Ingresa tu nombre" }),
   role: z.enum(roles, { required_error: "Selecciona un rol" }),
+  identity_card: z.string().min(5, { message: "Ingresa tu CI" }),
+  corporate_phone: z.string().min(6, { message: "Ingresa tu celular corporativo" }),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -44,12 +46,14 @@ export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("signup");
 
   const form = useForm<SignupValues | LoginValues>({
-    resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
+resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
     defaultValues: {
       email: "",
       password: "",
       full_name: "",
       role: undefined,
+      identity_card: "",
+      corporate_phone: "",
     },
   });
 
@@ -58,28 +62,46 @@ export default function AuthForm() {
 
     try {
       if (mode === "signup") {
-        const { email, password, full_name, role } = values as SignupValues;
-        const { error } = await supabase.auth.signUp({
+        const { email, password, full_name, role, identity_card, corporate_phone } = values as SignupValues;
+        const redirectUrl = `${window.location.origin}/`;
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              full_name,
-              role,
-            },
+            emailRedirectTo: redirectUrl,
+            data: { full_name, role },
           },
         });
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+
+        // Ensure we have a user session
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (userId) {
+          // Upsert profile with extra fields
+          const { error: upsertErr } = await supabase.from('profiles').upsert({
+            id: userId,
+            full_name,
+            identity_card,
+            corporate_phone,
+          });
+          if (upsertErr) console.warn('No se pudo guardar el perfil', upsertErr);
+
+          // Generate agent code only for agents
+          if (role === 'Agente Inmobiliario') {
+            const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
+              body: { full_name, identity_card },
+            });
+            if (fxError) console.warn('No se pudo generar el código de agente', fxError);
+          }
+        }
+
         toast.success("Registro exitoso", {
-          description:
-            "Revisa tu correo para verificar la cuenta si es requerido.",
+          description: "Revisa tu correo para verificar la cuenta si es requerido.",
         });
       } else {
         const { email, password } = values as LoginValues;
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Inicio de sesión correcto");
       }
@@ -106,20 +128,32 @@ export default function AuthForm() {
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          {mode === "signup" && (
-            <div className="grid gap-2">
-              <Label htmlFor="full_name">Nombre completo</Label>
-              <Input
-                id="full_name"
-                placeholder="Ej. Ana Pérez"
-                {...form.register("full_name")}
-              />
-              {form.formState.errors?.["full_name"] && (
-                <p className="text-sm text-destructive">
-                  {((form.formState.errors as any)["full_name"].message as string) ?? ""}
-                </p>
-              )}
-            </div>
+{mode === "signup" && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="full_name">Nombre completo</Label>
+                <Input id="full_name" placeholder="Ej. Ana Pérez" {...form.register("full_name")} />
+                {form.formState.errors?.["full_name"] && (
+                  <p className="text-sm text-destructive">{((form.formState.errors as any)["full_name"].message as string) ?? ""}</p>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="identity_card">Carnet de Identidad</Label>
+                <Input id="identity_card" placeholder="Ej. 1234567" {...form.register("identity_card")} />
+                {(form.formState.errors as any)?.identity_card && (
+                  <p className="text-sm text-destructive">{((form.formState.errors as any).identity_card.message as string) ?? ""}</p>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="corporate_phone">Celular corporativo</Label>
+                <Input id="corporate_phone" placeholder="Ej. 7XXXXXXXX" {...form.register("corporate_phone")} />
+                {(form.formState.errors as any)?.corporate_phone && (
+                  <p className="text-sm text-destructive">{((form.formState.errors as any).corporate_phone.message as string) ?? ""}</p>
+                )}
+              </div>
+            </>
           )}
 
           <div className="grid gap-2">

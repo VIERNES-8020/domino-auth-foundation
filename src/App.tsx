@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import AgentsPage from "./pages/AgentsPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import AgentPublicPage from "./pages/AgentPublicPage";
 import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/dashboard/agent" element={<AgentDashboard />} />
           <Route path="/dashboard/franchise/:franchiseId/leaderboard" element={<LeaderboardPage />} />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
+          <Route path="/agente/:code" element={<AgentPublicPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
