@@ -210,7 +210,7 @@ export default function AgentDashboard() {
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.title}</TableCell>
                           <TableCell>{p.address}</TableCell>
-                          <TableCell className="text-right">${'{'}p.price.toLocaleString(){'}'}</TableCell>
+                          <TableCell className="text-right">${p.price.toLocaleString()}</TableCell>
                           <TableCell>{p.status ?? "—"}</TableCell>
                         </TableRow>
                       ))}
