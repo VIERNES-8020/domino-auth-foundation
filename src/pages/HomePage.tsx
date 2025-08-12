@@ -45,7 +45,7 @@ interface Property {
   title: string;
   description?: string | null;
   price?: number | null;
-  image_url?: string | null;
+  image_urls?: string[] | null;
   status?: string | null;
 }
 
@@ -68,7 +68,7 @@ export default function HomePage() {
 
     const { data, error } = await supabase
       .from("properties")
-      .select("id, title, price, image_url, status")
+      .select("id, title, price, image_urls, status")
       .textSearch("fts_column", q, { type: "websearch", config: "spanish" })
       .eq("status", "approved");
 
@@ -129,7 +129,7 @@ export default function HomePage() {
                 <Card key={p.id} className="overflow-hidden shadow-sm">
                   <AspectRatio ratio={16 / 9}>
                     <img
-                      src={p.image_url || "/placeholder.svg"}
+                      src={p.image_urls?.[0] || "/placeholder.svg"}
                       alt={`Propiedad: ${p.title} — Inmobiliaria DOMIN10`}
                       className="h-full w-full object-cover"
                       loading="lazy"
