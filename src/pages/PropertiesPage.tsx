@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import PropertyCard from "@/components/PropertyCard";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 // SEO helper (scoped to this page)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -55,12 +55,16 @@ export default function PropertiesPage() {
     canonicalPath: "/properties",
   });
 
+  const sb = getSupabaseClient();
+
   const [city, setCity] = useState("");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
   const [propertyType, setPropertyType] = useState<string>("");
   const [lifestyle, setLifestyle] = useState<string>("");
+  const [amenities, setAmenities] = useState<{ id: string; name: string }[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -68,22 +72,65 @@ export default function PropertiesPage() {
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
-    () => [city, priceMin, priceMax, bedrooms, propertyType, lifestyle].join("|"),
-    [city, priceMin, priceMax, bedrooms, propertyType, lifestyle]
+    () => [city, priceMin, priceMax, bedrooms, propertyType, lifestyle, selectedAmenities.sort().join(",")].join("|"),
+    [city, priceMin, priceMax, bedrooms, propertyType, lifestyle, selectedAmenities]
   );
 
+  // Load amenities once
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAmenities() {
+      const { data, error } = await sb.from("amenities").select("id,name").order("name", { ascending: true });
+      if (!cancelled && !error) setAmenities(data ?? []);
+    }
+    loadAmenities();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load properties when filters change
   useEffect(() => {
     let active = true;
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
-        let query = supabase
+        // If filtering by amenities, compute matching property ids first
+        let amenityPropertyIds: string[] | null = null;
+        if (selectedAmenities.length > 0) {
+          const { data: pa, error: paError } = await sb
+            .from("property_amenities")
+            .select("property_id, amenity_id")
+            .in("amenity_id", selectedAmenities);
+          if (paError) throw paError;
+
+          const counts = new Map<string, number>();
+          (pa ?? []).forEach((row: any) => {
+            counts.set(row.property_id, (counts.get(row.property_id) ?? 0) + 1);
+          });
+          amenityPropertyIds = Array.from(counts.entries())
+            .filter(([, count]) => count >= selectedAmenities.length)
+            .map(([id]) => id);
+
+          if ((amenityPropertyIds?.length ?? 0) === 0) {
+            if (!active) return;
+            setProperties([]);
+            setLoading(false);
+            return;
+          }
+        }
+
+        let query = sb
           .from("properties")
           .select("id,title,price,image_urls,bedrooms,address,property_type", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);
+
+        if (amenityPropertyIds && amenityPropertyIds.length > 0) {
+          query = query.in("id", amenityPropertyIds);
+        }
 
         if (city.trim()) {
           query = query.ilike("address", `%${city.trim()}%`);
@@ -184,6 +231,33 @@ export default function PropertiesPage() {
                   />
                 </div>
 
+                <div className="md:col-span-6">
+                  <Label>Amenidades</Label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {amenities.map((a) => {
+                      const selected = selectedAmenities.includes(a.id);
+                      return (
+                        <Button
+                          key={a.id}
+                          type="button"
+                          size="sm"
+                          variant={selected ? "default" : "outline"}
+                          onClick={() =>
+                            setSelectedAmenities((prev) =>
+                              selected ? prev.filter((id) => id !== a.id) : [...prev, a.id]
+                            )
+                          }
+                        >
+                          {a.name}
+                        </Button>
+                      );
+                    })}
+                    {amenities.length === 0 && (
+                      <span className="text-sm text-muted-foreground">Cargando amenidades...</span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="self-end">
                   <Button type="button" variant="ghost" onClick={() => {
                     setCity("");
@@ -192,6 +266,7 @@ export default function PropertiesPage() {
                     setBedrooms("");
                     setPropertyType("");
                     setLifestyle("");
+                    setSelectedAmenities([]);
                   }}>Limpiar filtros</Button>
                 </div>
               </div>
@@ -204,7 +279,7 @@ export default function PropertiesPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 id="results-heading" className="text-xl font-semibold">Resultados</h2>
             <div className="text-sm text-muted-foreground">
-              {loading ? "Cargando..." : `${properties.length} propiedades`}
+              {loading ? "Cargando propiedades..." : `${properties.length} propiedades`}
             </div>
           </div>
 

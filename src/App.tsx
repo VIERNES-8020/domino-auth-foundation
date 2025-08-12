@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import AgentDashboard from "./pages/AgentDashboard";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import PropertiesPage from "./pages/PropertiesPage";
+import PropertyDetailPage from "./pages/PropertyDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
