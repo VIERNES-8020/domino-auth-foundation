@@ -22,6 +22,7 @@ import { Home, Cog, MapPin, Images } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQuery } from "@tanstack/react-query";
+import MapPicker from "@/components/MapPicker";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -577,9 +578,15 @@ export default function AgentDashboard() {
                       </div>
                     </div>
 
-                    <div className="h-40 rounded-md border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-                      Mapa interactivo — próximamente
-                    </div>
+                    <MapPicker
+                      lat={lat ? Number(lat) : null}
+                      lng={lng ? Number(lng) : null}
+                      onChange={({ lat: newLat, lng: newLng }) => {
+                        setLat(String(newLat));
+                        setLng(String(newLng));
+                      }}
+                      className="h-64 rounded-md border"
+                    />
                   </TabsContent>
 
                   <TabsContent value="media" className="space-y-4 animate-fade-in">
@@ -590,15 +597,8 @@ export default function AgentDashboard() {
                       </AlertDescription>
                     </Alert>
                     <div className="space-y-2">
-                      <Label>Fotos (URLs por ahora)</Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input placeholder="https://..." value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} />
-                        <Button type="button" variant="secondary" onClick={() => {
-                          if (!newImageUrl.trim()) return;
-                          setImageUrls((prev) => Array.from(new Set([...prev, newImageUrl.trim()])));
-                          setNewImageUrl("");
-                        }}>Añadir</Button>
-                      </div>
+                      <Label>Fotos</Label>
+                      <Input id="photoFiles" type="file" accept="image/jpeg" multiple onChange={handleSelectPhotos} />
                       {imageUrls.length > 0 && (
                         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
                           {imageUrls.map((u) => (
@@ -617,15 +617,8 @@ export default function AgentDashboard() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Planos (URLs por ahora)</Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input placeholder="https://.../plano.pdf" value={newPlanUrl} onChange={(e) => setNewPlanUrl(e.target.value)} />
-                        <Button type="button" variant="secondary" onClick={() => {
-                          if (!newPlanUrl.trim()) return;
-                          setPlansUrls((prev) => Array.from(new Set([...prev, newPlanUrl.trim()])));
-                          setNewPlanUrl("");
-                        }}>Añadir</Button>
-                      </div>
+                      <Label>Planos</Label>
+                      <Input id="planFiles" type="file" accept="image/jpeg,application/pdf" multiple onChange={handleSelectPlans} />
                       {plansUrls.length > 0 && (
                         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
                           {plansUrls.map((u) => (
