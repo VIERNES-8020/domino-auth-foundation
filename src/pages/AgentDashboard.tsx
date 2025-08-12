@@ -67,6 +67,14 @@ interface Property {
   status: string | null;
 }
 
+interface OtherAgent {
+  id: string;
+  full_name: string | null;
+  agent_code: string | null;
+}
+
+type OtherProperty = Property & { agent_id?: string };
+
 export default function AgentDashboard() {
   usePageSEO({
     title: "Panel Agente Inmobiliario | Inmobiliaria DOMIN10",
@@ -113,9 +121,16 @@ export default function AgentDashboard() {
   const [newImageUrl, setNewImageUrl] = useState("");
   const [plansUrls, setPlansUrls] = useState<string[]>([]);
   const [newPlanUrl, setNewPlanUrl] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
+const [videoUrl, setVideoUrl] = useState("");
 
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Colaboración entre agentes
+  const [agentCodeQuery, setAgentCodeQuery] = useState("");
+  const [foundAgent, setFoundAgent] = useState<OtherAgent | null>(null);
+  const [collabProps, setCollabProps] = useState<Property[]>([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; created_at: string; read: boolean }>>([]);
 
   const isFormValid = useMemo(
     () => Boolean(title && address && price !== "" && Number(price) >= 0),
@@ -128,6 +143,7 @@ export default function AgentDashboard() {
       setUser(data.user ?? null);
       if (data.user) {
         await fetchProperties(data.user.id);
+        await fetchNotifications(data.user.id);
       }
       setIsLoading(false);
     };
@@ -139,8 +155,10 @@ export default function AgentDashboard() {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProperties(session.user.id);
+        fetchNotifications(session.user.id);
       } else {
         setProperties([]);
+        setNotifications([]);
       }
     });
 
@@ -166,6 +184,66 @@ export default function AgentDashboard() {
     setProperties((data ?? []) as Property[]);
   };
 
+  const fetchNotifications = async (_uid: string) => {
+    const { data, error } = await supabase
+      .from('agent_notifications')
+      .select('id, message, created_at, read')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching notifications:', error);
+      return;
+    }
+    setNotifications((data ?? []) as any);
+  };
+
+  const searchAgentByCode = async () => {
+    try {
+      setLoadingSearch(true);
+      setFoundAgent(null);
+      setCollabProps([]);
+      const code = agentCodeQuery.trim();
+      if (!code) return;
+      const { data: prof, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, full_name, agent_code')
+        .eq('agent_code', code)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!prof) {
+        toast.message('No se encontró un agente con ese código');
+        return;
+      }
+      setFoundAgent(prof as OtherAgent);
+      const { data: props, error: rpcErr } = await supabase.rpc('get_agent_properties_secure', { _agent_id: (prof as any).id });
+      if (rpcErr) throw rpcErr;
+      setCollabProps((props ?? []) as Property[]);
+      toast.success('Propiedades del agente cargadas');
+    } catch (e: any) {
+      console.error(e);
+      toast.error('No fue posible cargar propiedades del agente', { description: e.message });
+    } finally {
+      setLoadingSearch(false);
+    }
+  };
+
+  const shareWithClient = async (prop: Property) => {
+    try {
+      if (!user || !foundAgent) return;
+      const message = `El agente ${user.user_metadata?.full_name ?? 'Desconocido'} ha compartido tu propiedad '${prop.title}' con uno de sus clientes.`;
+      const { error } = await supabase.from('agent_notifications').insert({
+        to_agent_id: foundAgent.id,
+        from_agent_id: user.id,
+        property_id: (prop as any).id,
+        message,
+      });
+      if (error) throw error;
+      toast.success('Compartido con tu cliente');
+      await fetchNotifications(user.id);
+    } catch (e: any) {
+      console.error(e);
+      toast.error('No se pudo registrar la notificación', { description: e.message });
+    }
+  };
   // ======== File Upload Helpers (frontend resize + Storage uploads) ========
   async function resizeImage(file: File, maxWidth = 1920): Promise<Blob> {
     return new Promise((resolve, reject) => {
@@ -433,6 +511,66 @@ export default function AgentDashboard() {
               <CardTitle>Mis propiedades</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-6 space-y-2">
+                <Label htmlFor="agentCode">Colaboración entre agentes</Label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    id="agentCode"
+                    placeholder="Ingresa código ej. LMG4567"
+                    value={agentCodeQuery}
+                    onChange={(e) => setAgentCodeQuery(e.target.value)}
+                  />
+                  <Button type="button" onClick={searchAgentByCode} disabled={loadingSearch || !agentCodeQuery.trim()}>
+                    {loadingSearch ? 'Buscando…' : 'Buscar'}
+                  </Button>
+                </div>
+                {foundAgent && (
+                  <p className="text-sm text-muted-foreground">
+                    Agente: {foundAgent.full_name ?? '—'} ({foundAgent.agent_code ?? '—'})
+                  </p>
+                )}
+                {collabProps.length > 0 && (
+                  <div className="overflow-x-auto rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Dirección</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {collabProps.map((cp) => (
+                          <TableRow key={cp.id}>
+                            <TableCell className="font-medium">{cp.title}</TableCell>
+                            <TableCell>{cp.address}</TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" variant="secondary" onClick={() => shareWithClient(cp)}>Compartir con mi cliente</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-6">
+                <h3 className="font-semibold">Mis notificaciones</h3>
+                {notifications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No tienes notificaciones</p>
+                ) : (
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {notifications.slice(0, 5).map((n) => (
+                      <li key={n.id} className="rounded-md border p-2 bg-background/50">
+                        <span className="block">{n.message}</span>
+                        <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
               {properties.length === 0 ? (
                 <p className="text-muted-foreground">Aún no tienes propiedades registradas.</p>
               ) : (
