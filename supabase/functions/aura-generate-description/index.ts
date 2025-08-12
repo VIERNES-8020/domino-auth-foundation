@@ -39,6 +39,8 @@ serve(async (req) => {
       lat,
       lng,
     } = property || {};
+    
+    console.log("[AURA] Input received", { language, brand, tone, style, property });
 
     const typeMap: Record<string, string> = {
       house: "casa",
@@ -79,32 +81,44 @@ serve(async (req) => {
       .filter(Boolean)
       .join("\n");
 
+    console.log("[AURA] Built user prompt:", userPrompt);
+
+    const openaiBody = {
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.7,
+    };
+
+    // Log exact payload sent to OpenAI (without Authorization header)
+    console.log("[AURA] Payload to OpenAI:", JSON.stringify(openaiBody));
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.7,
-      }),
+      body: JSON.stringify(openaiBody),
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error("OpenAI error:", err);
-      return new Response(JSON.stringify({ error: "OpenAI request failed", details: err }), {
+      const errText = await response.text();
+      console.error("[AURA] OpenAI error response", {
+        status: response.status,
+        statusText: response.statusText,
+        errText,
+      });
+      return new Response(JSON.stringify({ error: "OpenAI request failed", details: errText }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await response.json();
+    console.log("[AURA] OpenAI success response", data);
     const generatedText = data.choices?.[0]?.message?.content ?? "";
 
     return new Response(JSON.stringify({ generatedText }), {
