@@ -18,6 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Home, Cog, MapPin, Images } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -233,12 +235,19 @@ export default function AgentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
       <header className="container mx-auto py-10">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          Panel del Agente Inmobiliario
-        </h1>
-        <p className="mt-2 text-muted-foreground max-w-2xl">
-          Gestiona tus propiedades: consulta el listado y añade nuevas.
-        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Panel del Agente Inmobiliario
+            </h1>
+            <p className="mt-2 text-muted-foreground max-w-2xl">
+              Gestiona tus propiedades: consulta el listado y añade nuevas.
+            </p>
+          </div>
+          <span className="hidden sm:inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            ✨ AURA activado
+          </span>
+        </div>
       </header>
 
       <main className="container mx-auto pb-16">
@@ -286,14 +295,32 @@ export default function AgentDashboard() {
             <CardContent>
               <form onSubmit={handleCreateProperty} className="space-y-4">
                 <Tabs defaultValue="general" className="w-full">
-                  <TabsList className="grid grid-cols-4 w-full">
-                    <TabsTrigger value="general">General</TabsTrigger>
-                    <TabsTrigger value="features">Características</TabsTrigger>
-                    <TabsTrigger value="location">Ubicación</TabsTrigger>
-                    <TabsTrigger value="media">Multimedia</TabsTrigger>
+                  <TabsList className="grid grid-cols-4 w-full rounded-lg shadow-md">
+                    <TabsTrigger value="general" className="gap-2">
+                      <Home className="h-4 w-4" aria-hidden="true" />
+                      General
+                    </TabsTrigger>
+                    <TabsTrigger value="features" className="gap-2">
+                      <Cog className="h-4 w-4" aria-hidden="true" />
+                      Características
+                    </TabsTrigger>
+                    <TabsTrigger value="location" className="gap-2">
+                      <MapPin className="h-4 w-4" aria-hidden="true" />
+                      Ubicación
+                    </TabsTrigger>
+                    <TabsTrigger value="media" className="gap-2">
+                      <Images className="h-4 w-4" aria-hidden="true" />
+                      Multimedia
+                    </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-4 animate-fade-in">
+                    <Alert>
+                      <AlertTitle>✨ AURA</AlertTitle>
+                      <AlertDescription>
+                        Generará descripciones de marketing persuasivas a partir de los datos ingresados. Puedes editar el resultado libremente.
+                      </AlertDescription>
+                    </Alert>
                     <div className="space-y-2">
                       <Label htmlFor="title">Título</Label>
                       <Input
@@ -417,6 +444,12 @@ export default function AgentDashboard() {
                   </TabsContent>
 
                   <TabsContent value="location" className="space-y-4 animate-fade-in">
+                    <Alert>
+                      <AlertTitle>✨ AURA</AlertTitle>
+                      <AlertDescription>
+                        Autocompletará la dirección y coordenadas desde el mapa y podrá sugerir usar tu ubicación actual. (Próxima fase)
+                      </AlertDescription>
+                    </Alert>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="address">Dirección</Label>
@@ -448,6 +481,12 @@ export default function AgentDashboard() {
                   </TabsContent>
 
                   <TabsContent value="media" className="space-y-4 animate-fade-in">
+                    <Alert>
+                      <AlertTitle>✨ AURA</AlertTitle>
+                      <AlertDescription>
+                        Evaluará calidad de fotos y convertirá formatos no válidos automáticamente. (UI lista, lógica en fase 4)
+                      </AlertDescription>
+                    </Alert>
                     <div className="space-y-2">
                       <Label>Fotos (URLs por ahora)</Label>
                       <div className="flex gap-2">
