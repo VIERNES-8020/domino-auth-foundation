@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabaseClient";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { toast } from "sonner";
+import PropertyCard from "@/components/PropertyCard";
 import heroImage from "@/assets/cover.jpg";
 
 // SEO helpers
@@ -121,28 +120,14 @@ export default function HomePage() {
           <h2 id="results-title" className="text-2xl font-semibold tracking-tight">
             Resultados de la búsqueda
           </h2>
-          {results.length === 0 ? (
+          {loading ? (
+            <p className="mt-3 text-muted-foreground">Buscando…</p>
+          ) : results.length === 0 ? (
             <p className="mt-3 text-muted-foreground">No hay resultados aún. Prueba una búsqueda de estilo de vida.</p>
           ) : (
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {results.map((p) => (
-                <Card key={p.id} className="overflow-hidden shadow-sm">
-                  <AspectRatio ratio={16 / 9}>
-                    <img
-                      src={p.image_urls?.[0] || "/placeholder.svg"}
-                      alt={`Propiedad: ${p.title} — Inmobiliaria DOMIN10`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </AspectRatio>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold line-clamp-1">{p.title}</h3>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      <span className="font-medium">{typeof p.price === "number" ? `$${p.price.toLocaleString()}` : "Precio a consultar"}</span>
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">Match Score AURA — próximamente</div>
-                  </CardContent>
-                </Card>
+                <PropertyCard key={p.id} property={p} />
               ))}
             </div>
           )}
