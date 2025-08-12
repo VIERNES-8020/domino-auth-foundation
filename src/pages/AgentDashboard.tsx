@@ -98,6 +98,8 @@ export default function AgentDashboard() {
   const [newPlanUrl, setNewPlanUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
 
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const isFormValid = useMemo(
     () => Boolean(title && address && price !== "" && Number(price) >= 0),
     [title, address, price]
@@ -338,24 +340,50 @@ export default function AgentDashboard() {
                         <Button
                           type="button"
                           variant="ghost"
-                          onClick={() => {
-                            const friendlyType = propertyType ? (
-                              propertyType === "house" ? "casa" : propertyType === "apartment" ? "departamento" : propertyType === "land" ? "terreno" : "oficina"
-                            ) : "propiedad";
-                            const parts: string[] = [];
-                            parts.push(`Descubre esta ${friendlyType}${address ? ` en ${address}` : ""}.`);
-                            if (bedrooms) parts.push(`${bedrooms} habitaciones`);
-                            if (bathrooms) parts.push(`${bathrooms} baños`);
-                            if (area) parts.push(`${area} m² de confort`);
-                            if (hasPool) parts.push("piscina");
-                            if (hasGarage) parts.push("garaje");
-                            if (petFriendly) parts.push("acepta mascotas");
-                            const tail = parts.length > 1 ? ` Cuenta con ${parts.slice(1).join(", ")}.` : "";
-                            setDescription(`${parts[0]}${tail} Vive la calidez de hogar con DOMINIO.`);
-                            toast.info("AURA: descripción generada");
+                          disabled={isGenerating}
+                          onClick={async () => {
+                            try {
+                              setIsGenerating(true);
+                              const { data, error } = await supabase.functions.invoke('aura-generate-description', {
+                                body: {
+                                  property: {
+                                    title: title || "",
+                                    address: address || "",
+                                    price: price === "" ? null : Number(price),
+                                    property_type: propertyType || null,
+                                    transaction_type: transactionType || null,
+                                    bedrooms: bedrooms ? Number(bedrooms) : null,
+                                    bathrooms: bathrooms ? Number(bathrooms) : null,
+                                    area_m2: area ? Number(area) : null,
+                                    has_pool: hasPool,
+                                    has_garage: hasGarage,
+                                    pet_friendly: petFriendly,
+                                    lat: lat || null,
+                                    lng: lng || null,
+                                  },
+                                  language: 'es',
+                                  brand: 'DOMINIO',
+                                  tone: 'premium inmobiliario persuasivo',
+                                  style: '80-120 palabras, frases cortas, enfocado en beneficios, sin emojis, sin mayúsculas excesivas'
+                                }
+                              });
+                              if (error) throw error;
+                              const generated = (data as any)?.generatedText || (data as any)?.text || '';
+                              if (generated) {
+                                setDescription(generated.trim());
+                                toast.success('AURA generó la descripción');
+                              } else {
+                                toast.message('AURA no pudo generar contenido. Intenta completando más campos.');
+                              }
+                            } catch (err: any) {
+                              console.error(err);
+                              toast.error('Error con AURA', { description: err.message ?? 'Intenta nuevamente' });
+                            } finally {
+                              setIsGenerating(false);
+                            }
                           }}
                         >
-                          ✨ Generar con AURA
+                          {isGenerating ? 'Generando…' : '✨ Generar con AURA'}
                         </Button>
                       </div>
                       <Textarea
