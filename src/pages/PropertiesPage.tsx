@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import PropertyCard from "@/components/PropertyCard";
+import PropertiesMap from "@/components/PropertiesMap";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { toast } from "sonner";
 
 // SEO helper (scoped to this page)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -47,6 +49,7 @@ interface Property {
   bedrooms?: number | null;
   address?: string | null;
   property_type?: string | null;
+  geolocation?: any;
 }
 
 export default function PropertiesPage() {
@@ -71,12 +74,27 @@ export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [mapToken, setMapToken] = useState<string | null>(null);
+  const [suggestedCity, setSuggestedCity] = useState<string | null>(null);
+  const [favIds, setFavIds] = useState<Set<string>>(new Set());
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
     () => [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(",")].join("|"),
     [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities]
   );
+
+  const markers = useMemo(() => {
+    const list: { id: string; lng: number; lat: number; title?: string }[] = [];
+    for (const p of properties) {
+      const g: any = (p as any).geolocation;
+      const c = g?.coordinates || g?.geom?.coordinates;
+      if (Array.isArray(c) && c.length >= 2) {
+        list.push({ id: p.id, lng: c[0], lat: c[1], title: p.title });
+      }
+    }
+    return list;
+  }, [properties]);
 
   // Load amenities once
   useEffect(() => {
@@ -90,6 +108,41 @@ export default function PropertiesPage() {
       cancelled = true;
     };
   }, []);
+
+  // Mapbox token and geolocation suggestion + favorites
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await sb.functions.invoke("mapbox-public-token");
+        const t = (data as any)?.token as string | undefined;
+        if (t) setMapToken(t);
+      } catch (_) { /* noop */ }
+    })();
+  }, [sb]);
+
+  useEffect(() => {
+    if (!mapToken || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?types=place&language=es&access_token=${mapToken}`);
+        const j = await res.json();
+        const place = j?.features?.[0]?.text;
+        if (place) setSuggestedCity(place);
+      } catch (_) { /* noop */ }
+    });
+  }, [mapToken]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await sb.auth.getUser();
+      const user = auth?.user;
+      if (!user) return;
+      const { data } = await sb.from("favorites").select("property_id");
+      const ids = new Set<string>((data ?? []).map((r: any) => r.property_id));
+      setFavIds(ids);
+    })();
+  }, [sb]);
 
   // Load properties when filters change
   useEffect(() => {
@@ -125,7 +178,7 @@ export default function PropertiesPage() {
 
         let query = sb
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,address,property_type", { count: "exact" })
+          .select("id,title,price,price_currency,image_urls,bedrooms,address,property_type,geolocation", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);
@@ -284,6 +337,13 @@ export default function PropertiesPage() {
           </Card>
         </section>
 
+        {/* Map */}
+        {mapToken && (
+          <section aria-labelledby="map-heading" className="mb-8">
+            <h2 id="map-heading" className="text-xl font-semibold mb-3">Mapa de resultados</h2>
+            <PropertiesMap token={mapToken} markers={markers} className="w-full h-80 rounded-lg overflow-hidden" />
+          </section>
+        )}
         {/* Results */}
         <section aria-labelledby="results-heading">
           <div className="flex items-center justify-between mb-4">
@@ -292,6 +352,12 @@ export default function PropertiesPage() {
               {loading ? "Cargando propiedades..." : `${properties.length} propiedades`}
             </div>
           </div>
+          {suggestedCity && !city && (
+            <div className="mb-4 rounded-md border p-3 text-sm flex items-center justify-between">
+              <span>¿Quieres ver propiedades en {suggestedCity}?</span>
+              <Button size="sm" onClick={() => setCity(suggestedCity!)}>Sí, mostrar</Button>
+            </div>
+          )}
 
           {error && (
             <div role="alert" className="mb-4 text-destructive">
@@ -301,7 +367,18 @@ export default function PropertiesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((p) => (
-              <PropertyCard key={p.id} property={p} />
+              <PropertyCard key={p.id} property={p} isFavorited={favIds.has(p.id)} onToggleFavorite={async (id, next) => {
+                const { data: auth } = await sb.auth.getUser();
+                const user = auth?.user;
+                if (!user) { toast.message("Inicia sesión para guardar favoritos"); return; }
+                if (next) {
+                  const { error } = await sb.from("favorites").insert({ user_id: user.id, property_id: id });
+                  if (!error) setFavIds((prev) => new Set(prev).add(id));
+                } else {
+                  const { error } = await sb.from("favorites").delete().eq("user_id", user.id).eq("property_id", id);
+                  if (!error) setFavIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+                }
+              }} />
             ))}
           </div>
 

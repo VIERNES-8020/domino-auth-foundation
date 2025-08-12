@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import AgentsPage from "./pages/AgentsPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Footer />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

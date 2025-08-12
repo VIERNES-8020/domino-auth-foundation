@@ -1,10 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/hero-warm.jpg";
 import brandLogo from "@/assets/logo-dominio.svg";
 import { ArrowRight } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+import PropertyCard from "@/components/PropertyCard";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -44,6 +48,37 @@ export default function HomePage() {
       "La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas y agentes certificados.",
     canonicalPath: "/",
   });
+
+  const sb = useMemo(() => getSupabaseClient(), []);
+  const [featHouse, setFeatHouse] = useState<any[]>([]);
+  const [featApt, setFeatApt] = useState<any[]>([]);
+  const [featLand, setFeatLand] = useState<any[]>([]);
+  const [featOffice, setFeatOffice] = useState<any[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const fetchType = async (type: string) => {
+        const { data } = await sb
+          .from("properties")
+          .select("id,title,price,price_currency,image_urls")
+          .eq("status", "approved")
+          .eq("property_type", type)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        return (data ?? []) as any[];
+      };
+      const [houses, apts, lands, offices] = await Promise.all([
+        fetchType("house"),
+        fetchType("apartment"),
+        fetchType("land"),
+        fetchType("office"),
+      ]);
+      if (!active) return;
+      setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices);
+    })();
+    return () => { active = false; };
+  }, [sb]);
 
   const orgJsonLd = {
     "@context": "https://schema.org",
@@ -111,6 +146,75 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* Featured Properties */}
+      <section className="container mx-auto py-10" aria-labelledby="featured-heading">
+        <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
+        <Tabs defaultValue="house">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
+            <TabsTrigger value="house">Casas</TabsTrigger>
+            <TabsTrigger value="apartment">Departamentos</TabsTrigger>
+            <TabsTrigger value="land">Terrenos</TabsTrigger>
+            <TabsTrigger value="office">Oficinas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="house">
+            <Carousel>
+              <CarouselContent>
+                {featHouse.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="apartment">
+            <Carousel>
+              <CarouselContent>
+                {featApt.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="land">
+            <Carousel>
+              <CarouselContent>
+                {featLand.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="office">
+            <Carousel>
+              <CarouselContent>
+                {featOffice.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+        </Tabs>
       </section>
 
       {/* Metrics Section */}
