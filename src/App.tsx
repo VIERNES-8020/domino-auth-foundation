@@ -10,6 +10,9 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import PropertyDetailPage from "./pages/PropertyDetailPage";
 import NotFound from "./pages/NotFound";
+import AgentsPage from "./pages/AgentsPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +26,10 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/auth" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/agents" element={<AgentsPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
           <Route path="/dashboard/agent" element={<AgentDashboard />} />
           <Route path="/dashboard/franchise/:franchiseId/leaderboard" element={<LeaderboardPage />} />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />

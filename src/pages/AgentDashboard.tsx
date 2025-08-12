@@ -63,6 +63,7 @@ interface Property {
   title: string;
   address: string;
   price: number;
+  price_currency?: string | null;
   status: string | null;
 }
 
@@ -82,6 +83,7 @@ export default function AgentDashboard() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [price, setPrice] = useState<number | "">("");
+  const [priceCurrency, setPriceCurrency] = useState<string>("USD");
   const [propertyType, setPropertyType] = useState("");
   const [transactionType, setTransactionType] = useState("");
 
@@ -150,7 +152,7 @@ export default function AgentDashboard() {
   const fetchProperties = async (agentId: string) => {
     const { data, error } = await supabase
       .from("properties")
-      .select("id, title, address, price, status")
+      .select("id, title, address, price, price_currency, status")
       .eq("agent_id", agentId)
       .order("id", { ascending: false });
 
@@ -307,6 +309,7 @@ export default function AgentDashboard() {
         description: description.trim() || null,
         address: address.trim(),
         price: Number(price) || 0,
+        price_currency: (priceCurrency || 'USD'),
         property_type: propertyType || null,
         transaction_type: transactionType || null,
         bedrooms: bedrooms ? Number(bedrooms) : undefined,
@@ -448,7 +451,7 @@ export default function AgentDashboard() {
                         <TableRow key={p.id}>
                           <TableCell className="font-medium">{p.title}</TableCell>
                           <TableCell>{p.address}</TableCell>
-                          <TableCell className="text-right">${p.price.toLocaleString()}</TableCell>
+                          <TableCell className="text-right">{(p.price_currency === 'BOB' ? 'Bs.' : '$us.')} {p.price.toLocaleString()}</TableCell>
                           <TableCell>{p.status ?? "—"}</TableCell>
                         </TableRow>
                       ))}
@@ -587,6 +590,19 @@ export default function AgentDashboard() {
                           placeholder="150000"
                           required
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Moneda</Label>
+                        <Select value={priceCurrency} onValueChange={setPriceCurrency}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selecciona" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">$us.</SelectItem>
+                            <SelectItem value="BOB">Bs.</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">

@@ -42,6 +42,7 @@ interface Property {
   id: string;
   title: string;
   price: number | null;
+  price_currency?: string | null;
   image_urls: string[] | null;
   bedrooms?: number | null;
   address?: string | null;
@@ -124,7 +125,7 @@ export default function PropertiesPage() {
 
         let query = sb
           .from("properties")
-          .select("id,title,price,image_urls,bedrooms,address,property_type", { count: "exact" })
+          .select("id,title,price,price_currency,image_urls,bedrooms,address,property_type", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);

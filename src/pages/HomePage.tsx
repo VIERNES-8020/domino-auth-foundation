@@ -65,6 +65,9 @@ export default function HomePage() {
             <div className="hidden md:flex items-center gap-6 text-sm">
               <Link to="/" className="story-link">Inicio</Link>
               <Link to="/properties" className="story-link">Propiedades</Link>
+              <Link to="/agents" className="story-link">Nuestros Agentes</Link>
+              <Link to="/about" className="story-link">Sobre Nosotros</Link>
+              <Link to="/contact" className="story-link">Contacto</Link>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
