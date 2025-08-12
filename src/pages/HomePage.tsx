@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/cover.jpg";
+import brandLogo from "@/assets/logo-dominio.svg";
 import { ArrowRight } from "lucide-react";
 
 // SEO helpers
@@ -38,7 +39,7 @@ function usePageSEO(options: { title: string; description: string; canonicalPath
 
 export default function HomePage() {
   usePageSEO({
-    title: "Encuentra tu Hogar Ideal | DOMIN10 Inmobiliaria",
+    title: "Encuentra tu Hogar Ideal | DOMINIO Inmobiliaria",
     description:
       "La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas y agentes certificados.",
     canonicalPath: "/",
@@ -47,7 +48,7 @@ export default function HomePage() {
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "DOMIN10 Inmobiliaria",
+    name: "DOMINIO Inmobiliaria",
     url: typeof window !== "undefined" ? window.location.origin : "",
     logo: typeof window !== "undefined" ? `${window.location.origin}/favicon.ico` : "/favicon.ico",
   };
@@ -57,8 +58,8 @@ export default function HomePage() {
       {/* Header / Top Navigation */}
       <header className="container mx-auto py-5">
         <nav className="flex items-center justify-between" aria-label="Principal">
-          <Link to="/" className="flex items-center gap-2 hover-scale" aria-label="DOMIN10 Inicio">
-            <span className="text-xl font-bold tracking-tight">DOMIN10</span>
+          <Link to="/" className="flex items-center gap-2 hover-scale" aria-label="DOMINIO Inicio">
+            <img src={brandLogo} alt="DOMINIO Inmobiliaria - logotipo oficial" className="h-8 w-auto" />
           </Link>
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-6 text-sm">
@@ -82,7 +83,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img
             src={heroImage}
-            alt="Hogares de DOMIN10 en Bolivia, fotografía inmobiliaria profesional"
+            alt="Hogares de DOMINIO en Bolivia, fotografía inmobiliaria profesional"
             className="h-[72vh] w-full object-cover"
             loading="eager"
           />
@@ -95,7 +96,7 @@ export default function HomePage() {
           </h1>
           <p className="mt-4 max-w-3xl text-muted-foreground">
             La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas,
-            agentes certificados y el respaldo de DOMIN10.
+            agentes certificados y el respaldo de DOMINIO.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
             <Button size="lg" asChild>
@@ -112,7 +113,7 @@ export default function HomePage() {
       {/* Metrics Section */}
       <main>
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
-          <h2 id="metrics-heading" className="sr-only">Métricas de DOMIN10</h2>
+          <h2 id="metrics-heading" className="sr-only">Métricas de DOMINIO</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             <Card className="shadow-sm">
               <CardContent className="p-6 text-center">
