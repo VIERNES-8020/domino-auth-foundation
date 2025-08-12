@@ -54,23 +54,6 @@ export default function AuthForm() {
   });
 
   const onSubmit = async (values: any) => {
-    const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-    const anonKey = (
-      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    ) as string | undefined;
-
-    if (!url || !anonKey) {
-      toast.error(
-        "Conecta Supabase para continuar",
-        {
-          description:
-            "Ve al botón verde Supabase (arriba a la derecha), conéctalo y vuelve a intentarlo.",
-        }
-      );
-      return;
-    }
-
     const supabase = getSupabaseClient();
 
     try {
