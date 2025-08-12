@@ -164,6 +164,131 @@ export default function AgentDashboard() {
     setProperties((data ?? []) as Property[]);
   };
 
+  // ======== File Upload Helpers (frontend resize + Storage uploads) ========
+  async function resizeImage(file: File, maxWidth = 1920): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.naturalWidth);
+        const width = Math.round(img.naturalWidth * scale);
+        const height = Math.round(img.naturalHeight * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('No canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('No blob'));
+        }, 'image/jpeg', 0.9);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  const handleSelectPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const files: FileList | null = e.target.files;
+      if (!files || !user) return;
+      const arr = Array.from(files);
+      if (arr.length + imageUrls.length > 10) {
+        toast.error('Puedes subir hasta 10 fotos');
+        return;
+      }
+      const valid = arr.every((f) => f.type === 'image/jpeg' || /\.jpe?g$/i.test(f.name));
+      if (!valid) {
+        toast.error('Solo se permiten imágenes JPG/JPEG');
+        return;
+      }
+      const base = `${user.id}/${Date.now()}`;
+      const uploaded: string[] = [];
+      for (let i = 0; i < arr.length; i++) {
+        const blob = await resizeImage(arr[i], 1920);
+        const path = `${base}/photo-${i}.jpg`;
+        const { error } = await supabase.storage.from('property-photos').upload(path, blob, {
+          contentType: 'image/jpeg',
+          upsert: false,
+        });
+        if (error) {
+          console.error(error);
+          toast.error('Error subiendo foto', { description: error.message });
+          continue;
+        }
+        const { data } = supabase.storage.from('property-photos').getPublicUrl(path);
+        uploaded.push(data.publicUrl);
+      }
+      if (uploaded.length) {
+        setImageUrls((prev) => Array.from(new Set([...prev, ...uploaded])));
+        toast.success(`Subidas ${uploaded.length} foto(s)`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Error al subir fotos', { description: err.message });
+    } finally {
+      if (e?.target) e.target.value = '';
+    }
+  };
+
+  const handleSelectPlans = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const files: FileList | null = e.target.files;
+      if (!files || !user) return;
+      const arr = Array.from(files);
+      const valid = arr.every((f) => f.type === 'image/jpeg' || f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+      if (!valid) {
+        toast.error('Solo se permiten JPG/JPEG o PDF para planos');
+        return;
+      }
+      const base = `${user.id}/${Date.now()}`;
+      const uploaded: string[] = [];
+      for (let i = 0; i < arr.length; i++) {
+        const f = arr[i];
+        if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+          const path = `${base}/plan-${i}.pdf`;
+          const { error } = await supabase.storage.from('property-plans').upload(path, f, {
+            contentType: 'application/pdf',
+            upsert: false,
+          });
+          if (error) {
+            console.error(error);
+            toast.error('Error subiendo plano', { description: error.message });
+            continue;
+          }
+          const { data } = supabase.storage.from('property-plans').getPublicUrl(path);
+          uploaded.push(data.publicUrl);
+        } else {
+          const blob = await resizeImage(f, 1920);
+          const path = `${base}/plan-${i}.jpg`;
+          const { error } = await supabase.storage.from('property-plans').upload(path, blob, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
+          if (error) {
+            console.error(error);
+            toast.error('Error subiendo plano', { description: error.message });
+            continue;
+          }
+          const { data } = supabase.storage.from('property-plans').getPublicUrl(path);
+          uploaded.push(data.publicUrl);
+        }
+      }
+      if (uploaded.length) {
+        setPlansUrls((prev) => Array.from(new Set([...prev, ...uploaded])));
+        toast.success(`Subidos ${uploaded.length} archivo(s) de planos`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Error al subir planos', { description: err.message });
+    } finally {
+      if (e?.target) e.target.value = '';
+    }
+  };
+
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
