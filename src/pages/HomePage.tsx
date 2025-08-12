@@ -115,30 +115,38 @@ export default function HomePage() {
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
           <h2 id="metrics-heading" className="sr-only">Métricas de DOMINIO</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
-            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold tracking-tight">1,200+</div>
-                <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold tracking-tight">25</div>
-                <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold tracking-tight">9</div>
-                <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
-              </CardContent>
-            </Card>
-            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold tracking-tight">150+</div>
-                <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
-              </CardContent>
-            </Card>
+            <Link to="/properties" aria-label="Ver propiedades" className="block group">
+              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">1,200+</div>
+                  <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/properties" aria-label="Ver franquicias" className="block group">
+              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">25</div>
+                  <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/properties" aria-label="Ver ciudades" className="block group">
+              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">9</div>
+                  <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/properties" aria-label="Ver ventas mensuales" className="block group">
+              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
+                <CardContent className="p-6 text-center">
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">150+</div>
+                  <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         </section>
       </main>

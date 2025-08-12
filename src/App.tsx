@@ -7,6 +7,7 @@ import HomePage from "./pages/HomePage";
 import Index from "./pages/Index";
 import AgentDashboard from "./pages/AgentDashboard";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import PropertiesPage from "./pages/PropertiesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/auth" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="/dashboard/agent" element={<AgentDashboard />} />
