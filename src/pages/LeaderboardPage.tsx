@@ -67,29 +67,18 @@ export default function LeaderboardPage() {
       try {
         setIsLoading(true);
 
-        let query = (supabase as any)
-          .from('agent_performance')
-          .select('agent_id, average_rating, properties_sold_month, franchise_rank, global_rank');
-
-        // Nota: Cuando exista relación directa con franquicia, se podrá filtrar por franchiseId.
-        // Por ahora, ordenamos por ranking de franquicia, luego global y finalmente por rating.
-        query = query.order('franchise_rank', { ascending: true, nullsFirst: false });
-        query = query.order('global_rank', { ascending: true, nullsFirst: false });
-        query = query.order('average_rating', { ascending: false });
-
-        const { data, error } = await query;
+        const franchiseUuid = franchiseId || null;
+        const { data, error } = await (supabase as any).rpc('get_franchise_leaderboard', {
+          franchise_id_param: franchiseUuid,
+        });
         if (error) throw error;
 
-        const mapped: RankedAgent[] = (data ?? []).map((row: any, idx: number) => {
-          const rank = row.franchise_rank ?? row.global_rank ?? idx + 1;
-          const name = `Agente ${String(row.agent_id).slice(0, 8)}`;
-          return {
-            rank,
-            name,
-            averageRating: Number(row.average_rating ?? 0),
-            salesMonth: Number(row.properties_sold_month ?? 0),
-          };
-        });
+        const mapped: RankedAgent[] = (data ?? []).map((row: any) => ({
+          rank: Number(row.rank ?? 0),
+          name: String(row.name ?? 'Agente'),
+          averageRating: Number(row.average_rating ?? 0),
+          salesMonth: Number(row.sales_month ?? 0),
+        }));
 
         setLeaderboard(mapped);
       } catch (err) {
