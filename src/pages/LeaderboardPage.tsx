@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { supabase } from '@/integrations/supabase/client';
 
 // SEO helper (reutilizado del patrón existente)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -63,14 +64,40 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      // TODO: Reemplazar con lectura real de Supabase (agent_performance + profiles)
-      const mockData: RankedAgent[] = [
-        { rank: 1, name: 'Maria Rojas', averageRating: 4.98, salesMonth: 8 },
-        { rank: 2, name: 'Carlos Soliz', averageRating: 4.85, salesMonth: 6 },
-        { rank: 3, name: 'Ana Gutierrez', averageRating: 4.82, salesMonth: 7 },
-      ];
-      setLeaderboard(mockData);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+
+        let query = (supabase as any)
+          .from('agent_performance')
+          .select('agent_id, average_rating, properties_sold_month, franchise_rank, global_rank');
+
+        // Nota: Cuando exista relación directa con franquicia, se podrá filtrar por franchiseId.
+        // Por ahora, ordenamos por ranking de franquicia, luego global y finalmente por rating.
+        query = query.order('franchise_rank', { ascending: true, nullsFirst: false });
+        query = query.order('global_rank', { ascending: true, nullsFirst: false });
+        query = query.order('average_rating', { ascending: false });
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const mapped: RankedAgent[] = (data ?? []).map((row: any, idx: number) => {
+          const rank = row.franchise_rank ?? row.global_rank ?? idx + 1;
+          const name = `Agente ${String(row.agent_id).slice(0, 8)}`;
+          return {
+            rank,
+            name,
+            averageRating: Number(row.average_rating ?? 0),
+            salesMonth: Number(row.properties_sold_month ?? 0),
+          };
+        });
+
+        setLeaderboard(mapped);
+      } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        setLeaderboard([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchLeaderboard();
   }, [franchiseId]);
