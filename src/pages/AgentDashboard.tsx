@@ -98,6 +98,7 @@ export default function AgentDashboard() {
   const [bedrooms, setBedrooms] = useState<string>("");
   const [bathrooms, setBathrooms] = useState<string>("");
   const [area, setArea] = useState<string>("");
+  const [constructedArea, setConstructedArea] = useState<string>("");
   const [hasPool, setHasPool] = useState<boolean>(false);
   const [hasGarage, setHasGarage] = useState<boolean>(false);
   const [petFriendly, setPetFriendly] = useState<boolean>(false);
@@ -393,6 +394,7 @@ const [videoUrl, setVideoUrl] = useState("");
         bedrooms: bedrooms ? Number(bedrooms) : undefined,
         bathrooms: bathrooms ? Number(bathrooms) : undefined,
         area_m2: area ? Number(area) : undefined,
+        constructed_area_m2: constructedArea ? Number(constructedArea) : undefined,
         has_pool,
         has_garage,
         pet_friendly,
@@ -430,13 +432,14 @@ const [videoUrl, setVideoUrl] = useState("");
       setAddress("");
       setPrice("");
       setPropertyType("");
-      setTransactionType("");
-      setBedrooms("");
-      setBathrooms("");
-      setArea("");
-      setHasPool(false);
-      setHasGarage(false);
-      setPetFriendly(false);
+        setTransactionType("");
+        setBedrooms("");
+        setBathrooms("");
+        setArea("");
+        setConstructedArea("");
+        setHasPool(false);
+        setHasGarage(false);
+        setPetFriendly(false);
       setHasGarden(false);
       setLat("");
       setLng("");
@@ -775,7 +778,7 @@ const [videoUrl, setVideoUrl] = useState("");
                   </TabsContent>
 
                   <TabsContent value="features" className="space-y-4 animate-fade-in">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="bedrooms">Habitaciones</Label>
                         <Input id="bedrooms" type="number" min={0} value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
@@ -787,6 +790,10 @@ const [videoUrl, setVideoUrl] = useState("");
                       <div className="space-y-2">
                         <Label htmlFor="area">Superficie (m²)</Label>
                         <Input id="area" type="number" min={0} value={area} onChange={(e) => setArea(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="constructedArea">Superficie Construida (m²)</Label>
+                        <Input id="constructedArea" type="number" min={0} value={constructedArea} onChange={(e) => setConstructedArea(e.target.value)} />
                       </div>
                     </div>
 

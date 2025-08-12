@@ -200,6 +200,7 @@ export type Database = {
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
+          constructed_area_m2: number | null
           created_at: string | null
           description: string | null
           franchise_id: string | null
@@ -227,6 +228,7 @@ export type Database = {
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          constructed_area_m2?: number | null
           created_at?: string | null
           description?: string | null
           franchise_id?: string | null
@@ -254,6 +256,7 @@ export type Database = {
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          constructed_area_m2?: number | null
           created_at?: string | null
           description?: string | null
           franchise_id?: string | null
@@ -833,6 +836,7 @@ export type Database = {
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
+          constructed_area_m2: number | null
           created_at: string | null
           description: string | null
           franchise_id: string | null
