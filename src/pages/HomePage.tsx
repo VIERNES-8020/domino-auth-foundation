@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import heroImage from "@/assets/cover.jpg";
+import heroImage from "@/assets/hero-warm.jpg";
 import brandLogo from "@/assets/logo-dominio.svg";
 import { ArrowRight } from "lucide-react";
 
@@ -83,7 +83,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img
             src={heroImage}
-            alt="Hogares de DOMINIO en Bolivia, fotografía inmobiliaria profesional"
+            alt="Pareja pintando su nuevo hogar con luz cálida - inspiración DOMINIO"
             className="h-[72vh] w-full object-cover"
             loading="eager"
           />
@@ -114,26 +114,26 @@ export default function HomePage() {
       <main>
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
           <h2 id="metrics-heading" className="sr-only">Métricas de DOMINIO</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            <Card className="shadow-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
+            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold tracking-tight">1,200+</div>
                 <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
               </CardContent>
             </Card>
-            <Card className="shadow-sm">
+            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold tracking-tight">25</div>
                 <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
               </CardContent>
             </Card>
-            <Card className="shadow-sm">
+            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold tracking-tight">9</div>
                 <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
               </CardContent>
             </Card>
-            <Card className="shadow-sm">
+            <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)]">
               <CardContent className="p-6 text-center">
                 <div className="text-3xl font-bold tracking-tight">150+</div>
                 <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
