@@ -1,4 +1,6 @@
 import AuthForm from "@/components/auth/AuthForm";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -10,6 +12,11 @@ const Index = () => {
         <p className="mt-3 text-muted-foreground max-w-2xl">
           Regístrate o inicia sesión para acceder al panel de gestión.
         </p>
+        <div className="mt-6">
+          <Button asChild>
+            <Link to="/dashboard/agent">Ir al Panel del Agente</Link>
+          </Button>
+        </div>
       </header>
       <main className="container mx-auto pb-16">
         <section aria-labelledby="auth-section" className="flex justify-center">
