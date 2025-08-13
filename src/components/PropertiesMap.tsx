@@ -7,6 +7,7 @@ export interface PropertiesMapMarker {
   lng: number;
   lat: number;
   title?: string;
+  label?: string;
 }
 
 interface PropertiesMapProps {
@@ -31,7 +32,7 @@ const PropertiesMap: React.FC<PropertiesMapProps> = ({ token, markers, className
 
     mapRef.current = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/streets-v12",
       center: [center.lng, center.lat],
       zoom: 11,
     });
@@ -54,13 +55,19 @@ const PropertiesMap: React.FC<PropertiesMapProps> = ({ token, markers, className
     let hasBounds = false;
 
     markers.forEach((mk) => {
-      const marker = new mapboxgl.Marker().setLngLat([mk.lng, mk.lat]);
-      if (mk.title) {
-        const el = document.createElement("div");
-        el.className = "px-2 py-1 rounded bg-background/90 text-xs shadow";
-        el.textContent = mk.title;
-        new mapboxgl.Popup({ offset: 12 }).setDOMContent(el);
-      }
+      // Custom price label marker
+      const el = document.createElement("div");
+      el.className = "rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-semibold shadow-md ring-1 ring-primary/30";
+      el.textContent = mk.label ?? mk.title ?? "";
+
+      const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" }).setLngLat([mk.lng, mk.lat]);
+
+      // Click: scroll to property card
+      el.addEventListener("click", () => {
+        const target = document.querySelector(`#property-${mk.id}`) as HTMLElement | null;
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
       marker.addTo(mapRef.current!);
       markerObjs.current.push(marker);
       bounds.extend([mk.lng, mk.lat]);

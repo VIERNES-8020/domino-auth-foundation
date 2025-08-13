@@ -47,6 +47,8 @@ interface Property {
   price_currency?: string | null;
   image_urls: string[] | null;
   bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_m2?: number | null;
   address?: string | null;
   property_type?: string | null;
   geolocation?: any;
@@ -85,12 +87,19 @@ export default function PropertiesPage() {
   );
 
   const markers = useMemo(() => {
-    const list: { id: string; lng: number; lat: number; title?: string }[] = [];
+    const list: { id: string; lng: number; lat: number; title?: string; label?: string }[] = [];
     for (const p of properties) {
       const g: any = (p as any).geolocation;
       const c = g?.coordinates || g?.geom?.coordinates;
       if (Array.isArray(c) && c.length >= 2) {
-        list.push({ id: p.id, lng: c[0], lat: c[1], title: p.title });
+        // Abbreviated price label: e.g., 144K USD
+        const cur = (p.price_currency || "USD").toUpperCase();
+        const priceNum = typeof p.price === "number" ? p.price : null;
+        const abbr = priceNum === null ? "—" :
+          priceNum >= 1_000_000 ? `${(priceNum / 1_000_000).toFixed(1).replace(/\.0$/, '')}M` :
+          priceNum >= 1_000 ? `${(priceNum / 1_000).toFixed(0)}K` : `${priceNum}`;
+        const label = priceNum === null ? "Consultar" : `${abbr} ${cur}`;
+        list.push({ id: p.id, lng: c[0], lat: c[1], title: p.title, label });
       }
     }
     return list;
@@ -178,7 +187,7 @@ export default function PropertiesPage() {
 
         let query = sb
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,address,property_type,geolocation", { count: "exact" })
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,geolocation", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);
@@ -206,8 +215,11 @@ export default function PropertiesPage() {
           query = query.eq("property_type", propertyType);
         }
         if (lifestyle.trim()) {
-          // Use FTS column for lifestyle search
-          query = query.textSearch("fts_column", lifestyle.trim(), { type: "websearch", config: "spanish" });
+          const term = lifestyle.trim();
+          // Use broad search across key text fields (stable fallback)
+          query = query.or(
+            `title.ilike.%${term}%,description.ilike.%${term}%,address.ilike.%${term}%`
+          );
         }
 
         const { data, error } = await query;
