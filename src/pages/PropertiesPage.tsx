@@ -8,6 +8,7 @@ import PropertyCard from "@/components/PropertyCard";
 import PropertiesMap from "@/components/PropertiesMap";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import { LocateFixed } from "lucide-react";
 
 // SEO helper (scoped to this page)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -78,7 +79,10 @@ export default function PropertiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [mapToken, setMapToken] = useState<string | null>(null);
   const [suggestedCity, setSuggestedCity] = useState<string | null>(null);
-  const [favIds, setFavIds] = useState<Set<string>>(new Set());
+const [favIds, setFavIds] = useState<Set<string>>(new Set());
+const [usingNearMe, setUsingNearMe] = useState(false);
+const [nearMeLoading, setNearMeLoading] = useState(false);
+const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | null>(null);
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
@@ -153,9 +157,52 @@ export default function PropertiesPage() {
     })();
   }, [sb]);
 
+  // Buscar por ubicación actual (GPS)
+  const handleNearMeClick = () => {
+    if (!("geolocation" in navigator)) {
+      toast.message("Tu navegador no soporta geolocalización");
+      return;
+    }
+    setNearMeLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          setUsingNearMe(true);
+          setLoading(true);
+          const { data, error } = await sb.rpc("properties_nearby", {
+            lon: longitude,
+            lat: latitude,
+            radius_km: 5,
+          });
+          if (error) throw error;
+          setProperties((data as Property[]) ?? []);
+          setNearMeCenter({ lng: longitude, lat: latitude });
+          setError(null);
+        } catch (e) {
+          console.error("Geolocalización: error al buscar cercanas", e);
+          toast.message("No se pudo obtener propiedades cercanas.");
+          setUsingNearMe(false);
+        } finally {
+          setNearMeLoading(false);
+          setLoading(false);
+        }
+      },
+      (err) => {
+        console.error("Geolocalización: permiso denegado o error", err);
+        toast.message("No pudimos acceder a tu ubicación.");
+        setNearMeLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   // Load properties when filters change
   useEffect(() => {
     let active = true;
+    if (usingNearMe) {
+      return () => { active = false }; 
+    }
     async function fetchData() {
       setLoading(true);
       setError(null);
@@ -239,7 +286,7 @@ export default function PropertiesPage() {
     return () => {
       active = false;
     };
-  }, [filterKey]);
+  }, [filterKey, usingNearMe]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
@@ -261,7 +308,17 @@ export default function PropertiesPage() {
                   <Label htmlFor="city">Ciudad / Zona</Label>
                   <Input id="city" placeholder="Ej. La Paz, Equipetrol" value={city} onChange={(e) => setCity(e.target.value)} aria-describedby="results-heading" />
                 </div>
-
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleNearMeClick}
+                    disabled={nearMeLoading}
+                    aria-label="Buscar propiedades cerca de mi ubicación"
+                  >
+                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? "Buscando..." : "Buscar cerca de mí"}
+                  </Button>
+                </div>
                 <div>
                   <Label htmlFor="priceMin">Precio mín.</Label>
                   <Input id="priceMin" type="number" min={0} placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} inputMode="numeric" />
@@ -339,9 +396,12 @@ export default function PropertiesPage() {
                     setPriceMin("");
                     setPriceMax("");
                     setBedrooms("");
+                    setBathrooms("");
                     setPropertyType("");
                     setLifestyle("");
                     setSelectedAmenities([]);
+                    setUsingNearMe(false);
+                    setNearMeCenter(null);
                   }}>Limpiar filtros</Button>
                 </div>
               </div>
@@ -353,7 +413,7 @@ export default function PropertiesPage() {
         {mapToken && (
           <section aria-labelledby="map-heading" className="mb-8">
             <h2 id="map-heading" className="text-xl font-semibold mb-3">Mapa de resultados</h2>
-            <PropertiesMap token={mapToken} markers={markers} className="w-full h-80 rounded-lg overflow-hidden" />
+            <PropertiesMap token={mapToken} markers={markers} defaultCenter={nearMeCenter ?? undefined} className="w-full h-80 rounded-lg overflow-hidden" />
           </section>
         )}
         {/* Results */}
