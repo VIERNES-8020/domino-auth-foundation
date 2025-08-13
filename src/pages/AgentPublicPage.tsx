@@ -66,7 +66,7 @@ export default function AgentPublicPage() {
       if (!code) return;
       const { data: prof, error: pErr } = await supabase
         .from("profiles")
-        .select("id, full_name, agent_code, experience_summary, bio, corporate_phone, avatar_url")
+        .select("id, full_name, agent_code, experience_summary, bio, corporate_phone")
         .eq("agent_code", code)
         .maybeSingle();
       if (pErr) {
@@ -124,7 +124,7 @@ export default function AgentPublicPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <img src={(profile as any).avatar_url || "/default-placeholder.jpg"} alt={`Foto de perfil del agente ${profile.full_name ?? ''}`} className="h-20 w-20 rounded-full object-cover" />
+                  <img src="/default-placeholder.jpg" alt={`Foto de perfil del agente ${profile.full_name ?? ''}`} className="h-20 w-20 rounded-full object-cover" />
                   <div>
                     <p className="font-semibold">{profile.full_name ?? "Agente"}</p>
                     <p className="text-sm text-muted-foreground">Código: {profile.agent_code ?? "—"}</p>
