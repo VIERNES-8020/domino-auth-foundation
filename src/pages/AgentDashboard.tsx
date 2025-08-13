@@ -126,6 +126,15 @@ const [videoUrl, setVideoUrl] = useState("");
 
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Estado del perfil del agente
+  const [profileFullName, setProfileFullName] = useState<string>("");
+  const [profileExperience, setProfileExperience] = useState<string>("");
+  const [profileBio, setProfileBio] = useState<string>("");
+  const [profileAgentCode, setProfileAgentCode] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState<boolean>(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
+
   // Colaboración entre agentes
   const [agentCodeQuery, setAgentCodeQuery] = useState("");
   const [foundAgent, setFoundAgent] = useState<OtherAgent | null>(null);
@@ -458,6 +467,84 @@ const [videoUrl, setVideoUrl] = useState("");
     }
   };
 
+  // Cargar perfil del agente
+  useEffect(() => {
+    (async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, experience_summary, bio, agent_code, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!error && data) {
+        setProfileFullName(data.full_name ?? "");
+        setProfileExperience(data.experience_summary ?? "");
+        setProfileBio(data.bio ?? "");
+        setProfileAgentCode(data.agent_code ?? null);
+        setAvatarUrl((data as any).avatar_url ?? null);
+      }
+    })();
+  }, [user]);
+
+  // Subir/cambiar foto de perfil
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      if (!user) return;
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        toast.message('Selecciona una imagen válida');
+        return;
+      }
+      setUploadingAvatar(true);
+      const blob = await resizeImage(file, 512);
+      const path = `${user.id}/avatar.jpg`;
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      setAvatarUrl(publicUrl);
+      const { error: updErr } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+      if (updErr) throw updErr;
+      toast.success('Foto actualizada');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('No se pudo actualizar la foto', { description: err.message });
+    } finally {
+      setUploadingAvatar(false);
+      if (e?.target) e.target.value = '';
+    }
+  };
+
+  // Guardar perfil
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    try {
+      setSavingProfile(true);
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileFullName.trim(),
+          experience_summary: profileExperience.trim() || null,
+          bio: profileBio.trim() || null,
+        })
+        .eq('id', user.id);
+      if (error) throw error;
+      toast.success('Perfil actualizado');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('No se pudo actualizar el perfil', { description: err.message });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
@@ -506,6 +593,12 @@ const [videoUrl, setVideoUrl] = useState("");
       </header>
 
       <main className="container mx-auto pb-16">
+        <Tabs defaultValue="propiedades" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
+            <TabsTrigger value="perfil">Mi Perfil</TabsTrigger>
+          </TabsList>
+          <TabsContent value="propiedades">
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-labelledby="agent-dashboard">
           <h2 id="agent-dashboard" className="sr-only">Panel de agente</h2>
 
@@ -928,6 +1021,76 @@ const [videoUrl, setVideoUrl] = useState("");
             </CardContent>
           </Card>
         </section>
+          </TabsContent>
+
+          <TabsContent value="perfil">
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-labelledby="my-profile">
+              <h2 id="my-profile" className="sr-only">Mi Perfil</h2>
+              <Card className="lg:col-span-2 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Editar mi perfil</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={async (e) => { e.preventDefault(); await handleSaveProfile(); }} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={avatarUrl || "/default-placeholder.jpg"}
+                        alt="Foto de perfil"
+                        className="h-20 w-20 rounded-full object-cover"
+                      />
+                      <div>
+                        <input
+                          id="avatar"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarSelect}
+                          aria-label="Subir foto de perfil"
+                          disabled={uploadingAvatar}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          JPG/PNG, máx 2MB. Se optimiza automáticamente.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Nombre completo</Label>
+                      <Input id="fullName" value={profileFullName} onChange={(e) => setProfileFullName(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="experience">Resumen de experiencia</Label>
+                      <Input id="experience" value={profileExperience} onChange={(e) => setProfileExperience(e.target.value)} placeholder="Ej: 5 años en el sector de lujo" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Biografía</Label>
+                      <Textarea id="bio" rows={4} value={profileBio} onChange={(e) => setProfileBio(e.target.value)} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="agentCode">Código de agente</Label>
+                      <Input id="agentCode" value={profileAgentCode ?? ""} disabled />
+                      {profileAgentCode && (
+                        <div className="text-sm mt-1">
+                          <a className="underline" href={`/agente/${profileAgentCode}`} target="_blank" rel="noreferrer">
+                            Ver perfil público
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2">
+                      <Button type="submit" disabled={savingProfile}>
+                        {savingProfile ? "Guardando..." : "Guardar cambios"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </section>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

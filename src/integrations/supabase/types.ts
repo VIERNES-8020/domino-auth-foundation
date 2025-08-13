@@ -178,6 +178,7 @@ export type Database = {
       profiles: {
         Row: {
           agent_code: string | null
+          avatar_url: string | null
           bio: string | null
           corporate_phone: string | null
           created_at: string
@@ -190,6 +191,7 @@ export type Database = {
         }
         Insert: {
           agent_code?: string | null
+          avatar_url?: string | null
           bio?: string | null
           corporate_phone?: string | null
           created_at?: string
@@ -202,6 +204,7 @@ export type Database = {
         }
         Update: {
           agent_code?: string | null
+          avatar_url?: string | null
           bio?: string | null
           corporate_phone?: string | null
           created_at?: string
