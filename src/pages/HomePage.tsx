@@ -61,7 +61,7 @@ export default function HomePage() {
       const fetchType = async (type: string) => {
         const { data } = await sb
           .from("properties")
-          .select("id,title,price,price_currency,image_urls")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2")
           .eq("status", "approved")
           .eq("property_type", type)
           .order("created_at", { ascending: false })
