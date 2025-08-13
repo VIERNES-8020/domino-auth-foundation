@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@/assets/hero-warm.jpg";
-import brandLogo from "@/assets/logo-dominio.svg";
+
 import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
@@ -55,14 +55,6 @@ export default function HomePage() {
   const [featLand, setFeatLand] = useState<any[]>([]);
   const [featOffice, setFeatOffice] = useState<any[]>([]);
 
-  const [session, setSession] = useState<any>(null);
-  useEffect(() => {
-    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-    });
-    sb.auth.getSession().then(({ data: { session } }) => setSession(session));
-    return () => subscription.unsubscribe();
-  }, [sb]);
 
   useEffect(() => {
     let active = true;
@@ -99,42 +91,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
-      {/* Header / Top Navigation */}
-      <header className="container mx-auto py-5">
-        <nav className="flex items-center justify-between" aria-label="Principal">
-          <Link to="/" className="flex items-center gap-2 hover-scale" aria-label="DOMINIO Inicio">
-            <img src={brandLogo} alt="DOMINIO Inmobiliaria - logotipo oficial" className="h-8 w-auto" />
-          </Link>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-6 text-sm">
-              <Link to="/" className="story-link">Inicio</Link>
-              <Link to="/properties" className="story-link">Propiedades</Link>
-              <Link to="/agents" className="story-link">Nuestros Agentes</Link>
-              <Link to="/about" className="story-link">Sobre Nosotros</Link>
-              <Link to="/contact" className="story-link">Contacto</Link>
-            </div>
-            {session ? (
-              <div className="flex items-center gap-2">
-                <Button asChild>
-                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
-                </Button>
-                <Button variant="outline" onClick={async () => { await sb.auth.signOut(); }}>
-                  Cerrar Sesión
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild>
-                  <Link to="/auth">Iniciar Sesión</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/auth">Registrarse</Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </nav>
-      </header>
 
       {/* Hero Section */}
       <section className="relative">
