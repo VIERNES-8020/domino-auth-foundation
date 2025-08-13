@@ -125,6 +125,27 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_fields: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -202,6 +223,7 @@ export type Database = {
           bedrooms: number | null
           constructed_area_m2: number | null
           created_at: string | null
+          custom_data: Json | null
           description: string | null
           franchise_id: string | null
           fts_column: unknown | null
@@ -230,6 +252,7 @@ export type Database = {
           bedrooms?: number | null
           constructed_area_m2?: number | null
           created_at?: string | null
+          custom_data?: Json | null
           description?: string | null
           franchise_id?: string | null
           fts_column?: unknown | null
@@ -258,6 +281,7 @@ export type Database = {
           bedrooms?: number | null
           constructed_area_m2?: number | null
           created_at?: string | null
+          custom_data?: Json | null
           description?: string | null
           franchise_id?: string | null
           fts_column?: unknown | null
@@ -331,6 +355,18 @@ export type Database = {
           proj4text?: string | null
           srid?: number
           srtext?: string | null
+        }
+        Relationships: []
+      }
+      super_admins: {
+        Row: {
+          user_id: string
+        }
+        Insert: {
+          user_id: string
+        }
+        Update: {
+          user_id?: string
         }
         Relationships: []
       }
@@ -838,6 +874,7 @@ export type Database = {
           bedrooms: number | null
           constructed_area_m2: number | null
           created_at: string | null
+          custom_data: Json | null
           description: string | null
           franchise_id: string | null
           fts_column: unknown | null
@@ -1092,6 +1129,38 @@ export type Database = {
       postgis_wagyu_version: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      properties_nearby: {
+        Args: { lon: number; lat: number; radius_km: number }
+        Returns: {
+          address: string
+          agent_id: string
+          area_m2: number | null
+          bathrooms: number | null
+          bedrooms: number | null
+          constructed_area_m2: number | null
+          created_at: string | null
+          custom_data: Json | null
+          description: string | null
+          franchise_id: string | null
+          fts_column: unknown | null
+          geolocation: unknown | null
+          has_garage: boolean | null
+          has_pool: boolean | null
+          id: string
+          image_urls: string[] | null
+          other_amenities: string | null
+          pet_friendly: boolean | null
+          plans_url: string[] | null
+          price: number
+          price_currency: string
+          property_type: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          transaction_type: string | null
+          video_url: string | null
+        }[]
       }
       spheroid_in: {
         Args: { "": unknown }
