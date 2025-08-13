@@ -50,7 +50,7 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
 
 return (
   <Link to={`/properties/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
-    <Card key={property.id} className="relative overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <Card key={property.id} className="relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
       {onToggleFavorite && (
         <Button
           type="button"
@@ -58,14 +58,14 @@ return (
           variant="secondary"
           aria-label={isFavorited ? "Quitar de favoritos" : "Agregar a favoritos"}
           aria-pressed={isFavorited}
-          className="absolute right-2 top-2 z-10"
+          className="absolute right-2 top-2 z-20"
           onClick={handleFavClick}
         >
           <Heart className="h-4 w-4" fill={isFavorited ? "currentColor" : "none"} />
         </Button>
       )}
       {txLabel && (
-        <Badge variant="secondary" className="absolute left-2 top-2 z-10">
+        <Badge variant="secondary" className="absolute left-2 top-2 z-20">
           {txLabel}
         </Badge>
       )}
@@ -82,7 +82,9 @@ return (
             }
           }}
         />
-        <div className="absolute bottom-2 left-2 rounded-md bg-background/90 px-2 py-1 text-sm font-semibold shadow">
+        {/* Overlay de legibilidad y precio destacado */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
+        <div className="absolute right-2 top-2 z-20 rounded-md bg-primary/90 px-2.5 py-1.5 text-sm sm:text-base font-semibold text-primary-foreground shadow">
           {priceText}
         </div>
       </AspectRatio>
@@ -103,7 +105,7 @@ return (
           </span>
         </div>
         <div className="mt-4">
-          <Button size="sm" variant="secondary" className="w-full sm:w-auto" asChild>
+          <Button size="sm" className="w-full sm:w-auto" asChild>
             <span>Ver Detalles</span>
           </Button>
         </div>

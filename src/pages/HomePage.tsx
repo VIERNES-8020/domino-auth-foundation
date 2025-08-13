@@ -153,10 +153,10 @@ export default function HomePage() {
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
         <Tabs defaultValue="house">
         <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
-          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Casas</TabsTrigger>
-          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Departamentos</TabsTrigger>
-          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Terrenos</TabsTrigger>
-          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm">Oficinas</TabsTrigger>
+          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
+          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
+          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
+          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
         </TabsList>
 
           <TabsContent value="house">
