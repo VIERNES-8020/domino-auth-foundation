@@ -55,6 +55,15 @@ export default function HomePage() {
   const [featLand, setFeatLand] = useState<any[]>([]);
   const [featOffice, setFeatOffice] = useState<any[]>([]);
 
+  const [session, setSession] = useState<any>(null);
+  useEffect(() => {
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+    });
+    sb.auth.getSession().then(({ data: { session } }) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, [sb]);
+
   useEffect(() => {
     let active = true;
     (async () => {
@@ -104,14 +113,25 @@ export default function HomePage() {
               <Link to="/about" className="story-link">Sobre Nosotros</Link>
               <Link to="/contact" className="story-link">Contacto</Link>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" asChild>
-                <Link to="/auth">Iniciar Sesión</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/auth">Registrarse</Link>
-              </Button>
-            </div>
+            {session ? (
+              <div className="flex items-center gap-2">
+                <Button asChild>
+                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
+                </Button>
+                <Button variant="outline" onClick={async () => { await sb.auth.signOut(); }}>
+                  Cerrar Sesión
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild>
+                  <Link to="/auth">Iniciar Sesión</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth">Registrarse</Link>
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
       </header>
