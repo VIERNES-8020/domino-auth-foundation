@@ -115,9 +115,10 @@ export default function AuthGate() {
     case 'agent':
     case 'Agente Inmobiliario':
       return <AgentDashboard />;
-    // ... añadir casos para otros roles aquí ...
+    case 'client':
+    case 'user':
     default:
-      // Si el rol no tiene un panel, o es un simple cliente, se queda en el portal público.
+      // Clientes y usuarios por defecto van al portal público
       return <Index />;
   }
 }

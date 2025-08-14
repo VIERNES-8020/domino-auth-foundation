@@ -118,37 +118,41 @@ export default function AuthForm() {
       const userRole = await getUserRole(session.user.id);
       console.log("Rol detectado:", userRole);
       
-      let targetPath = '/dashboard/agent'; // Ruta por defecto
+      let targetPath = '/'; // Ruta por defecto para clientes
 
-      // Lógica de enrutamiento basada en roles
+      // Lógica de enrutamiento basada en roles (usando valores de la base de datos)
       switch (userRole) {
-        case 'Super Administrador':
+        case 'super_admin':
           targetPath = '/admin/dashboard';
           console.log("Redirigiendo a Super Admin dashboard");
           break;
-        case 'Agente Inmobiliario':
+        case 'agent':
           targetPath = '/dashboard/agent';
           console.log("Redirigiendo a Agent dashboard");
           break;
-        case 'Administrador de Franquicia':
+        case 'franchise_admin':
           targetPath = '/dashboard/franchise';
           console.log("Redirigiendo a Franchise dashboard");
           break;
-        case 'Gerente de Oficina':
+        case 'office_manager':
           targetPath = '/dashboard/office';
           console.log("Redirigiendo a Office dashboard");
           break;
-        case 'Supervisor':
+        case 'supervisor':
           targetPath = '/dashboard/supervisor';
           console.log("Redirigiendo a Supervisor dashboard");
           break;
+        case 'client':
+          targetPath = '/';
+          console.log("Redirigiendo a Portal Público para cliente");
+          break;
         default:
-          console.warn("Rol no reconocido o no encontrado, usando ruta por defecto");
-          targetPath = '/dashboard/agent';
+          console.warn("Rol no reconocido o no encontrado, redirigiendo a portal público");
+          targetPath = '/';
       }
 
       // Mostrar mensaje de éxito
-      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo a tu panel...");
+      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
       
       // Redirigir después de un breve delay
       setTimeout(() => {
@@ -158,10 +162,10 @@ export default function AuthForm() {
 
     } catch (err) {
       console.error("Error en redirección basada en roles:", err);
-      // Fallback navigation
+      // Fallback navigation to public portal
       setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
       setTimeout(() => {
-        navigate('/dashboard/agent');
+        navigate('/');
       }, 1500);
     }
   };
