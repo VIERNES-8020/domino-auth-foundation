@@ -52,14 +52,35 @@ export default function AgentDashboard() {
 
   const fetchNotifications = async (agentId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('agent_notifications')
-        .select('*')
-        .eq('to_agent_id', agentId)
-        .order('created_at', { ascending: false });
+      // Fetch both agent notifications and leads
+      const [notificationsResult, leadsResult] = await Promise.all([
+        supabase
+          .from('agent_notifications')
+          .select('*')
+          .eq('to_agent_id', agentId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('agent_leads')
+          .select('*')
+          .eq('agent_id', agentId)
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (error) throw error;
-      setNotifications(data || []);
+      if (notificationsResult.error) throw notificationsResult.error;
+      if (leadsResult.error) throw leadsResult.error;
+
+      // Combine notifications and leads
+      const combinedNotifications = [
+        ...(notificationsResult.data || []),
+        ...(leadsResult.data || []).map(lead => ({
+          id: lead.id,
+          message: `Nuevo contacto de ${lead.client_name} (${lead.client_email}): ${lead.message}`,
+          created_at: lead.created_at,
+          read: lead.status !== 'new'
+        }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setNotifications(combinedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }

@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_leads: {
+        Row: {
+          agent_id: string
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          property_id: string | null
+          status: string | null
+        }
+        Insert: {
+          agent_id: string
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          property_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          agent_id?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          property_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       agent_notifications: {
         Row: {
           created_at: string
@@ -234,6 +270,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      franchise_applications: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          cv_url: string | null
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          photo_url: string | null
+          status: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          cv_url?: string | null
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          cv_url?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
       }
       franchises: {
         Row: {

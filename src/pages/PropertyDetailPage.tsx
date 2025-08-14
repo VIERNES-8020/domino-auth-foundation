@@ -294,22 +294,50 @@ export default function PropertyDetailPage() {
               <h2 className="text-xl font-semibold mb-2">Contactar al agente</h2>
               <form
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  toast.success("Mensaje enviado. Nos pondremos en contacto pronto.");
+                  const formData = new FormData(e.currentTarget);
+                  const name = formData.get("name") as string;
+                  const email = formData.get("email") as string;
+                  const phone = formData.get("phone") as string;
+                  const message = formData.get("message") as string;
+                  
+                  try {
+                    const { error } = await sb.functions.invoke("agent-contact", {
+                      body: {
+                        agentId: property.agent_id,
+                        propertyId: property.id,
+                        clientName: name,
+                        clientEmail: email,
+                        clientPhone: phone,
+                        message: message
+                      }
+                    });
+                    
+                    if (error) throw error;
+                    toast.success("¡Mensaje enviado exitosamente! El agente se pondrá en contacto contigo pronto.");
+                    (e.target as HTMLFormElement).reset();
+                  } catch (error) {
+                    console.error("Error sending message:", error);
+                    toast.error("Error al enviar el mensaje. Inténtalo de nuevo.");
+                  }
                 }}
               >
                 <div>
                   <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" required placeholder="Tu nombre" />
+                  <Input id="name" name="name" required placeholder="Tu nombre" />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required placeholder="tu@correo.com" />
+                  <Input id="email" name="email" type="email" required placeholder="tu@correo.com" />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Número de Celular</Label>
+                  <Input id="phone" name="phone" placeholder="+591 70000000" />
                 </div>
                 <div className="md:col-span-2">
                   <Label htmlFor="message">Mensaje</Label>
-                  <Textarea id="message" required placeholder="Estoy interesado/a en esta propiedad..." />
+                  <Textarea id="message" name="message" required placeholder="Estoy interesado/a en esta propiedad..." />
                 </div>
                 <div className="md:col-span-2">
                   <Button type="submit">Enviar mensaje</Button>

@@ -146,7 +146,7 @@ export default function HomePage() {
             <Button size="lg" asChild>
               <Link to="/properties">Explorar Propiedades</Link>
             </Button>
-            <Link to="/auth" className="inline-flex items-center gap-2 text-primary hover-scale">
+            <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2 text-primary hover-scale">
               <span>Únete como Franquicia</span>
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>

@@ -16,6 +16,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import AgentPublicPage from "./pages/AgentPublicPage";
 import AdminUserManagement from "./pages/AdminUserManagement";
+import FranchiseApplicationPage from "./pages/FranchiseApplicationPage";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="/properties" element={<PropertiesPage />} />
           <Route path="/auth" element={<Index />} />
+          <Route path="/solicitar-franquicia" element={<FranchiseApplicationPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/about" element={<AboutPage />} />

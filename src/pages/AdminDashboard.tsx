@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +58,14 @@ export default function AdminDashboard() {
         
         setNotifications(notificationsData || []);
       }
+
+      // Fetch franchise applications
+      const { data: franchiseData } = await supabase
+        .from('franchise_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setFranchiseApplications(franchiseData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Error loading dashboard data');
@@ -131,7 +140,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="mensajes" className="relative">
@@ -139,6 +148,14 @@ export default function AdminDashboard() {
             {contactMessages.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {contactMessages.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="franquicias" className="relative">
+            Solicitudes de Franquicia
+            {franchiseApplications.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {franchiseApplications.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -295,6 +312,79 @@ export default function AdminDashboard() {
                       </div>
                       <div className="bg-muted p-3 rounded">
                         <p className="text-sm">{message.message}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="franquicias" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Solicitudes de Franquicia</CardTitle>
+              <CardDescription>
+                Gestiona las solicitudes de nuevas franquicias
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {franchiseApplications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay solicitudes de franquicia.
+                  </div>
+                ) : (
+                  franchiseApplications.map((application) => (
+                    <div
+                      key={application.id}
+                      className="p-4 border rounded-lg"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{application.full_name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {application.email} | {application.phone}
+                          </p>
+                          <p className="text-sm">
+                            <strong>Ciudad:</strong> {application.city}, {application.country}
+                          </p>
+                          {application.message && (
+                            <p className="text-sm mt-2">
+                              <strong>Mensaje:</strong> {application.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Recibido: {new Date(application.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            application.status === 'pending' 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : application.status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {application.status === 'pending' ? 'Pendiente' : 
+                             application.status === 'approved' ? 'Aprobado' : 'Rechazado'}
+                          </span>
+                          {application.photo_url && (
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={application.photo_url} target="_blank" rel="noreferrer">
+                                Ver Foto
+                              </a>
+                            </Button>
+                          )}
+                          {application.cv_url && (
+                            <Button variant="outline" size="sm" asChild>
+                              <a href={application.cv_url} target="_blank" rel="noreferrer">
+                                Ver CV
+                              </a>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
