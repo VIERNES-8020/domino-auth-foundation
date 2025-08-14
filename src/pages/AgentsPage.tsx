@@ -41,7 +41,7 @@ export default function AgentsPage() {
   const [filteredAgents, setFilteredAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [minRating, setMinRating] = useState<string>("");
+  const [minRating, setMinRating] = useState<string>("all");
   const [displayCount, setDisplayCount] = useState(12);
   const [agentPerformance, setAgentPerformance] = useState<Record<string, {average_rating: number, total_ratings: number}>>({});
 
@@ -95,7 +95,7 @@ export default function AgentsPage() {
       );
     }
     
-    if (minRating) {
+    if (minRating && minRating !== "all") {
       const minRatingNum = Number(minRating);
       filtered = filtered.filter(agent => {
         const performance = agentPerformance[agent.id];
@@ -156,7 +156,7 @@ export default function AgentsPage() {
                     <SelectValue placeholder="Calificación mínima" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas las calificaciones</SelectItem>
+                    <SelectItem value="all">Todas las calificaciones</SelectItem>
                     <SelectItem value="4.5">4.5+ estrellas</SelectItem>
                     <SelectItem value="4.0">4.0+ estrellas</SelectItem>
                     <SelectItem value="3.5">3.5+ estrellas</SelectItem>
@@ -165,7 +165,7 @@ export default function AgentsPage() {
                 </Select>
               </div>
             </div>
-            {(searchTerm || minRating) && (
+            {(searchTerm || (minRating && minRating !== "all")) && (
               <div className="mt-4 text-sm text-muted-foreground">
                 Mostrando {filteredAgents.length} de {agents.length} agentes
               </div>
