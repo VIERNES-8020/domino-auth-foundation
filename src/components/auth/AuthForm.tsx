@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -52,7 +53,7 @@ export default function AuthForm() {
   const navigate = useNavigate();
 
   const form = useForm<SignupValues | LoginValues>({
-resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
+    resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -63,71 +64,84 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
     },
   });
 
-  // Role-based redirection helper
-  const handleSuccessfulLogin = async (session: any) => {
-    if (!session?.user?.id) return;
-
+  // Función para obtener el rol del usuario desde la tabla user_roles
+  const getUserRole = async (userId: string): Promise<string | null> => {
     const supabase = getSupabaseClient();
+    
+    try {
+      console.log("Obteniendo rol para usuario:", userId);
+      
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.warn("Error al obtener rol de user_roles:", error);
+        return null;
+      }
+      
+      console.log("Rol obtenido de user_roles:", roleData?.role);
+      return roleData?.role || null;
+    } catch (err) {
+      console.error("Error en getUserRole:", err);
+      return null;
+    }
+  };
+
+  // Función de redirección basada en roles
+  const handleSuccessfulLogin = async (session: any) => {
+    if (!session?.user?.id) {
+      console.error("No hay sesión o usuario");
+      return;
+    }
+
+    console.log("Usuario logueado:", session.user.id);
 
     try {
-      // Get role from user_roles table AND get profile metadata
-      const [userRoleResponse, profileResponse] = await Promise.all([
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single(),
-        supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', session.user.id)
-          .single()
-      ]);
-
-      // Check for errors in profile fetch (not critical for role routing)
-      if (profileResponse.error) {
-        console.warn("Error al obtener el perfil del usuario:", profileResponse.error);
-      }
-
-      // Determine user role (priority: user_roles table > user metadata)
-      const userRole = userRoleResponse.data?.role || session.user.user_metadata?.role;
+      // Obtener el rol del usuario
+      const userRole = await getUserRole(session.user.id);
+      console.log("Rol detectado:", userRole);
       
-      console.log("User role detected:", userRole); // Debug log
-      
-      let targetPath = '/dashboard/agent'; // Default fallback
+      let targetPath = '/dashboard/agent'; // Ruta por defecto
 
-      // Role-based routing logic
+      // Lógica de enrutamiento basada en roles
       switch (userRole) {
-        case 'admin':
         case 'Super Administrador':
           targetPath = '/admin/dashboard';
+          console.log("Redirigiendo a Super Admin dashboard");
           break;
-        case 'agent':
         case 'Agente Inmobiliario':
           targetPath = '/dashboard/agent';
+          console.log("Redirigiendo a Agent dashboard");
           break;
         case 'Administrador de Franquicia':
           targetPath = '/dashboard/franchise';
+          console.log("Redirigiendo a Franchise dashboard");
           break;
         case 'Gerente de Oficina':
           targetPath = '/dashboard/office';
+          console.log("Redirigiendo a Office dashboard");
           break;
         case 'Supervisor':
           targetPath = '/dashboard/supervisor';
+          console.log("Redirigiendo a Supervisor dashboard");
           break;
         default:
-          console.warn("No specific role found, redirecting to agent dashboard");
+          console.warn("Rol no reconocido o no encontrado, usando ruta por defecto");
           targetPath = '/dashboard/agent';
       }
 
-      console.log("Redirecting to:", targetPath); // Debug log
-
-      // Show success message and redirect
+      // Mostrar mensaje de éxito
       setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo a tu panel...");
       
+      // Redirigir después de un breve delay
       setTimeout(() => {
+        console.log("Navegando a:", targetPath);
         navigate(targetPath);
       }, 1500);
+
     } catch (err) {
       console.error("Error en redirección basada en roles:", err);
       // Fallback navigation
@@ -147,7 +161,8 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
       if (mode === "signup") {
         const { email, password, full_name, role, identity_card, corporate_phone } = values as SignupValues;
         const redirectUrl = `${window.location.origin}/`;
-        const { error: signUpError } = await supabase.auth.signUp({
+        
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -155,50 +170,66 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
             data: { full_name, role },
           },
         });
+        
         if (signUpError) throw signUpError;
 
-        // Ensure we have a user session
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData.user?.id;
-        if (userId) {
-          // Upsert profile with extra fields
+        // Si hay usuario, actualizar el perfil
+        if (data.user) {
+          console.log("Usuario registrado:", data.user.id);
+          
+          // Upsert profile con información adicional
           const { error: upsertErr } = await supabase.from('profiles').upsert({
-            id: userId,
+            id: data.user.id,
             full_name,
             identity_card,
             corporate_phone,
           });
-          if (upsertErr) console.warn('No se pudo guardar el perfil', upsertErr);
+          
+          if (upsertErr) console.warn('Error al guardar perfil:', upsertErr);
 
-          // Generate agent code only for agents
+          // Insertar rol en user_roles
+          const { error: roleError } = await supabase.from('user_roles').upsert({
+            user_id: data.user.id,
+            role: role,
+          });
+          
+          if (roleError) console.warn('Error al guardar rol:', roleError);
+
+          // Generar código de agente si es necesario
           if (role === 'Agente Inmobiliario') {
             const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
               body: { full_name, identity_card },
             });
-            if (fxError) console.warn('No se pudo generar el código de agente', fxError);
+            if (fxError) console.warn('Error al generar código de agente:', fxError);
+          }
+
+          toast.success("Registro exitoso", {
+            description: "Revisa tu correo para verificar la cuenta si es requerido.",
+          });
+
+          // Manejar redirección después del registro exitoso
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            await handleSuccessfulLogin(sessionData.session);
           }
         }
-
-        toast.success("Registro exitoso", {
-          description: "Revisa tu correo para verificar la cuenta si es requerido.",
-        });
-
-        // Handle redirection after successful signup
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session) {
-          await handleSuccessfulLogin(sessionData.session);
-        }
       } else {
+        // Proceso de login
         const { email, password } = values as LoginValues;
+        console.log("Intentando login para:", email);
+        
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         
-        // Handle redirection after successful login
+        console.log("Login exitoso");
+        
+        // Manejar redirección después del login exitoso
         if (data.session) {
           await handleSuccessfulLogin(data.session);
         }
       }
     } catch (err: any) {
+      console.error("Error de autenticación:", err);
       toast.error("Error de autenticación", {
         description: err?.message ?? "Inténtalo de nuevo",
       });
@@ -229,7 +260,7 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-{mode === "signup" && (
+          {mode === "signup" && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="full_name">Nombre completo</Label>

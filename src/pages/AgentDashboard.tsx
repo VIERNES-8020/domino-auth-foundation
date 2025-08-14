@@ -1,10 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Edit, Trash, Upload, Archive } from "lucide-react";
+import { Eye, Edit, Trash, Archive } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,9 +14,47 @@ import ProfileForm from "@/components/ProfileForm";
 export default function AgentDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
   const [showArchived, setShowArchived] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   const user = useUser();
+
+  // Verificar acceso del usuario
+  useEffect(() => {
+    const checkUserAccess = async () => {
+      if (!user?.id) {
+        setIsCheckingAccess(false);
+        return;
+      }
+
+      try {
+        console.log("Verificando acceso para usuario:", user.id);
+        
+        // Obtener rol del usuario
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.warn("Error al obtener rol:", error);
+          setUserRole(null);
+        } else {
+          console.log("Rol del usuario:", roleData?.role);
+          setUserRole(roleData?.role || null);
+        }
+      } catch (err) {
+        console.error("Error en checkUserAccess:", err);
+        setUserRole(null);
+      } finally {
+        setIsCheckingAccess(false);
+      }
+    };
+
+    checkUserAccess();
+  }, [user?.id]);
 
   const { data: properties = [], refetch: refetchProperties } = useQuery({
     queryKey: ["agent-properties", user?.id, showArchived],
@@ -32,7 +71,7 @@ export default function AgentDashboard() {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!userRole,
   });
 
   const handleDeleteProperty = async (propertyId: string) => {
@@ -87,6 +126,25 @@ export default function AgentDashboard() {
     }
   };
 
+  // Mostrar loading mientras verificamos acceso
+  if (isCheckingAccess) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Verificando acceso...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Verificando tus permisos, por favor espera...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Verificar si el usuario está logueado
   if (!user) {
     return (
       <div className="container mx-auto p-6">
@@ -98,6 +156,39 @@ export default function AgentDashboard() {
             <p className="text-muted-foreground">
               Debes iniciar sesión para acceder al panel del agente.
             </p>
+            <Button 
+              className="mt-4" 
+              onClick={() => navigate('/auth')}
+            >
+              Ir a iniciar sesión
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Verificar si el usuario tiene el rol adecuado
+  if (!userRole || (userRole !== 'Agente Inmobiliario' && userRole !== 'Super Administrador')) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Acceso denegado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              No tienes permisos para acceder al panel del agente.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Tu rol actual: {userRole || 'No definido'}
+            </p>
+            <Button 
+              className="mt-4" 
+              onClick={() => navigate('/')}
+            >
+              Volver al inicio
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -110,6 +201,9 @@ export default function AgentDashboard() {
         <div>
           <h1 className="text-3xl font-bold">Panel del Agente</h1>
           <p className="text-muted-foreground">Gestiona tus propiedades y perfil</p>
+          {userRole && (
+            <p className="text-sm text-muted-foreground">Rol: {userRole}</p>
+          )}
         </div>
       </div>
 
