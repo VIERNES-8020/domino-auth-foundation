@@ -18,8 +18,15 @@ import AgentPublicPage from "./pages/AgentPublicPage";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import AuthGate from "./AuthGate";
 
 const queryClient = new QueryClient();
+
+// Check if we're on dashboard routes that should use AuthGate
+const isDashboardRoute = () => {
+  const path = window.location.pathname;
+  return path.startsWith('/dashboard/') || path.startsWith('/admin/dashboard');
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,8 +43,8 @@ const App = () => (
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
-          <Route path="/dashboard/agent" element={<AgentDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/dashboard/agent" element={<AuthGate />} />
+          <Route path="/admin/dashboard" element={<AuthGate />} />
           <Route path="/admin/dashboard/users" element={<AdminUserManagement />} />
           <Route path="/dashboard/franchise/:franchiseId/leaderboard" element={<LeaderboardPage />} />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
