@@ -74,32 +74,67 @@ export default function ClientsPage() {
     let active = true;
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from("client_reviews")
-          .select(`
-            id,
-            client_name,
-            transaction_type,
-            company_rating,
-            agent_rating,
-            comment,
-            created_at,
-            agent_id,
-            agent:agent_id (
-              full_name,
-              agent_code
-            )
-          `)
+        // Try to fetch from new testimonials table first
+        const { data: testimonialsData, error: testimonialsError } = await supabase
+          .from("testimonials")
+          .select("*")
           .eq("is_approved", true)
           .order("created_at", { ascending: false });
         
-        if (!active) return;
-        if (error) {
-          console.error("Error loading reviews:", error);
-          setReviews([]);
+        if (testimonialsError) {
+          console.error("Error loading testimonials:", testimonialsError);
+          // Fallback to old client_reviews table
+          const { data, error } = await supabase
+            .from("client_reviews")
+            .select(`
+              id,
+              client_name,
+              transaction_type,
+              company_rating,
+              agent_rating,
+              comment,
+              created_at,
+              agent_id
+            `)
+            .eq("is_approved", true)
+            .order("created_at", { ascending: false });
+          
+          if (!active) return;
+          if (error) {
+            console.error("Error loading reviews:", error);
+            setReviews([]);
+          } else {
+            // Convert client_reviews format to testimonials format
+            const convertedReviews = (data || []).map((review: any) => ({
+              id: review.id,
+              client_name: review.client_name,
+              transaction_type: review.transaction_type,
+              company_rating: review.company_rating,
+              agent_rating: review.agent_rating,
+              comment: review.comment,
+              created_at: review.created_at,
+              agent_id: review.agent_id || '',
+              rating: Math.round((review.company_rating + review.agent_rating) / 2) // Average rating
+            }));
+            setReviews(convertedReviews);
+          }
         } else {
-          setReviews((data as any[]) || []);
+          // Use new testimonials data
+          if (!active) return;
+          const convertedTestimonials = (testimonialsData || []).map((testimonial: any) => ({
+            id: testimonial.id,
+            client_name: testimonial.client_name,
+            transaction_type: testimonial.transaction_type,
+            company_rating: testimonial.rating,
+            agent_rating: testimonial.rating,
+            comment: testimonial.comment,
+            created_at: testimonial.created_at,
+            agent_id: '',
+            rating: testimonial.rating
+          }));
+          setReviews(convertedTestimonials);
         }
+        
         setLoading(false);
       } catch (e) { 
         console.error("Error loading reviews:", e);

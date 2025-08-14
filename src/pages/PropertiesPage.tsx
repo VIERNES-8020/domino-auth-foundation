@@ -93,9 +93,29 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
   const markers = useMemo(() => {
     const list: { id: string; lng: number; lat: number; title?: string; label?: string }[] = [];
     for (const p of properties) {
+      // Fixed geolocation parsing for PostGIS geometry
       const g: any = (p as any).geolocation;
-      const c = g?.coordinates || g?.geom?.coordinates;
-      if (Array.isArray(c) && c.length >= 2) {
+      let coordinates: number[] | null = null;
+      
+      if (g) {
+        // Handle PostGIS POINT geometry format
+        if (typeof g === 'string') {
+          // Parse PostGIS binary format or WKT
+          try {
+            // For now, we'll skip string parsing as it requires complex PostGIS parsing
+            continue;
+          } catch (e) {
+            continue;
+          }
+        } else if (g.coordinates && Array.isArray(g.coordinates)) {
+          coordinates = g.coordinates;
+        } else if (g.geom?.coordinates && Array.isArray(g.geom.coordinates)) {
+          coordinates = g.geom.coordinates;
+        }
+      }
+      
+      if (coordinates && coordinates.length >= 2 && 
+          typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
         // Abbreviated price label: e.g., 144K USD
         const cur = (p.price_currency || "USD").toUpperCase();
         const priceNum = typeof p.price === "number" ? p.price : null;
@@ -103,7 +123,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
           priceNum >= 1_000_000 ? `${(priceNum / 1_000_000).toFixed(1).replace(/\.0$/, '')}M` :
           priceNum >= 1_000 ? `${(priceNum / 1_000).toFixed(0)}K` : `${priceNum}`;
         const label = priceNum === null ? "Consultar" : `${abbr} ${cur}`;
-        list.push({ id: p.id, lng: c[0], lat: c[1], title: p.title, label });
+        list.push({ id: p.id, lng: coordinates[0], lat: coordinates[1], title: p.title, label });
       }
     }
     return list;

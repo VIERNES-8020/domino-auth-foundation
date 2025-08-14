@@ -32,7 +32,16 @@ function formatPrice(price?: number | null, currency?: string | null) {
 }
 
 export default function PropertyCard({ property, isFavorited = false, onToggleFavorite, showConcludedBadge = false }: PropertyCardProps) {
-  const cover = property.image_urls?.[0] || "/default-placeholder.jpg";
+  // Fix image display: check if image_urls array exists and has valid URL
+  const hasValidImage = property.image_urls && 
+    Array.isArray(property.image_urls) && 
+    property.image_urls.length > 0 && 
+    property.image_urls[0] && 
+    typeof property.image_urls[0] === 'string' &&
+    property.image_urls[0].trim() !== '' &&
+    !property.image_urls[0].includes('google.com/search'); // Filter out invalid URLs
+  
+  const cover = hasValidImage ? property.image_urls[0] : "/default-placeholder.jpg";
   const priceText = formatPrice(property.price, property.price_currency);
   const br = typeof property.bedrooms === "number" ? property.bedrooms : undefined;
   const ba = typeof property.bathrooms === "number" ? property.bathrooms : undefined;

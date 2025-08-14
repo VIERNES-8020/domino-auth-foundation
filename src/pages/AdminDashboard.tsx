@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, CheckCircle, XCircle, Bell, MailIcon, Users, Building2, TrendingUp } from "lucide-react";
+import TestimonialManagement from "@/components/admin/TestimonialManagement";
+import AboutPageManagement from "@/components/admin/AboutPageManagement";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
@@ -149,7 +151,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="mensajes" className="relative">
@@ -175,6 +177,12 @@ export default function AdminDashboard() {
                 {listingLeads.length}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="testimonios">
+            Testimonios
+          </TabsTrigger>
+          <TabsTrigger value="sobre-nosotros">
+            Sobre Nosotros
           </TabsTrigger>
           <TabsTrigger value="notificaciones" className="relative">
             Notificaciones
@@ -467,6 +475,14 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="testimonios" className="space-y-6">
+          <TestimonialManagement />
+        </TabsContent>
+
+        <TabsContent value="sobre-nosotros" className="space-y-6">
+          <AboutPageManagement />
         </TabsContent>
 
         <TabsContent value="notificaciones" className="space-y-6">

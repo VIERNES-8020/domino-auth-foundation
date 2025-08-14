@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_page_content: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          section_key: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          section_key: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          section_key?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           created_at: string
@@ -655,6 +685,39 @@ export type Database = {
         }
         Update: {
           user_id?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          client_name: string
+          comment: string
+          created_at: string
+          id: string
+          is_approved: boolean
+          rating: number
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          comment: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          rating: number
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          rating?: number
+          transaction_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
