@@ -41,9 +41,9 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange, className }) 
     mapboxgl.accessToken = token;
 
     const center: [number, number] = [
-      typeof lng === "number" ? lng : -68.1193,
-      typeof lat === "number" ? lat : -16.4897,
-    ]; // La Paz por defecto
+      typeof lng === "number" ? lng : -66.1568,
+      typeof lat === "number" ? lat : -17.3895,
+    ]; // Cochabamba por defecto
 
     mapRef.current = new mapboxgl.Map({
       container: containerRef.current,

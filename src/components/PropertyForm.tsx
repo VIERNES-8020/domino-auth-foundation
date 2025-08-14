@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import MapPicker from "@/components/MapPicker"; // Fixed import
 import { toast } from "sonner";
-import { Home, MapPin, Camera, Settings } from "lucide-react";
+import { Home, MapPin, Camera, Settings, Upload, FileText, Video } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PropertyFormData {
   title: string;
@@ -20,10 +21,14 @@ interface PropertyFormData {
   bedrooms: string;
   bathrooms: string;
   area: string;
+  constructed_area_m2: string;
   address: string;
   latitude: number | null;
   longitude: number | null;
   features: string[];
+  image_urls: string[];
+  video_url: string;
+  plans_url: string[];
 }
 
 interface PropertyFormProps {
@@ -34,7 +39,7 @@ interface PropertyFormProps {
 const availableFeatures = [
   "Piscina", "Gym", "Estacionamiento", "Jardín", 
   "Balcón", "Terraza", "Seguridad 24h", "Ascensor",
-  "Aire Acondicionado", "Calefacción", "Barbacoa", "Cochera"
+  "Aire Acondicionado", "Calefacción", "Parrillero", "Cochera"
 ];
 
 export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
@@ -49,10 +54,14 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
     bedrooms: "",
     bathrooms: "",
     area: "",
+    constructed_area_m2: "",
     address: "",
     latitude: null,
     longitude: null,
-    features: []
+    features: [],
+    image_urls: [],
+    video_url: "",
+    plans_url: []
   });
 
   const updateFormData = (field: keyof PropertyFormData, value: any) => {
@@ -68,9 +77,88 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
     }));
   };
 
-  const handleLocationSelect = (coords: { lat: number; lng: number }) => {
+  const handleLocationSelect = async (coords: { lat: number; lng: number }) => {
     updateFormData("latitude", coords.lat);
     updateFormData("longitude", coords.lng);
+    
+    // AURA: Auto-fill address using reverse geocoding
+    try {
+      const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coords.lng},${coords.lat}.json?access_token=${mapboxToken}&language=es&country=bo`);
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const address = data.features[0].place_name;
+        updateFormData("address", address);
+        toast.success("Dirección actualizada automáticamente");
+      }
+    } catch (error) {
+      console.error("Error getting address:", error);
+    }
+  };
+  
+  const [mapboxToken, setMapboxToken] = useState<string>("");
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  
+  useEffect(() => {
+    // Get Mapbox token for AURA reverse geocoding
+    const getMapboxToken = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('mapbox-public-token');
+        setMapboxToken(data?.token || "");
+      } catch (error) {
+        console.error("Error getting Mapbox token:", error);
+      }
+    };
+    getMapboxToken();
+  }, []);
+
+  const generateAuraDescription = async () => {
+    if (!formData.title || !formData.property_type) {
+      toast.error("Completa al menos el título y tipo de propiedad");
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const propertyData = {
+        title: formData.title,
+        property_type: formData.property_type,
+        transaction_type: "venta", // Default
+        price: formData.price,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
+        area_m2: formData.area ? parseFloat(formData.area) : undefined,
+        address: formData.address,
+        lat: formData.latitude,
+        lng: formData.longitude,
+        has_pool: formData.features.includes("Piscina"),
+        has_garage: formData.features.includes("Cochera") || formData.features.includes("Estacionamiento"),
+        pet_friendly: false // Can be added as a feature later
+      };
+
+      const { data, error } = await supabase.functions.invoke('aura-generate-description', {
+        body: {
+          property: propertyData,
+          language: "es",
+          brand: "Dominio Inmobiliario",
+          tone: "profesional persuasivo",
+          style: "80-150 palabras, frases cortas, enfocado en beneficios y estilo de vida"
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.generatedText) {
+        updateFormData("description", data.generatedText);
+        toast.success("Descripción generada por AURA");
+      } else {
+        throw new Error("No se pudo generar la descripción");
+      }
+    } catch (error: any) {
+      console.error("Error generating AURA description:", error);
+      toast.error("Error generando descripción: " + error.message);
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,10 +189,14 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
         bedrooms: "",
         bathrooms: "",
         area: "",
+        constructed_area_m2: "",
         address: "",
         latitude: null,
         longitude: null,
-        features: []
+        features: [],
+        image_urls: [],
+        video_url: "",
+        plans_url: []
       });
       
       if (onClose) {
@@ -224,26 +316,53 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="area">Área (m²)</Label>
-                <Input
-                  id="area"
-                  value={formData.area}
-                  onChange={(e) => updateFormData("area", e.target.value)}
-                  placeholder="250"
-                  type="number"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="area">Área Total (m²)</Label>
+                  <Input
+                    id="area"
+                    value={formData.area}
+                    onChange={(e) => updateFormData("area", e.target.value)}
+                    placeholder="250"
+                    type="number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="constructed_area_m2">M2 Construidos</Label>
+                  <Input
+                    id="constructed_area_m2"
+                    value={formData.constructed_area_m2}
+                    onChange={(e) => updateFormData("constructed_area_m2", e.target.value)}
+                    placeholder="180"
+                    type="number"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Descripción</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => updateFormData("description", e.target.value)}
-                  placeholder="Describe las características principales de la propiedad..."
-                  rows={4}
-                />
+                <div className="flex gap-2">
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => updateFormData("description", e.target.value)}
+                    placeholder="Describe las características principales de la propiedad..."
+                    rows={4}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={generateAuraDescription}
+                    disabled={!formData.title || !formData.property_type}
+                    className="self-start"
+                  >
+                    ✨ AURA
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Usa AURA para generar una descripción profesional automáticamente
+                </p>
               </div>
             </TabsContent>
 
@@ -301,16 +420,108 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
             </TabsContent>
 
             <TabsContent value="multimedia" className="space-y-6">
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8">
-                <div className="text-center">
-                  <Camera className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-medium mb-2">Subir fotos de la propiedad</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Arrastra y suelta las imágenes aquí o haz clic para seleccionar
+              {/* Property Images */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Fotografías de la Propiedad</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Sube hasta 10 imágenes de la propiedad
                   </p>
-                  <Button type="button" variant="outline">
-                    Seleccionar archivos
-                  </Button>
+                </div>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                  <div className="text-center">
+                    <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Haz clic para seleccionar imágenes o arrastra y suelta aquí
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => console.log("Files selected:", e.target.files)}
+                      className="hidden"
+                      id="property-images"
+                    />
+                    <label htmlFor="property-images">
+                      <Button type="button" variant="outline" asChild>
+                        <span className="flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          Seleccionar fotos
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Video */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Video de la Propiedad</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Sube un video promocional de la propiedad (opcional)
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video_url">URL del Video o Subir Archivo</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="video_url"
+                      value={formData.video_url}
+                      onChange={(e) => updateFormData("video_url", e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="flex-1"
+                    />
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => console.log("Video file:", e.target.files?.[0])}
+                      className="hidden"
+                      id="video-upload"
+                    />
+                    <label htmlFor="video-upload">
+                      <Button type="button" variant="outline" asChild>
+                        <span className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          Subir
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Plans */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-medium">Planos de la Propiedad</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Sube los planos arquitectónicos en PDF o imagen
+                  </p>
+                </div>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                  <div className="text-center">
+                    <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Selecciona archivos PDF o imágenes de los planos
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,image/*"
+                      onChange={(e) => console.log("Plans selected:", e.target.files)}
+                      className="hidden"
+                      id="property-plans"
+                    />
+                    <label htmlFor="property-plans">
+                      <Button type="button" variant="outline" asChild>
+                        <span className="flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          Seleccionar planos
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
                 </div>
               </div>
             </TabsContent>

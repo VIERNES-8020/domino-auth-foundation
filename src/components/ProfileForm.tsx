@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { User, Upload } from "lucide-react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -31,7 +31,6 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ user }: ProfileFormProps) {
-  const sb = getSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<Profile>({
@@ -56,13 +55,13 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await sb
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         console.error("Error fetching profile:", error);
         return;
       }
@@ -124,7 +123,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
       const fileName = `${user.id}/avatar.jpg`;
 
       // Upload processed image to storage
-      const { error: uploadError } = await sb.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, processedBlob, { 
           upsert: true,
@@ -136,7 +135,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
       }
 
       // Get public URL with timestamp to force refresh
-      const { data: { publicUrl } } = sb.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
       
@@ -158,7 +157,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     setLoading(true);
 
     try {
-      const { error } = await sb
+      const { error } = await supabase
         .from("profiles")
         .upsert({
           id: user.id,

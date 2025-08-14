@@ -13,32 +13,50 @@ export default function AgentDashboard() {
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-
-  // Mock data for visual display
-  const mockProperties = [
-    {
-      id: "1",
-      title: "Casa Moderna en Miraflores",
-      address: "Av. Larco 123, Miraflores, Lima",
-      price: 350000,
-      price_currency: "USD"
-    },
-    {
-      id: "2", 
-      title: "Departamento con Vista al Mar",
-      address: "Malecón de la Marina 456, San Miguel, Lima",
-      price: 280000,
-      price_currency: "USD"
-    }
-  ];
+  const [properties, setProperties] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      if (user) {
+        await fetchProperties(user.id);
+        await fetchNotifications(user.id);
+      }
     };
     getCurrentUser();
   }, []);
+
+  const fetchProperties = async (agentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('agent_id', agentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  const fetchNotifications = async (agentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('agent_notifications')
+        .select('*')
+        .eq('to_agent_id', agentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setNotifications(data || []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
 
   const toggleFeature = (feature: string) => {
     setSelectedFeatures(prev => 
@@ -49,9 +67,38 @@ export default function AgentDashboard() {
   };
 
   const handlePropertySubmit = async (propertyData: any) => {
-    // Here you would save to database
-    console.log("Saving property:", propertyData);
-    setShowPropertyForm(false);
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert({
+          title: propertyData.title,
+          description: propertyData.description,
+          price: parseFloat(propertyData.price),
+          price_currency: propertyData.currency,
+          property_type: propertyData.property_type,
+          bedrooms: propertyData.bedrooms ? parseInt(propertyData.bedrooms) : null,
+          bathrooms: propertyData.bathrooms ? parseInt(propertyData.bathrooms) : null,
+          area_m2: propertyData.area ? parseFloat(propertyData.area) : null,
+          constructed_area_m2: propertyData.constructed_area_m2 ? parseFloat(propertyData.constructed_area_m2) : null,
+          address: propertyData.address,
+          geolocation: propertyData.latitude && propertyData.longitude 
+            ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
+            : null,
+          agent_id: user.id,
+          status: 'approved'
+        })
+        .select();
+
+      if (error) throw error;
+      
+      // Refresh properties list
+      await fetchProperties(user.id);
+      setShowPropertyForm(false);
+    } catch (error: any) {
+      console.error('Error saving property:', error);
+    }
   };
 
   return (
@@ -64,9 +111,17 @@ export default function AgentDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="propiedades">Mis Propiedades</TabsTrigger>
           <TabsTrigger value="caracteristicas">Características</TabsTrigger>
+          <TabsTrigger value="notificaciones">
+            Mis Notificaciones
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span className="ml-2 bg-red-500 text-white rounded-full text-xs px-2 py-1">
+                {notifications.filter(n => !n.read).length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="perfil">Mi Perfil</TabsTrigger>
         </TabsList>
 
@@ -111,7 +166,7 @@ export default function AgentDashboard() {
               </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {(!showArchived ? mockProperties : []).map((property) => (
+                {(!showArchived ? properties.filter(p => !p.is_archived) : properties.filter(p => p.is_archived)).map((property) => (
                   <div
                     key={property.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -122,7 +177,7 @@ export default function AgentDashboard() {
                         {property.address}
                       </p>
                       <p className="text-lg font-bold">
-                        ${property.price?.toLocaleString()} {property.price_currency}
+                        ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -144,7 +199,7 @@ export default function AgentDashboard() {
                     </div>
                   </div>
                 ))}
-                {(showArchived ? [] : mockProperties).length === 0 && (
+                {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived)).length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     {showArchived 
                       ? "No tienes propiedades archivadas." 
@@ -167,7 +222,7 @@ export default function AgentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Piscina", "Gym", "Estacionamiento", "Jardín", "Balcón", "Terraza", "Seguridad 24h", "Ascensor"].map((feature) => (
+                {["Piscina", "Gym", "Estacionamiento", "Jardín", "Balcón", "Terraza", "Seguridad 24h", "Ascensor", "Aire Acondicionado", "Calefacción", "Parrillero", "Cochera"].map((feature) => (
                   <Button
                     key={feature}
                     variant={selectedFeatures.includes(feature) ? "default" : "outline"}
@@ -186,6 +241,49 @@ export default function AgentDashboard() {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notificaciones" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mis Notificaciones</CardTitle>
+              <CardDescription>
+                Mensajes de clientes interesados en tus propiedades
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tienes notificaciones nuevas.
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50 border-blue-200' : ''}`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium">
+                            {notification.message}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                            Nuevo
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
