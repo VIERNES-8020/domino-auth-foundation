@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AmenitiesManagement from "@/components/AmenitiesManagement";
+import WatermarkManagement from "@/components/WatermarkManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -216,6 +217,7 @@ const AdminDashboard = () => {
         {/* Amenities Management */}
         <TabsContent value="amenities" className="space-y-6">
           <AmenitiesManagement />
+          <WatermarkManagement />
         </TabsContent>
 
         {/* Franchises Management */}

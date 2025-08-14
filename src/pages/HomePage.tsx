@@ -65,12 +65,13 @@ export default function HomePage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const fetchType = async (type: string) => {
+        const fetchType = async (type: string) => {
         const { data } = await supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type")
           .eq("status", "approved")
           .eq("property_type", type)
+          .eq("is_archived", false)
           .order("created_at", { ascending: false })
           .limit(10);
         return (data ?? []) as any[];
@@ -96,10 +97,10 @@ export default function HomePage() {
       };
 
       const [houses, apts, lands, offices] = await Promise.all([
-        fetchType("house"),
-        fetchType("apartment"),
-        fetchType("land"),
-        fetchType("office"),
+        fetchType("casa"),
+        fetchType("departamento"),
+        fetchType("terreno"),
+        fetchType("oficina"),
       ]);
       
       await fetchMetrics();
@@ -255,7 +256,7 @@ export default function HomePage() {
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.monthlySales}+</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Venta / Alquiler</p>
                 </CardContent>
               </Card>
             </Link>

@@ -5,12 +5,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Eye, Edit, Trash, Archive, Plus } from "lucide-react";
 import PropertyForm from "@/components/PropertyForm";
 import ProfileForm from "@/components/ProfileForm";
+import PropertyViewModal from "@/components/PropertyViewModal";
+import DeletePropertyModal from "@/components/DeletePropertyModal";
+import ArchivePropertyModal from "@/components/ArchivePropertyModal";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
   const [showArchived, setShowArchived] = useState(false);
   const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<any>(null);
+  const [viewingProperty, setViewingProperty] = useState<any>(null);
+  const [deletingProperty, setDeletingProperty] = useState<any>(null);
+  const [archivingProperty, setArchivingProperty] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
@@ -70,50 +77,79 @@ export default function AgentDashboard() {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .insert({
-          title: propertyData.title,
-          description: propertyData.description,
-          price: parseFloat(propertyData.price),
-          price_currency: propertyData.currency,
-          property_type: propertyData.property_type,
-          bedrooms: propertyData.bedrooms ? parseInt(propertyData.bedrooms) : null,
-          bathrooms: propertyData.bathrooms ? parseInt(propertyData.bathrooms) : null,
-          area_m2: propertyData.area ? parseFloat(propertyData.area) : null,
-          constructed_area_m2: propertyData.constructed_area_m2 ? parseFloat(propertyData.constructed_area_m2) : null,
-          address: propertyData.address,
-          geolocation: propertyData.latitude && propertyData.longitude 
-            ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
-            : null,
-          agent_id: user.id,
-          status: 'approved'
-        })
-        .select();
+      if (editingProperty) {
+        // Update existing property
+        const { error } = await supabase
+          .from('properties')
+          .update({
+            title: propertyData.title,
+            description: propertyData.description,
+            price: parseFloat(propertyData.price),
+            price_currency: propertyData.currency,
+            property_type: propertyData.property_type,
+            bedrooms: propertyData.bedrooms ? parseInt(propertyData.bedrooms) : null,
+            bathrooms: propertyData.bathrooms ? parseInt(propertyData.bathrooms) : null,
+            area_m2: propertyData.area ? parseFloat(propertyData.area) : null,
+            constructed_area_m2: propertyData.constructed_area_m2 ? parseFloat(propertyData.constructed_area_m2) : null,
+            address: propertyData.address,
+            geolocation: propertyData.latitude && propertyData.longitude 
+              ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
+              : null,
+            tags: propertyData.features
+          })
+          .eq('id', editingProperty.id)
+          .eq('agent_id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new property
+        const { data, error } = await supabase
+          .from('properties')
+          .insert({
+            title: propertyData.title,
+            description: propertyData.description,
+            price: parseFloat(propertyData.price),
+            price_currency: propertyData.currency,
+            property_type: propertyData.property_type,
+            bedrooms: propertyData.bedrooms ? parseInt(propertyData.bedrooms) : null,
+            bathrooms: propertyData.bathrooms ? parseInt(propertyData.bathrooms) : null,
+            area_m2: propertyData.area ? parseFloat(propertyData.area) : null,
+            constructed_area_m2: propertyData.constructed_area_m2 ? parseFloat(propertyData.constructed_area_m2) : null,
+            address: propertyData.address,
+            geolocation: propertyData.latitude && propertyData.longitude 
+              ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
+              : null,
+            agent_id: user.id,
+            status: 'approved',
+            tags: propertyData.features
+          })
+          .select();
+
+        if (error) throw error;
+      }
       
       // Refresh properties list
       await fetchProperties(user.id);
       setShowPropertyForm(false);
+      setEditingProperty(null);
+      
+      // Reset form and return to first tab
+      setActiveTab("propiedades");
     } catch (error: any) {
       console.error('Error saving property:', error);
     }
   };
 
-  const handleArchiveProperty = async (propertyId: string, isArchived: boolean) => {
+  const handleArchiveProperty = async (propertyId: string, isArchived: boolean, justification?: string) => {
     if (!user) return;
-    
-    if (!isArchived) {
-      // Show modal for justification when archiving
-      const justification = prompt("¿Por qué estás archivando esta propiedad? (ej: 'Propiedad Vendida')");
-      if (!justification) return;
-    }
     
     try {
       const { error } = await supabase
         .from('properties')
-        .update({ is_archived: isArchived })
+        .update({ 
+          is_archived: isArchived,
+          // You could add an archive_reason field to store justification
+        })
         .eq('id', propertyId)
         .eq('agent_id', user.id);
 
@@ -126,25 +162,24 @@ export default function AgentDashboard() {
     }
   };
 
-  const handleDeleteProperty = async (propertyId: string) => {
-    if (!user) return;
-    
-    const confirmDelete = confirm("¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer.");
-    if (!confirmDelete) return;
+  const handleDeleteProperty = async () => {
+    if (!user || !deletingProperty) return;
     
     try {
       const { error } = await supabase
         .from('properties')
         .delete()
-        .eq('id', propertyId)
+        .eq('id', deletingProperty.id)
         .eq('agent_id', user.id);
 
       if (error) throw error;
       
       // Refresh properties list
       await fetchProperties(user.id);
+      setDeletingProperty(null);
     } catch (error: any) {
       console.error('Error deleting property:', error);
+      throw error; // Re-throw for modal to handle
     }
   };
 
@@ -193,8 +228,12 @@ export default function AgentDashboard() {
         <TabsContent value="propiedades" className="space-y-6">
           {showPropertyForm ? (
             <PropertyForm 
-              onClose={() => setShowPropertyForm(false)}
+              onClose={() => {
+                setShowPropertyForm(false);
+                setEditingProperty(null);
+              }}
               onSubmit={handlePropertySubmit}
+              initialData={editingProperty}
             />
           ) : (
             <Card>
@@ -249,7 +288,7 @@ export default function AgentDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => window.open(`/properties/${property.id}`, '_blank')}
+                        onClick={() => setViewingProperty(property)}
                         title="Ver propiedad"
                       >
                         <Eye className="h-4 w-4" />
@@ -257,7 +296,10 @@ export default function AgentDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => setShowPropertyForm(true)}
+                        onClick={() => {
+                          setEditingProperty(property);
+                          setShowPropertyForm(true);
+                        }}
                         title="Editar propiedad"
                       >
                         <Edit className="h-4 w-4" />
@@ -265,7 +307,7 @@ export default function AgentDashboard() {
                       <Button
                         variant={showArchived ? "default" : "secondary"}
                         size="sm"
-                        onClick={() => handleArchiveProperty(property.id, !property.is_archived)}
+                        onClick={() => setArchivingProperty(property)}
                         title={showArchived ? "Desarchivar" : "Archivar"}
                       >
                         {showArchived ? <Eye className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
@@ -273,7 +315,7 @@ export default function AgentDashboard() {
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={() => handleDeleteProperty(property.id)}
+                        onClick={() => setDeletingProperty(property)}
                         title="Eliminar propiedad"
                       >
                         <Trash className="h-4 w-4" />
@@ -390,6 +432,36 @@ export default function AgentDashboard() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <PropertyViewModal
+        property={viewingProperty}
+        isOpen={!!viewingProperty}
+        onClose={() => setViewingProperty(null)}
+      />
+      
+      <DeletePropertyModal
+        isOpen={!!deletingProperty}
+        onClose={() => setDeletingProperty(null)}
+        onConfirm={handleDeleteProperty}
+        propertyTitle={deletingProperty?.title || ""}
+      />
+      
+      <ArchivePropertyModal
+        property={archivingProperty}
+        isOpen={!!archivingProperty}
+        onClose={() => setArchivingProperty(null)}
+        onConfirm={(justification) => {
+          if (archivingProperty) {
+            handleArchiveProperty(
+              archivingProperty.id, 
+              !archivingProperty.is_archived, 
+              justification
+            );
+            setArchivingProperty(null);
+          }
+        }}
+      />
     </div>
   );
 }

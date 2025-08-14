@@ -51,9 +51,13 @@ export default function AuthGate() {
         .from('profiles')
         .select('is_super_admin')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (profileData?.is_super_admin) {
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
+      
+      if (profileData?.is_super_admin === true) {
         setProfile({ id: user.id, role: 'super_admin' });
         return;
       }
@@ -63,17 +67,18 @@ export default function AuthGate() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') {
-        throw error;
+        console.error("Error fetching user role:", error);
       }
       
       const role = data?.role || 'user';
       setProfile({ id: user.id, role });
     } catch (error) {
       console.error("Error al obtener perfil:", error);
-      await supabase.auth.signOut();
+      // Don't sign out on profile fetch errors, just set default role
+      setProfile({ id: user.id, role: 'user' });
     } finally {
       setLoading(false);
     }

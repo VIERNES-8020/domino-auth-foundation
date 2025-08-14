@@ -11,6 +11,7 @@ import MapPicker from "@/components/MapPicker"; // Fixed import
 import { toast } from "sonner";
 import { Home, MapPin, Camera, Settings, Upload, FileText, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import FileUpload from "@/components/FileUpload";
 
 interface PropertyFormData {
   title: string;
@@ -34,6 +35,7 @@ interface PropertyFormData {
 interface PropertyFormProps {
   onClose?: () => void;
   onSubmit?: (data: PropertyFormData) => void;
+  initialData?: any;
 }
 
 const availableFeatures = [
@@ -42,26 +44,26 @@ const availableFeatures = [
   "Aire Acondicionado", "Calefacción", "Parrillero", "Cochera"
 ];
 
-export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
+export default function PropertyForm({ onClose, onSubmit, initialData }: PropertyFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<PropertyFormData>({
-    title: "",
-    description: "",
-    price: "",
-    currency: "USD",
-    property_type: "",
-    bedrooms: "",
-    bathrooms: "",
-    area: "",
-    constructed_area_m2: "",
-    address: "",
-    latitude: null,
-    longitude: null,
-    features: [],
-    image_urls: [],
-    video_url: "",
-    plans_url: []
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    price: initialData?.price?.toString() || "",
+    currency: initialData?.price_currency || "USD",
+    property_type: initialData?.property_type || "",
+    bedrooms: initialData?.bedrooms?.toString() || "",
+    bathrooms: initialData?.bathrooms?.toString() || "",
+    area: initialData?.area_m2?.toString() || "",
+    constructed_area_m2: initialData?.constructed_area_m2?.toString() || "",
+    address: initialData?.address || "",
+    latitude: initialData?.geolocation?.coordinates?.[1] || null,
+    longitude: initialData?.geolocation?.coordinates?.[0] || null,
+    features: initialData?.tags || [],
+    image_urls: initialData?.image_urls || [],
+    video_url: initialData?.video_url || "",
+    plans_url: initialData?.plans_url || []
   });
 
   const updateFormData = (field: keyof PropertyFormData, value: any) => {
@@ -179,7 +181,8 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
       
       toast.success("Propiedad guardada exitosamente");
       
-      // Reset form
+      // Reset form and return to general tab
+      setActiveTab("general");
       setFormData({
         title: "",
         description: "",
@@ -214,10 +217,10 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Home className="h-5 w-5" />
-          Nueva Propiedad
+          {initialData ? "Editar Propiedad" : "Nueva Propiedad"}
         </CardTitle>
         <CardDescription>
-          Completa la información de la propiedad para publicarla
+          {initialData ? "Actualiza la información de la propiedad" : "Completa la información de la propiedad para publicarla"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -425,33 +428,18 @@ export default function PropertyForm({ onClose, onSubmit }: PropertyFormProps) {
                 <div>
                   <Label className="text-base font-medium">Fotografías de la Propiedad</Label>
                   <p className="text-sm text-muted-foreground">
-                    Sube hasta 10 imágenes de la propiedad
+                    Sube hasta 10 imágenes de la propiedad (se aplicará marca de agua automáticamente)
                   </p>
                 </div>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-                  <div className="text-center">
-                    <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Haz clic para seleccionar imágenes o arrastra y suelta aquí
-                    </p>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => console.log("Files selected:", e.target.files)}
-                      className="hidden"
-                      id="property-images"
-                    />
-                    <label htmlFor="property-images">
-                      <Button type="button" variant="outline" asChild>
-                        <span className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          Seleccionar fotos
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-                </div>
+                <FileUpload
+                  onFilesUploaded={(urls) => updateFormData("image_urls", urls)}
+                  accept="image/*"
+                  multiple={true}
+                  maxFiles={10}
+                  maxSize={5}
+                  label="Seleccionar fotos"
+                  bucket="property-images"
+                />
               </div>
 
               {/* Property Video */}
