@@ -84,8 +84,11 @@ export default function AuthGate() {
 
   // Una vez que tenemos la sesión Y el perfil, decidimos qué panel mostrar
   switch (profile.role) {
+    case 'super_admin':
+    case 'admin':
     case 'Super Administrador':
       return <AdminDashboard />;
+    case 'agent':
     case 'Agente Inmobiliario':
       return <AgentDashboard />;
     // ... añadir casos para otros roles aquí ...

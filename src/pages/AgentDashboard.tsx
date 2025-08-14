@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Edit, Trash, Archive } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus } from "lucide-react";
+import PropertyForm from "@/components/PropertyForm";
+import ProfileForm from "@/components/ProfileForm";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
   const [showArchived, setShowArchived] = useState(false);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
   // Mock data for visual display
   const mockProperties = [
@@ -26,9 +32,26 @@ export default function AgentDashboard() {
     }
   ];
 
-  const mockUser = {
-    id: "mock-user-id",
-    email: "agente@ejemplo.com"
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getCurrentUser();
+  }, []);
+
+  const toggleFeature = (feature: string) => {
+    setSelectedFeatures(prev => 
+      prev.includes(feature) 
+        ? prev.filter(f => f !== feature)
+        : [...prev, feature]
+    );
+  };
+
+  const handlePropertySubmit = async (propertyData: any) => {
+    // Here you would save to database
+    console.log("Saving property:", propertyData);
+    setShowPropertyForm(false);
   };
 
   return (
@@ -48,31 +71,44 @@ export default function AgentDashboard() {
         </TabsList>
 
         <TabsContent value="propiedades" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{showArchived ? "Propiedades Archivadas" : "Mis Propiedades"}</CardTitle>
-                <CardDescription>
-                  {showArchived 
-                    ? "Propiedades que has archivado" 
-                    : "Gestiona todas tus propiedades publicadas"}
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={!showArchived ? "default" : "outline"}
-                  onClick={() => setShowArchived(false)}
-                >
-                  Activas
-                </Button>
-                <Button
-                  variant={showArchived ? "default" : "outline"}
-                  onClick={() => setShowArchived(true)}
-                >
-                  Archivadas
-                </Button>
-              </div>
-            </CardHeader>
+          {showPropertyForm ? (
+            <PropertyForm 
+              onClose={() => setShowPropertyForm(false)}
+              onSubmit={handlePropertySubmit}
+            />
+          ) : (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>{showArchived ? "Propiedades Archivadas" : "Mis Propiedades"}</CardTitle>
+                  <CardDescription>
+                    {showArchived 
+                      ? "Propiedades que has archivado" 
+                      : "Gestiona todas tus propiedades publicadas"}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowPropertyForm(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Nueva Propiedad
+                  </Button>
+                  <Button
+                    variant={!showArchived ? "default" : "outline"}
+                    onClick={() => setShowArchived(false)}
+                  >
+                    Activas
+                  </Button>
+                  <Button
+                    variant={showArchived ? "default" : "outline"}
+                    onClick={() => setShowArchived(true)}
+                  >
+                    Archivadas
+                  </Button>
+                </div>
+              </CardHeader>
             <CardContent>
               <div className="grid gap-4">
                 {(!showArchived ? mockProperties : []).map((property) => (
@@ -118,6 +154,7 @@ export default function AgentDashboard() {
               </div>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="caracteristicas" className="space-y-6">
@@ -131,29 +168,46 @@ export default function AgentDashboard() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {["Piscina", "Gym", "Estacionamiento", "Jardín", "Balcón", "Terraza", "Seguridad 24h", "Ascensor"].map((feature) => (
-                  <div key={feature} className="p-3 border rounded-lg text-center">
+                  <Button
+                    key={feature}
+                    variant={selectedFeatures.includes(feature) ? "default" : "outline"}
+                    onClick={() => toggleFeature(feature)}
+                    className="p-3 h-auto"
+                  >
                     <p className="text-sm font-medium">{feature}</p>
-                  </div>
+                  </Button>
                 ))}
               </div>
+              {selectedFeatures.length > 0 && (
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <p className="text-sm font-medium mb-2">Características seleccionadas:</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedFeatures.join(", ")}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="perfil" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mi Perfil</CardTitle>
-              <CardDescription>
-                Gestiona tu información personal y profesional
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Componente de perfil en desarrollo...
-              </p>
-            </CardContent>
-          </Card>
+          {user ? (
+            <ProfileForm user={user} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Mi Perfil</CardTitle>
+                <CardDescription>
+                  Gestiona tu información personal y profesional
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Cargando perfil...
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
