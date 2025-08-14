@@ -178,39 +178,63 @@ export type Database = {
       profiles: {
         Row: {
           agent_code: string | null
+          avatar_url: string | null
           bio: string | null
           corporate_phone: string | null
           created_at: string
+          education: string | null
           experience_summary: string | null
+          facebook_url: string | null
           franchise_id: string | null
           full_name: string | null
           id: string
           identity_card: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          title: string | null
+          twitter_url: string | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           agent_code?: string | null
+          avatar_url?: string | null
           bio?: string | null
           corporate_phone?: string | null
           created_at?: string
+          education?: string | null
           experience_summary?: string | null
+          facebook_url?: string | null
           franchise_id?: string | null
           full_name?: string | null
           id: string
           identity_card?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          title?: string | null
+          twitter_url?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           agent_code?: string | null
+          avatar_url?: string | null
           bio?: string | null
           corporate_phone?: string | null
           created_at?: string
+          education?: string | null
           experience_summary?: string | null
+          facebook_url?: string | null
           franchise_id?: string | null
           full_name?: string | null
           id?: string
           identity_card?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          title?: string | null
+          twitter_url?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -366,6 +390,24 @@ export type Database = {
           user_id: string
         }
         Update: {
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -927,6 +969,13 @@ export type Database = {
       gidx_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
       }
       json: {
         Args: { "": unknown }
@@ -2251,7 +2300,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "agent" | "client" | "admin"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2386,6 +2435,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["agent", "client", "admin"],
+    },
   },
 } as const
