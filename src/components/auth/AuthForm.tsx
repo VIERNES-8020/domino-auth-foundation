@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,6 +47,8 @@ type Mode = "login" | "signup";
 
 export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("signup");
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   const form = useForm<SignupValues | LoginValues>({
@@ -66,27 +70,33 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
     const supabase = getSupabaseClient();
 
     try {
+      // First try to get role from user_roles table, then from user metadata
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
       // Get user profile from database
       const { data: profile, error } = await supabase.from('profiles')
         .select('full_name')
         .eq('id', session.user.id)
         .single();
 
-      if (error || !profile) {
+      if (error) {
         console.error("Error al obtener el perfil del usuario:", error);
-        // Default redirect for users without profile
-        navigate('/');
-        return;
       }
 
-      // Get user role from metadata or profiles table
-      const userRole = session.user.user_metadata?.role;
+      // Determine user role (priority: user_roles table > metadata > default)
+      const userRole = roleData?.role || session.user.user_metadata?.role;
       let targetPath = '/'; // Default route
 
       switch (userRole) {
+        case 'admin':
         case 'Super Administrador':
           targetPath = '/admin/dashboard/users';
           break;
+        case 'agent':
         case 'Agente Inmobiliario':
           targetPath = '/dashboard/agent';
           break;
@@ -100,19 +110,26 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
           targetPath = '/dashboard/supervisor';
           break;
         default:
-          targetPath = '/'; // Fallback for unknown roles
+          // If no specific role found, redirect to agent dashboard for authenticated users
+          targetPath = '/dashboard/agent';
       }
 
-      // Execute redirection
-      navigate(targetPath);
+      // Show success message and redirect after delay
+      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo a tu panel...");
+      
+      setTimeout(() => {
+        navigate(targetPath);
+      }, 2000);
     } catch (err) {
       console.error("Error en redirección basada en roles:", err);
-      navigate('/');
+      navigate('/dashboard/agent'); // Fallback to agent dashboard
     }
   };
 
   const onSubmit = async (values: any) => {
     const supabase = getSupabaseClient();
+    setIsLoading(true);
+    setSuccessMessage("");
 
     try {
       if (mode === "signup") {
@@ -164,8 +181,6 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         
-        toast.success("Inicio de sesión correcto");
-        
         // Handle redirection after successful login
         if (data.session) {
           await handleSuccessfulLogin(data.session);
@@ -175,6 +190,8 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
       toast.error("Error de autenticación", {
         description: err?.message ?? "Inténtalo de nuevo",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -189,6 +206,12 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {successMessage && (
+          <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{successMessage}</AlertDescription>
+          </Alert>
+        )}
         <form
           className="space-y-4"
           onSubmit={form.handleSubmit(onSubmit)}
@@ -284,8 +307,8 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
           )}
 
           <div className="flex items-center justify-between gap-2 pt-2">
-            <Button type="submit" className="w-full">
-              {mode === "signup" ? "Crear cuenta" : "Entrar"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Procesando..." : (mode === "signup" ? "Crear cuenta" : "Entrar")}
             </Button>
           </div>
 

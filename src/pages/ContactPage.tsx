@@ -37,6 +37,14 @@ export default function ContactPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" required placeholder="tu@correo.com" />
           </div>
+          <div>
+            <Label htmlFor="phone">Número de Celular</Label>
+            <Input id="phone" type="tel" placeholder="Ej: 7XXXXXXXX" />
+          </div>
+          <div>
+            <Label htmlFor="whatsapp">WhatsApp</Label>
+            <Input id="whatsapp" type="tel" placeholder="Ej: 7XXXXXXXX" />
+          </div>
           <div className="md:col-span-2">
             <Label htmlFor="message">Mensaje</Label>
             <Textarea id="message" required placeholder="¿En qué podemos ayudarte?" />
