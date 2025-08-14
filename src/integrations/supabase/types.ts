@@ -217,6 +217,7 @@ export type Database = {
           id: string
           identity_card: string | null
           instagram_url: string | null
+          is_super_admin: boolean | null
           linkedin_url: string | null
           title: string | null
           twitter_url: string | null
@@ -237,6 +238,7 @@ export type Database = {
           id: string
           identity_card?: string | null
           instagram_url?: string | null
+          is_super_admin?: boolean | null
           linkedin_url?: string | null
           title?: string | null
           twitter_url?: string | null
@@ -257,6 +259,7 @@ export type Database = {
           id?: string
           identity_card?: string | null
           instagram_url?: string | null
+          is_super_admin?: boolean | null
           linkedin_url?: string | null
           title?: string | null
           twitter_url?: string | null
@@ -483,6 +486,16 @@ export type Database = {
           f_table_schema?: unknown | null
           srid?: number | null
           type?: string | null
+        }
+        Relationships: []
+      }
+      platform_metrics: {
+        Row: {
+          avg_property_price: number | null
+          monthly_sales: number | null
+          total_agents: number | null
+          total_franchises: number | null
+          total_properties: number | null
         }
         Relationships: []
       }
