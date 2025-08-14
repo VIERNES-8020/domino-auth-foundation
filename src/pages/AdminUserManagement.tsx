@@ -143,7 +143,7 @@ const AdminUserManagement = () => {
           .from("user_roles")
           .insert({
             user_id: authData.user.id,
-            role: values.role,
+            role: values.role as any, // Type assertion due to enum not updated yet
           });
 
         if (roleError) throw roleError;
@@ -175,7 +175,7 @@ const AdminUserManagement = () => {
       const { error } = await supabase
         .from("user_roles")
         .upsert(
-          { user_id: userId, role: newRole },
+          { user_id: userId, role: newRole as any }, // Type assertion due to enum not updated yet
           { onConflict: "user_id" }
         );
 
@@ -198,12 +198,12 @@ const AdminUserManagement = () => {
   });
 
   const roles = [
-    "Super Administrador",
-    "Agente Inmobiliario",
-    "Administrador de Franquicia",
-    "Gerente de Oficina",
-    "Supervisor",
-    "Cliente",
+    "super_admin",
+    "agent", 
+    "franchise_admin",
+    "office_manager",
+    "supervisor",
+    "client",
   ];
 
   const onSubmit = async (values: UserFormValues) => {
@@ -225,11 +225,11 @@ const AdminUserManagement = () => {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "Super Administrador":
+      case "super_admin":
         return "destructive";
-      case "Administrador de Franquicia":
+      case "franchise_admin":
         return "default";
-      case "Agente Inmobiliario":
+      case "agent":
         return "secondary";
       default:
         return "outline";
@@ -349,7 +349,12 @@ const AdminUserManagement = () => {
                         <SelectContent>
                           {roles.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role}
+                              {role === "super_admin" ? "Super Administrador" :
+                               role === "agent" ? "Agente Inmobiliario" :
+                               role === "franchise_admin" ? "Administrador de Franquicia" :
+                               role === "office_manager" ? "Gerente de Oficina" :
+                               role === "supervisor" ? "Supervisor" :
+                               role === "client" ? "Cliente" : role}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -425,21 +430,31 @@ const AdminUserManagement = () => {
                         <SelectTrigger className="w-48">
                           <SelectValue>
                             <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {user.role}
+                              {user.role === "super_admin" ? "Super Administrador" :
+                               user.role === "agent" ? "Agente Inmobiliario" :
+                               user.role === "franchise_admin" ? "Administrador de Franquicia" :
+                               user.role === "office_manager" ? "Gerente de Oficina" :
+                               user.role === "supervisor" ? "Supervisor" :
+                               user.role === "client" ? "Cliente" : user.role}
                             </Badge>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {roles.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role}
+                              {role === "super_admin" ? "Super Administrador" :
+                               role === "agent" ? "Agente Inmobiliario" :
+                               role === "franchise_admin" ? "Administrador de Franquicia" :
+                               role === "office_manager" ? "Gerente de Oficina" :
+                               role === "supervisor" ? "Supervisor" :
+                               role === "client" ? "Cliente" : role}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
-                      {new Date(user.created_at).toLocaleDateString("es-ES")}
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString("es-ES") : "N/A"}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
