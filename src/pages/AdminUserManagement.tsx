@@ -17,6 +17,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 const userFormSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -24,7 +27,7 @@ const userFormSchema = z.object({
   corporate_phone: z.string().min(8, "El teléfono debe tener al menos 8 dígitos"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  role: z.string().min(1, "Debe seleccionar un rol"),
+  role: z.enum(["super_admin", "agent", "franchise_admin", "office_manager", "supervisor", "client"]),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -104,7 +107,7 @@ const AdminUserManagement = () => {
       corporate_phone: "",
       email: "",
       password: "",
-      role: "",
+      role: "agent",
     },
   });
 
@@ -143,7 +146,7 @@ const AdminUserManagement = () => {
           .from("user_roles")
           .insert({
             user_id: authData.user.id,
-            role: values.role as any, // Type assertion due to enum not updated yet
+            role: values.role as AppRole,
           });
 
         if (roleError) throw roleError;
@@ -175,7 +178,7 @@ const AdminUserManagement = () => {
       const { error } = await supabase
         .from("user_roles")
         .upsert(
-          { user_id: userId, role: newRole as any }, // Type assertion due to enum not updated yet
+          { user_id: userId, role: newRole as AppRole },
           { onConflict: "user_id" }
         );
 
@@ -197,7 +200,7 @@ const AdminUserManagement = () => {
     },
   });
 
-  const roles = [
+  const roles: AppRole[] = [
     "super_admin",
     "agent", 
     "franchise_admin",
