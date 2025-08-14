@@ -7,13 +7,58 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 export default function Header() {
   const sb = useMemo(() => getSupabaseClient(), []);
   const [session, setSession] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
 
   useEffect(() => {
-    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = sb.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
+      
+      if (s?.user?.id) {
+        // Fetch user role when session changes
+        setTimeout(async () => {
+          try {
+            const { data: roleData } = await sb
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', s.user.id)
+              .single();
+            
+            const role = roleData?.role || s.user.user_metadata?.role;
+            setUserRole(role);
+          } catch (error) {
+            console.warn("Could not fetch user role:", error);
+            setUserRole(null);
+          }
+        }, 0);
+      } else {
+        setUserRole(null);
+      }
     });
-    sb.auth.getSession().then(({ data: { session } }) => setSession(session));
+    
+    sb.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      
+      if (session?.user?.id) {
+        // Fetch user role for existing session
+        setTimeout(async () => {
+          try {
+            const { data: roleData } = await sb
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .single();
+            
+            const role = roleData?.role || session.user.user_metadata?.role;
+            setUserRole(role);
+          } catch (error) {
+            console.warn("Could not fetch user role:", error);
+            setUserRole(null);
+          }
+        }, 0);
+      }
+    });
+    
     return () => subscription.unsubscribe();
   }, [sb]);
 
@@ -58,9 +103,20 @@ export default function Header() {
           </div>
           {session ? (
             <div className="flex items-center gap-2">
-              <Button asChild>
-                <Link to="/dashboard/agent">Ir a mi Panel</Link>
-              </Button>
+              {userRole === 'Super Administrador' || userRole === 'admin' ? (
+                <>
+                  <Button asChild>
+                    <Link to="/admin/dashboard">Panel Super Admin</Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/dashboard/agent">Vista Agente</Link>
+                  </Button>
+                </>
+              ) : (
+                <Button asChild>
+                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
+                </Button>
+              )}
               <Button variant="outline" onClick={async () => { await sb.auth.signOut(); }}>
                 Cerrar Sesión
               </Button>

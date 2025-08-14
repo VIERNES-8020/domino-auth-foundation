@@ -70,31 +70,37 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
     const supabase = getSupabaseClient();
 
     try {
-      // First try to get role from user_roles table, then from user metadata
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single();
+      // Get role from user_roles table AND get profile metadata
+      const [userRoleResponse, profileResponse] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single(),
+        supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', session.user.id)
+          .single()
+      ]);
 
-      // Get user profile from database
-      const { data: profile, error } = await supabase.from('profiles')
-        .select('full_name')
-        .eq('id', session.user.id)
-        .single();
-
-      if (error) {
-        console.error("Error al obtener el perfil del usuario:", error);
+      // Check for errors in profile fetch (not critical for role routing)
+      if (profileResponse.error) {
+        console.warn("Error al obtener el perfil del usuario:", profileResponse.error);
       }
 
-      // Determine user role (priority: user_roles table > metadata > default)
-      const userRole = roleData?.role || session.user.user_metadata?.role;
-      let targetPath = '/'; // Default route
+      // Determine user role (priority: user_roles table > user metadata)
+      const userRole = userRoleResponse.data?.role || session.user.user_metadata?.role;
+      
+      console.log("User role detected:", userRole); // Debug log
+      
+      let targetPath = '/dashboard/agent'; // Default fallback
 
+      // Role-based routing logic
       switch (userRole) {
         case 'admin':
         case 'Super Administrador':
-          targetPath = '/admin/dashboard/users';
+          targetPath = '/admin/dashboard';
           break;
         case 'agent':
         case 'Agente Inmobiliario':
@@ -110,19 +116,25 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
           targetPath = '/dashboard/supervisor';
           break;
         default:
-          // If no specific role found, redirect to agent dashboard for authenticated users
+          console.warn("No specific role found, redirecting to agent dashboard");
           targetPath = '/dashboard/agent';
       }
 
-      // Show success message and redirect after delay
+      console.log("Redirecting to:", targetPath); // Debug log
+
+      // Show success message and redirect
       setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo a tu panel...");
       
       setTimeout(() => {
         navigate(targetPath);
-      }, 2000);
+      }, 1500);
     } catch (err) {
       console.error("Error en redirección basada en roles:", err);
-      navigate('/dashboard/agent'); // Fallback to agent dashboard
+      // Fallback navigation
+      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
+      setTimeout(() => {
+        navigate('/dashboard/agent');
+      }, 1500);
     }
   };
 
