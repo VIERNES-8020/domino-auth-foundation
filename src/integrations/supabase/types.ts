@@ -343,6 +343,45 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_leads: {
+        Row: {
+          city_country: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          property_location: string | null
+          request_type: string
+          status: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          city_country?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          property_location?: string | null
+          request_type: string
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          city_country?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          property_location?: string | null
+          request_type?: string
+          status?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agent_code: string | null
@@ -417,6 +456,8 @@ export type Database = {
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
+          concluded_at: string | null
+          concluded_status: string | null
           constructed_area_m2: number | null
           created_at: string | null
           custom_data: Json | null
@@ -448,6 +489,8 @@ export type Database = {
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          concluded_at?: string | null
+          concluded_status?: string | null
           constructed_area_m2?: number | null
           created_at?: string | null
           custom_data?: Json | null
@@ -479,6 +522,8 @@ export type Database = {
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          concluded_at?: string | null
+          concluded_status?: string | null
           constructed_area_m2?: number | null
           created_at?: string | null
           custom_data?: Json | null
@@ -1092,6 +1137,8 @@ export type Database = {
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
+          concluded_at: string | null
+          concluded_status: string | null
           constructed_area_m2: number | null
           created_at: string | null
           custom_data: Json | null
@@ -1377,6 +1424,8 @@ export type Database = {
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
+          concluded_at: string | null
+          concluded_status: string | null
           constructed_area_m2: number | null
           created_at: string | null
           custom_data: Json | null

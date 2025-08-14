@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Edit, Trash, Archive, Plus } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
 import ProfileForm from "@/components/ProfileForm";
 import PropertyViewModal from "@/components/PropertyViewModal";
@@ -204,6 +206,31 @@ export default function AgentDashboard() {
     }
   };
 
+  const handleConcludeProperty = async (propertyId: string, status: 'vendido' | 'alquilado' | 'anticretico') => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ 
+          concluded_status: status,
+          concluded_at: new Date().toISOString()
+        })
+        .eq('id', propertyId)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success(`Propiedad marcada como ${status.toUpperCase()}`);
+      
+      // Refresh properties list
+      await fetchProperties(user.id);
+    } catch (error: any) {
+      console.error('Error concluding property:', error);
+      toast.error('Error al marcar la propiedad como concluida');
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -214,7 +241,7 @@ export default function AgentDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger 
             value="propiedades" 
             className={`${activeTab === 'propiedades' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
@@ -237,6 +264,12 @@ export default function AgentDashboard() {
                 {notifications.filter(n => !n.read).length}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger 
+            value="concluidas"
+            className={`${activeTab === 'concluidas' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
+          >
+            Propiedades Concluidas
           </TabsTrigger>
           <TabsTrigger 
             value="perfil"
@@ -291,7 +324,7 @@ export default function AgentDashboard() {
               </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {(!showArchived ? properties.filter(p => !p.is_archived) : properties.filter(p => p.is_archived)).map((property) => (
+                {(!showArchived ? properties.filter(p => !p.is_archived && !p.concluded_status) : properties.filter(p => p.is_archived)).map((property) => (
                   <div
                     key={property.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -325,6 +358,26 @@ export default function AgentDashboard() {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {!showArchived && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" title="Marcar como concluida">
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'vendido')}>
+                              Marcar como Vendido
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'alquilado')}>
+                              Marcar como Alquilado
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'anticretico')}>
+                              Marcar como En Anticrético
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       <Button
                         variant={showArchived ? "default" : "secondary"}
                         size="sm"
@@ -344,7 +397,7 @@ export default function AgentDashboard() {
                     </div>
                   </div>
                 ))}
-                {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived)).length === 0 && (
+                {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived && !p.concluded_status)).length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     {showArchived 
                       ? "No tienes propiedades archivadas." 
@@ -427,6 +480,59 @@ export default function AgentDashboard() {
                       </div>
                     </div>
                   ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="concluidas" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mis Propiedades Concluidas</CardTitle>
+              <CardDescription>
+                Propiedades que has vendido, alquilado o puesto en anticrético
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                {properties.filter(p => p.concluded_status).map((property) => (
+                  <div
+                    key={property.id}
+                    className="flex items-center justify-between p-4 border rounded-lg bg-green-50"
+                  >
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{property.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {property.address}
+                      </p>
+                      <p className="text-lg font-bold">
+                        ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
+                      </p>
+                      <div className="mt-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {property.concluded_status === 'vendido' && 'VENDIDO'}
+                          {property.concluded_status === 'alquilado' && 'ALQUILADO'}
+                          {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setViewingProperty(property)}
+                        title="Ver propiedad"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {properties.filter(p => p.concluded_status).length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tienes propiedades concluidas aún.
+                  </div>
                 )}
               </div>
             </CardContent>

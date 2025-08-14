@@ -17,9 +17,11 @@ export interface PropertyCardProps {
     area_m2?: number | null;
     constructed_area_m2?: number | null;
     transaction_type?: string | null;
+    concluded_status?: string | null;
   };
   isFavorited?: boolean;
   onToggleFavorite?: (id: string, next: boolean) => void;
+  showConcludedBadge?: boolean;
 }
 
 function formatPrice(price?: number | null, currency?: string | null) {
@@ -29,7 +31,7 @@ function formatPrice(price?: number | null, currency?: string | null) {
   return `${symbol} ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function PropertyCard({ property, isFavorited = false, onToggleFavorite }: PropertyCardProps) {
+export default function PropertyCard({ property, isFavorited = false, onToggleFavorite, showConcludedBadge = false }: PropertyCardProps) {
   const cover = property.image_urls?.[0] || "/default-placeholder.jpg";
   const priceText = formatPrice(property.price, property.price_currency);
   const br = typeof property.bedrooms === "number" ? property.bedrooms : undefined;
@@ -86,6 +88,18 @@ return (
         />
         {/* Overlay de legibilidad y precio destacado */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
+        
+        {/* Concluded status badge overlay */}
+        {showConcludedBadge && property.concluded_status && (
+          <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center z-10">
+            <div className="bg-orange-500/90 text-white px-4 py-2 rounded-md font-bold text-lg uppercase tracking-wide shadow-lg">
+              {property.concluded_status === 'vendido' && 'VENDIDO'}
+              {property.concluded_status === 'alquilado' && 'ALQUILADO'}
+              {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO'}
+            </div>
+          </div>
+        )}
+        
         <div className="absolute right-2 top-2 z-20 rounded-md bg-primary/90 px-2.5 py-1.5 text-sm sm:text-base font-semibold text-primary-foreground shadow">
           {priceText}
         </div>

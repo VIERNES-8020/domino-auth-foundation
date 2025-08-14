@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
+  const [listingLeads, setListingLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,6 +67,14 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false });
       
       setFranchiseApplications(franchiseData || []);
+
+      // Fetch listing leads
+      const { data: listingData } = await supabase
+        .from('listing_leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setListingLeads(listingData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Error loading dashboard data');
@@ -140,7 +149,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="mensajes" className="relative">
@@ -156,6 +165,14 @@ export default function AdminDashboard() {
             {franchiseApplications.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {franchiseApplications.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="relative">
+            Leads Venta/Alquiler
+            {listingLeads.length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {listingLeads.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -386,6 +403,64 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="leads" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads de Venta/Alquiler</CardTitle>
+              <CardDescription>
+                Clientes que quieren vender o alquilar su propiedad
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {listingLeads.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No hay leads de venta/alquiler aún.
+                  </div>
+                ) : (
+                  listingLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="p-4 border rounded-lg space-y-2"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold">{lead.full_name}</h3>
+                          <p className="text-sm text-muted-foreground">{lead.email}</p>
+                          {lead.phone && (
+                            <p className="text-sm text-muted-foreground">Tel: {lead.phone}</p>
+                          )}
+                          {lead.whatsapp && (
+                            <p className="text-sm text-muted-foreground">WhatsApp: {lead.whatsapp}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            lead.request_type === 'venta' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {lead.request_type === 'venta' ? 'VENTA' : 'ALQUILER'}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(lead.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      {lead.city_country && (
+                        <p className="text-sm"><strong>Ciudad:</strong> {lead.city_country}</p>
+                      )}
+                      {lead.property_location && (
+                        <p className="text-sm"><strong>Ubicación:</strong> {lead.property_location}</p>
+                      )}
                     </div>
                   ))
                 )}

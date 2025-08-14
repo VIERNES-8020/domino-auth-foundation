@@ -54,6 +54,13 @@ export default function HomePage() {
   const [featApt, setFeatApt] = useState<any[]>([]);
   const [featLand, setFeatLand] = useState<any[]>([]);
   const [featOffice, setFeatOffice] = useState<any[]>([]);
+  
+  // Concluded properties for new carousel
+  const [concludedHouse, setConcludedHouse] = useState<any[]>([]);
+  const [concludedApt, setConcludedApt] = useState<any[]>([]);
+  const [concludedLand, setConcludedLand] = useState<any[]>([]);
+  const [concludedOffice, setConcludedOffice] = useState<any[]>([]);
+  
   const [realMetrics, setRealMetrics] = useState({
     totalProperties: 1200,
     totalFranchises: 25,
@@ -96,17 +103,36 @@ export default function HomePage() {
         }
       };
 
-      const [houses, apts, lands, offices] = await Promise.all([
+      // Fetch concluded properties
+      const fetchConcludedType = async (type: string) => {
+        const { data } = await supabase
+          .from("properties")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type,concluded_status")
+          .eq("status", "approved")
+          .eq("property_type", type)
+          .not("concluded_status", "is", null)
+          .eq("is_archived", false)
+          .order("concluded_at", { ascending: false })
+          .limit(10);
+        return (data ?? []) as any[];
+      };
+
+      const [houses, apts, lands, offices, concludedHouses, concludedApts, concludedLands, concludedOffices] = await Promise.all([
         fetchType("casa"),
         fetchType("departamento"),
         fetchType("terreno"),
         fetchType("oficina"),
+        fetchConcludedType("casa"),
+        fetchConcludedType("departamento"),
+        fetchConcludedType("terreno"),
+        fetchConcludedType("oficina"),
       ]);
       
       await fetchMetrics();
       
       if (!active) return;
       setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices);
+      setConcludedHouse(concludedHouses); setConcludedApt(concludedApts); setConcludedLand(concludedLands); setConcludedOffice(concludedOffices);
     })();
     return () => { active = false; };
   }, []);
@@ -144,6 +170,9 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
             <Button size="lg" asChild>
+              <Link to="/vende">Vende o Alquila</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
               <Link to="/properties">Explorar Propiedades</Link>
             </Button>
             <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2 text-primary hover-scale">
@@ -213,6 +242,75 @@ export default function HomePage() {
                 {featOffice.map((p) => (
                   <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
                     <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+        </Tabs>
+      </section>
+
+      {/* Concluded Properties */}
+      <section className="container mx-auto py-10" aria-labelledby="concluded-heading">
+        <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">Éxitos Recientes</h2>
+        <Tabs defaultValue="house">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
+          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
+          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
+          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
+          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
+        </TabsList>
+
+          <TabsContent value="house">
+            <Carousel>
+              <CarouselContent>
+                {concludedHouse.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} showConcludedBadge />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="apartment">
+            <Carousel>
+              <CarouselContent>
+                {concludedApt.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} showConcludedBadge />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="land">
+            <Carousel>
+              <CarouselContent>
+                {concludedLand.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} showConcludedBadge />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="office">
+            <Carousel>
+              <CarouselContent>
+                {concludedOffice.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} showConcludedBadge />
                   </CarouselItem>
                 ))}
               </CarouselContent>
