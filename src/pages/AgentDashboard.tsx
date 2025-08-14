@@ -18,11 +18,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Home, Cog, MapPin, Images } from "lucide-react";
+import { Home, Cog, MapPin, Images, UserIcon, Building } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQuery } from "@tanstack/react-query";
 import MapPicker from "@/components/MapPicker";
+import ProfileForm from "@/components/ProfileForm";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -83,6 +84,7 @@ export default function AgentDashboard() {
   });
 
   const [user, setUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<"properties" | "profile">("properties");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -506,8 +508,25 @@ const [videoUrl, setVideoUrl] = useState("");
       </header>
 
       <main className="container mx-auto pb-16">
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-labelledby="agent-dashboard">
-          <h2 id="agent-dashboard" className="sr-only">Panel de agente</h2>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "properties" | "profile")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="properties" className="flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Mis Propiedades
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <UserIcon className="h-4 w-4" />
+              Mi Perfil
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile">
+            <ProfileForm user={user} />
+          </TabsContent>
+
+          <TabsContent value="properties">
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6" aria-labelledby="agent-dashboard">
+              <h2 id="agent-dashboard" className="sr-only">Panel de agente</h2>
 
           <Card className="lg:col-span-2 shadow-sm">
             <CardHeader>
@@ -927,7 +946,9 @@ const [videoUrl, setVideoUrl] = useState("");
               </form>
             </CardContent>
           </Card>
-        </section>
+            </section>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
