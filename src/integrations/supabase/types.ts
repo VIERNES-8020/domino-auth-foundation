@@ -191,6 +191,48 @@ export type Database = {
         }
         Relationships: []
       }
+      client_reviews: {
+        Row: {
+          agent_id: string
+          agent_rating: number
+          client_id: string
+          client_name: string
+          comment: string | null
+          company_rating: number
+          created_at: string
+          id: string
+          is_approved: boolean
+          property_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          agent_id: string
+          agent_rating: number
+          client_id: string
+          client_name: string
+          comment?: string | null
+          company_rating: number
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          property_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          agent_id?: string
+          agent_rating?: number
+          client_id?: string
+          client_name?: string
+          comment?: string | null
+          company_rating?: number
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          property_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
