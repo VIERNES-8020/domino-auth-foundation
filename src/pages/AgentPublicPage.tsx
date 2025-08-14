@@ -3,15 +3,26 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Star, Facebook, Instagram, Linkedin, Twitter, Globe } from "lucide-react";
+
 
 interface Profile {
   id: string;
   full_name: string | null;
   agent_code: string | null;
+  avatar_url: string | null;
+  title: string | null;
   experience_summary: string | null;
+  education: string | null;
   bio: string | null;
   corporate_phone: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  linkedin_url?: string | null;
+  twitter_url?: string | null;
+  website_url?: string | null;
 }
+
 
 interface Property {
   id: string;
@@ -62,36 +73,25 @@ export default function AgentPublicPage() {
   );
 
   useEffect(() => {
-    const load = async () => {
+    let active = true;
+    (async () => {
       if (!code) return;
-      const { data: prof, error: pErr } = await supabase
-        .from("profiles")
-        .select("id, full_name, agent_code, experience_summary, bio, corporate_phone")
-        .eq("agent_code", code)
-        .maybeSingle();
-      if (pErr) {
-        console.error(pErr);
+      const { data, error } = await supabase.functions.invoke('get-agent-profile', {
+        body: { code },
+      });
+      if (error) {
+        console.error('get-agent-profile error', error);
         return;
       }
-      if (!prof) return;
-      setProfile(prof as Profile);
-
-      const { data: stat, error: sErr } = await supabase.rpc("get_agent_public_stats", { _agent_id: prof.id });
-      if (!sErr && stat && Array.isArray(stat) ? (stat as any)[0] : stat) {
-        const val = Array.isArray(stat) ? (stat as any)[0] : (stat as any);
-        setStats({ average_rating: Number(val.average_rating ?? 0), total_ratings: Number(val.total_ratings ?? 0) });
-      }
-
-      const { data: props, error: prErr } = await supabase
-        .from("properties")
-        .select("id, title, address, price, price_currency, image_urls")
-        .eq("agent_id", prof.id)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
-      if (!prErr) setProperties((props ?? []) as Property[]);
-    };
-    load();
+      if (!active) return;
+      const payload = data as any;
+      setProfile(payload.profile as Profile);
+      setStats(payload.stats as { average_rating: number; total_ratings: number });
+      setProperties((payload.properties ?? []) as Property[]);
+    })();
+    return () => { active = false; };
   }, [code]);
+
 
   const whatsappUrl = useMemo(() => {
     if (!profile?.corporate_phone) return null;
@@ -99,6 +99,22 @@ export default function AgentPublicPage() {
     const phone = profile.corporate_phone.replace(/\D+/g, "");
     return `https://wa.me/${phone}?text=${msg}`;
   }, [profile]);
+
+  const personJsonLd = profile ? {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: profile.full_name ?? undefined,
+    jobTitle: profile.title ?? undefined,
+    url: typeof window !== "undefined" ? window.location.href : undefined,
+    image: profile.avatar_url ?? undefined,
+    identifier: profile.agent_code ?? undefined,
+    sameAs: [profile.website_url, profile.facebook_url, profile.instagram_url, profile.linkedin_url, profile.twitter_url].filter(Boolean),
+    aggregateRating: stats ? {
+      "@type": "AggregateRating",
+      ratingValue: Number(stats.average_rating || 0).toFixed(1),
+      reviewCount: stats.total_ratings || 0,
+    } : undefined,
+  } : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
@@ -124,12 +140,23 @@ export default function AgentPublicPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <img src="/default-placeholder.jpg" alt={`Foto de perfil del agente ${profile.full_name ?? ''}`} className="h-20 w-20 rounded-full object-cover" />
+                  <img
+                    src={profile.avatar_url || "/default-placeholder.jpg"}
+                    alt={`Foto de perfil del agente ${profile.full_name ?? ''}`}
+                    className="h-20 w-20 rounded-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; }}
+                  />
                   <div>
                     <p className="font-semibold">{profile.full_name ?? "Agente"}</p>
+                    {profile.title && (<p className="text-sm text-muted-foreground">{profile.title}</p>)}
                     <p className="text-sm text-muted-foreground">Código: {profile.agent_code ?? "—"}</p>
                     {stats && (
-                      <p className="text-sm text-muted-foreground">⭐ {stats.average_rating.toFixed(1)} ({stats.total_ratings})</p>
+                      <div className="flex items-center gap-1 text-amber-500">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`h-4 w-4 ${i < Math.round(stats.average_rating) ? '' : 'opacity-30'}`} />
+                        ))}
+                        <span className="ml-1 text-xs text-muted-foreground">({stats.total_ratings})</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -139,13 +166,46 @@ export default function AgentPublicPage() {
                     <p className="text-sm text-muted-foreground">{profile.experience_summary}</p>
                   </div>
                 )}
+                {profile.education && (
+                  <div>
+                    <p className="text-sm font-medium">Estudios</p>
+                    <p className="text-sm text-muted-foreground">{profile.education}</p>
+                  </div>
+                )}
                 {profile.bio && (
                   <div>
-                    <p className="text-sm font-medium">Biografía</p>
+                    <p className="text-sm font-medium">Acerca de mí</p>
                     <p className="text-sm text-muted-foreground whitespace-pre-line">{profile.bio}</p>
                   </div>
                 )}
-                {whatsappUrl && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {profile.website_url && (
+                    <a href={profile.website_url} target="_blank" rel="noreferrer" aria-label="Sitio web" className="text-muted-foreground hover:text-primary">
+                      <Globe className="h-5 w-5" />
+                    </a>
+                  )}
+                  {profile.facebook_url && (
+                    <a href={profile.facebook_url} target="_blank" rel="noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-primary">
+                      <Facebook className="h-5 w-5" />
+                    </a>
+                  )}
+                  {profile.instagram_url && (
+                    <a href={profile.instagram_url} target="_blank" rel="noreferrer" aria-label="Instagram" className="text-muted-foreground hover:text-primary">
+                      <Instagram className="h-5 w-5" />
+                    </a>
+                  )}
+                  {profile.linkedin_url && (
+                    <a href={profile.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary">
+                      <Linkedin className="h-5 w-5" />
+                    </a>
+                  )}
+                  {profile.twitter_url && (
+                    <a href={profile.twitter_url} target="_blank" rel="noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-primary">
+                      <Twitter className="h-5 w-5" />
+                    </a>
+                  )}
+                </div>
+                {whatsappUrl && !(/\*/.test(profile.corporate_phone ?? '')) && (
                   <Button asChild className="w-full"><a href={whatsappUrl} target="_blank" rel="noreferrer">Contactar por WhatsApp</a></Button>
                 )}
               </CardContent>
@@ -219,6 +279,9 @@ export default function AgentPublicPage() {
           </div>
         )}
       </main>
+      {personJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      )}
     </div>
   );
 }
