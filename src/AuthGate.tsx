@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabaseClient'; // Asegúrate de que la ruta a tu cliente supabase sea correcta
+import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
 // Importa TODAS las páginas que hemos creado
-import AuthPage from './pages/AuthPage';
+import AuthForm from './components/auth/AuthForm';
 import AgentDashboard from './pages/AgentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import AccessDeniedPage from './pages/AccessDeniedPage';
-import PublicPortal from './pages/PublicPortal'; // Tu página de inicio pública
+import AccessDenied from './pages/AccessDenied';
+import Index from './pages/Index'; // Tu página de inicio pública
 
 interface Profile {
   id: string;
@@ -46,12 +46,12 @@ export default function AuthGate() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .eq('id', user.id)
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
         .single();
       if (error) throw error;
-      setProfile(data as Profile);
+      setProfile({ id: user.id, role: data.role });
     } catch (error) {
       console.error("Error al obtener perfil:", error);
       await supabase.auth.signOut();
@@ -70,7 +70,11 @@ export default function AuthGate() {
 
   if (!session) {
     // Si no hay sesión, siempre mostramos la página de autenticación/registro.
-    return <AuthPage />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        <AuthForm />
+      </div>
+    );
   }
 
   // Si hay sesión pero el perfil aún se está cargando
@@ -87,6 +91,6 @@ export default function AuthGate() {
     // ... añadir casos para otros roles aquí ...
     default:
       // Si el rol no tiene un panel, o es un simple cliente, se queda en el portal público.
-      return <PublicPortal />;
+      return <Index />;
   }
 }
