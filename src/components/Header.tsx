@@ -20,7 +20,7 @@ export default function Header() {
     <header className="container mx-auto py-5">
       <nav className="flex items-center justify-between" aria-label="Principal">
         <Link to="/" className="flex items-center gap-2 hover-scale" aria-label="DOMINIO Inicio">
-          <img src="/lovable-uploads/0db86b24-3da5-42a2-9780-da456242b977.png" alt="DOMINIO Inmobiliaria - logotipo oficial" className="h-8 w-auto" />
+          <img src="/lovable-uploads/0db86b24-3da5-42a2-9780-da456242b977.png" alt="DOMINIO Inmobiliaria - logotipo oficial" className="h-12 w-auto" />
         </Link>
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 text-sm">
