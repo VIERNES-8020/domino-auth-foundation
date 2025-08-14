@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from './integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import Index from './pages/Index'; // Auth page
 import AgentDashboard from './pages/AgentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import HomePage from './pages/HomePage'; // Public portal
 
 interface UserRole {
   role: string;
@@ -14,6 +14,7 @@ export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log('AuthGate: Initializing...');
@@ -26,8 +27,9 @@ export default function AuthGate() {
       setSession(session);
       if (session) {
         await fetchUserRole(session.user);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     fetchSessionAndProfile();
@@ -36,9 +38,11 @@ export default function AuthGate() {
       console.log('AuthGate: Auth state changed:', event, session);
       setSession(session);
       if (session) {
+        setLoading(true);
         await fetchUserRole(session.user);
       } else {
         setUserRole(null);
+        setLoading(false);
       }
     });
 
@@ -58,31 +62,45 @@ export default function AuthGate() {
       
       if (roleData && !roleError) {
         console.log('AuthGate: Role from user_roles:', roleData.role);
-        setUserRole(roleData.role);
+        
+        // Map database roles to UI expectations
+        const displayRole = roleData.role === 'super_admin' || roleData.role === 'admin' ? 'Super Administrador' : 'Agente Inmobiliario';
+        setUserRole(displayRole);
+        setLoading(false);
+        
+        if (roleData.role === 'super_admin' || roleData.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard/agent', { replace: true });
+        }
         return;
       }
       
-      // Fallback to profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileData && !profileError) {
-        console.log('AuthGate: Profile data:', profileData);
-        // Fallback to user metadata or default role
-        const role = user.user_metadata?.role || 'Agente Inmobiliario';
-        console.log('AuthGate: Role from metadata/default:', role);
-        setUserRole(role);
+      // Fallback to user metadata if no role found in user_roles table
+      const metadataRole = user.user_metadata?.role;
+      if (metadataRole) {
+        console.log('AuthGate: Role from metadata:', metadataRole);
+        setUserRole(metadataRole);
+        setLoading(false);
+        
+        // Redirect based on role
+        if (metadataRole === 'Super Administrador') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard/agent', { replace: true });
+        }
         return;
       }
       
+      // Final fallback - default to agent role
       console.warn('AuthGate: No role found, defaulting to Agente Inmobiliario');
       setUserRole('Agente Inmobiliario');
+      setLoading(false);
+      navigate('/dashboard/agent', { replace: true });
       
     } catch (error) {
       console.error("AuthGate: Error fetching user role:", error);
+      setLoading(false);
       // If we can't get the role, log out to prevent loops
       await supabase.auth.signOut();
     }
@@ -93,7 +111,7 @@ export default function AuthGate() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Cargando...</p>
+          <p className="mt-4 text-muted-foreground">Verificando permisos...</p>
         </div>
       </div>
     );
@@ -104,6 +122,7 @@ export default function AuthGate() {
     return <Index />;
   }
 
+  // If we have session and role, show appropriate dashboard
   if (userRole) {
     console.log('AuthGate: Routing user with role:', userRole);
     
@@ -115,17 +134,17 @@ export default function AuthGate() {
         console.log('AuthGate: Routing to Agent Dashboard');
         return <AgentDashboard />;
       default:
-        console.log('AuthGate: Unknown role, routing to public portal');
-        return <HomePage />;
+        console.log('AuthGate: Default routing to Agent Dashboard');
+        return <AgentDashboard />;
     }
   }
   
-  // Show loading state while fetching role
+  // Fallback loading state
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-        <p className="mt-4 text-muted-foreground">Verificando permisos...</p>
+        <p className="mt-4 text-muted-foreground">Cargando...</p>
       </div>
     </div>
   );

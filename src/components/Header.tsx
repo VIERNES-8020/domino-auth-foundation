@@ -24,8 +24,12 @@ export default function Header() {
               .eq('user_id', s.user.id)
               .single();
             
-            const role = roleData?.role || s.user.user_metadata?.role;
-            setUserRole(role);
+            // Map database roles to UI expectations
+            const dbRole = roleData?.role;
+            const displayRole = dbRole === 'super_admin' || dbRole === 'admin' 
+              ? 'Super Administrador' 
+              : s.user.user_metadata?.role || 'Agente Inmobiliario';
+            setUserRole(displayRole);
           } catch (error) {
             console.warn("Could not fetch user role:", error);
             setUserRole(null);
@@ -49,8 +53,12 @@ export default function Header() {
               .eq('user_id', session.user.id)
               .single();
             
-            const role = roleData?.role || session.user.user_metadata?.role;
-            setUserRole(role);
+            // Map database roles to UI expectations
+            const dbRole = roleData?.role;
+            const displayRole = dbRole === 'super_admin' || dbRole === 'admin' 
+              ? 'Super Administrador' 
+              : session.user.user_metadata?.role || 'Agente Inmobiliario';
+            setUserRole(displayRole);
           } catch (error) {
             console.warn("Could not fetch user role:", error);
             setUserRole(null);
@@ -103,7 +111,7 @@ export default function Header() {
           </div>
           {session ? (
             <div className="flex items-center gap-2">
-              {userRole === 'Super Administrador' || userRole === 'admin' ? (
+              {userRole === 'Super Administrador' ? (
                 <>
                   <Button asChild>
                     <Link to="/admin/dashboard">Panel Super Admin</Link>
@@ -114,7 +122,7 @@ export default function Header() {
                 </>
               ) : (
                 <Button asChild>
-                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
+                  <Link to="/dashboard/agent">Panel de Agente</Link>
                 </Button>
               )}
               <Button variant="outline" onClick={async () => { await sb.auth.signOut(); }}>
