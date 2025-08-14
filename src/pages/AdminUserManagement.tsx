@@ -144,10 +144,10 @@ const AdminUserManagement = () => {
         // Create user role
         const { error: roleError } = await supabase
           .from("user_roles")
-          .insert({
+          .insert([{
             user_id: authData.user.id,
-            role: values.role as AppRole,
-          });
+            role: values.role as any, // Using any to bypass type checking until types are regenerated
+          }]);
 
         if (roleError) throw roleError;
       }
@@ -177,10 +177,9 @@ const AdminUserManagement = () => {
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
       const { error } = await supabase
         .from("user_roles")
-        .upsert(
-          { user_id: userId, role: newRole as AppRole },
-          { onConflict: "user_id" }
-        );
+        .upsert([
+          { user_id: userId, role: newRole as any }
+        ], { onConflict: "user_id" });
 
       if (error) throw error;
     },
