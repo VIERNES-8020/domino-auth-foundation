@@ -450,33 +450,36 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     Sube un video promocional de la propiedad (opcional)
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="video_url">URL del Video o Subir Archivo</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="video_url"
-                      value={formData.video_url}
-                      onChange={(e) => updateFormData("video_url", e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="flex-1"
-                    />
-                    <input
-                      type="file"
-                      accept="video/*"
-                      onChange={(e) => console.log("Video file:", e.target.files?.[0])}
-                      className="hidden"
-                      id="video-upload"
-                    />
-                    <label htmlFor="video-upload">
-                      <Button type="button" variant="outline" asChild>
-                        <span className="flex items-center gap-2">
-                          <Video className="h-4 w-4" />
-                          Subir
-                        </span>
-                      </Button>
-                    </label>
+                  <div className="space-y-2">
+                    <Label htmlFor="video_url">URL del Video o Subir Archivo</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="video_url"
+                        value={formData.video_url}
+                        onChange={(e) => updateFormData("video_url", e.target.value)}
+                        placeholder="https://youtube.com/watch?v=... o Vimeo"
+                        className="flex-1"
+                      />
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        className="hidden"
+                        id="video-upload"
+                      />
+                      <label htmlFor="video-upload">
+                        <Button type="button" variant="outline" asChild>
+                          <span className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            Subir Video
+                          </span>
+                        </Button>
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Puedes pegar una URL de YouTube/Vimeo O subir un archivo de video directamente
+                    </p>
                   </div>
-                </div>
               </div>
 
               {/* Property Plans */}
@@ -497,7 +500,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                       type="file"
                       multiple
                       accept=".pdf,image/*"
-                      onChange={(e) => console.log("Plans selected:", e.target.files)}
+                      onChange={handlePlansUpload}
                       className="hidden"
                       id="property-plans"
                     />
