@@ -175,6 +175,33 @@ export type Database = {
           },
         ]
       }
+      franchises: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agent_code: string | null
@@ -256,6 +283,7 @@ export type Database = {
           has_pool: boolean | null
           id: string
           image_urls: string[] | null
+          is_archived: boolean | null
           other_amenities: string | null
           pet_friendly: boolean | null
           plans_url: string[] | null
@@ -285,6 +313,7 @@ export type Database = {
           has_pool?: boolean | null
           id?: string
           image_urls?: string[] | null
+          is_archived?: boolean | null
           other_amenities?: string | null
           pet_friendly?: boolean | null
           plans_url?: string[] | null
@@ -314,6 +343,7 @@ export type Database = {
           has_pool?: boolean | null
           id?: string
           image_urls?: string[] | null
+          is_archived?: boolean | null
           other_amenities?: string | null
           pet_friendly?: boolean | null
           plans_url?: string[] | null
@@ -925,6 +955,7 @@ export type Database = {
           has_pool: boolean | null
           id: string
           image_urls: string[] | null
+          is_archived: boolean | null
           other_amenities: string | null
           pet_friendly: boolean | null
           plans_url: string[] | null
@@ -1198,6 +1229,7 @@ export type Database = {
           has_pool: boolean | null
           id: string
           image_urls: string[] | null
+          is_archived: boolean | null
           other_amenities: string | null
           pet_friendly: boolean | null
           plans_url: string[] | null
