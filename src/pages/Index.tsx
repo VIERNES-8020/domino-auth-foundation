@@ -2,14 +2,13 @@ import AuthForm from "@/components/auth/AuthForm";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
-      const supabase = getSupabaseClient();
       const { data: session } = await supabase.auth.getSession();
       
       if (session?.session?.user) {

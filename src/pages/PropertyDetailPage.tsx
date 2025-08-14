@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,7 +63,7 @@ function usePageSEO(options: { title: string; description: string; canonicalPath
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const sb = useMemo(() => getSupabaseClient(), []);
+  
 
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
@@ -75,7 +75,7 @@ export default function PropertyDetailPage() {
     let cancelled = false;
     async function loadToken() {
       try {
-        const { data, error } = await sb.functions.invoke("mapbox-public-token");
+        const { data, error } = await supabase.functions.invoke("mapbox-public-token");
         if (!cancelled) {
           if (!error && (data as any)?.token) setMapToken((data as any).token as string);
           else setMapToken(undefined);
@@ -86,7 +86,7 @@ export default function PropertyDetailPage() {
     }
     loadToken();
     return () => { cancelled = true; };
-  }, [sb]);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -96,20 +96,20 @@ export default function PropertyDetailPage() {
       setLoading(true);
       setError(null);
       try {
-        const { data: prop, error: propErr } = await sb.from("properties").select("*").eq("id", id).maybeSingle();
+        const { data: prop, error: propErr } = await supabase.from("properties").select("*").eq("id", id).maybeSingle();
         if (propErr) throw propErr;
         if (!active) return;
         setProperty(prop as PropertyRow);
 
         // load amenities
-        const { data: pa, error: paErr } = await sb
+        const { data: pa, error: paErr } = await supabase
           .from("property_amenities")
           .select("amenity_id")
           .eq("property_id", id);
         if (paErr) throw paErr;
         const ids = (pa ?? []).map((r: any) => r.amenity_id);
         if (ids.length > 0) {
-          const { data: ams } = await sb.from("amenities").select("id,name,icon_svg").in("id", ids);
+          const { data: ams } = await supabase.from("amenities").select("id,name,icon_svg").in("id", ids);
           if (!active) return;
           setAmenities((ams as Amenity[]) ?? []);
         } else {
@@ -126,7 +126,7 @@ export default function PropertyDetailPage() {
 
     load();
     return () => { active = false; };
-  }, [id, sb]);
+  }, [id]);
 
   usePageSEO({
     title: property?.title ? `${property.title} | DOMINIO` : "Detalle de Propiedad | DOMINIO",
@@ -303,7 +303,7 @@ export default function PropertyDetailPage() {
                   const message = formData.get("message") as string;
                   
                   try {
-                    const { error } = await sb.functions.invoke("agent-contact", {
+                    const { error } = await supabase.functions.invoke("agent-contact", {
                       body: {
                         agentId: property.agent_id,
                         propertyId: property.id,

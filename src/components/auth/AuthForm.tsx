@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -66,7 +66,7 @@ export default function AuthForm() {
 
   // Función para obtener el rol del usuario desde la tabla user_roles
   const getUserRole = async (userId: string): Promise<string | null> => {
-    const supabase = getSupabaseClient();
+    
     
     try {
       console.log("Obteniendo rol para usuario:", userId);
@@ -153,7 +153,6 @@ export default function AuthForm() {
   };
 
   const onSubmit = async (values: any) => {
-    const supabase = getSupabaseClient();
     setIsLoading(true);
     setSuccessMessage("");
 
@@ -190,7 +189,10 @@ export default function AuthForm() {
           // Insertar rol en user_roles
           const { error: roleError } = await supabase.from('user_roles').upsert({
             user_id: data.user.id,
-            role: role,
+            role: role === 'Super Administrador' ? 'super_admin' : 
+                  role === 'Administrador de Franquicia' ? 'franchise_admin' :
+                  role === 'Gerente de Oficina' ? 'office_manager' :
+                  role === 'Supervisor' ? 'supervisor' : 'agent',
           });
           
           if (roleError) console.warn('Error al guardar rol:', roleError);

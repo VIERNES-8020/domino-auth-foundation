@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import PropertyCard from "@/components/PropertyCard";
 import PropertiesMap from "@/components/PropertiesMap";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LocateFixed } from "lucide-react";
 
@@ -62,7 +62,7 @@ export default function PropertiesPage() {
     canonicalPath: "/properties",
   });
 
-  const sb = getSupabaseClient();
+  
 
   const [city, setCity] = useState("");
   const [priceMin, setPriceMin] = useState<string>("");
@@ -113,7 +113,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
   useEffect(() => {
     let cancelled = false;
     async function loadAmenities() {
-      const { data, error } = await sb.from("amenities").select("id,name").order("name", { ascending: true });
+      const { data, error } = await supabase.from("amenities").select("id,name").order("name", { ascending: true });
       if (!cancelled && !error) setAmenities(data ?? []);
     }
     loadAmenities();
@@ -126,12 +126,12 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await sb.functions.invoke("mapbox-public-token");
+        const { data } = await supabase.functions.invoke("mapbox-public-token");
         const t = (data as any)?.token as string | undefined;
         if (t) setMapToken(t);
       } catch (_) { /* noop */ }
     })();
-  }, [sb]);
+  }, []);
 
   useEffect(() => {
     if (!mapToken || !navigator.geolocation) return;
@@ -148,14 +148,14 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
   useEffect(() => {
     (async () => {
-      const { data: auth } = await sb.auth.getUser();
+      const { data: auth } = await supabase.auth.getUser();
       const user = auth?.user;
       if (!user) return;
-      const { data } = await sb.from("favorites").select("property_id");
+      const { data } = await supabase.from("favorites").select("property_id");
       const ids = new Set<string>((data ?? []).map((r: any) => r.property_id));
       setFavIds(ids);
     })();
-  }, [sb]);
+  }, []);
 
   // Buscar por ubicación actual (GPS)
   const handleNearMeClick = () => {
@@ -170,7 +170,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         try {
           setUsingNearMe(true);
           setLoading(true);
-          const { data, error } = await sb.rpc("properties_nearby", {
+          const { data, error } = await supabase.rpc("properties_nearby", {
             lon: longitude,
             lat: latitude,
             radius_km: 5,
@@ -210,7 +210,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         // If filtering by amenities, compute matching property ids first
         let amenityPropertyIds: string[] | null = null;
         if (selectedAmenities.length > 0) {
-          const { data: pa, error: paError } = await sb
+          const { data: pa, error: paError } = await supabase
             .from("property_amenities")
             .select("property_id, amenity_id")
             .in("amenity_id", selectedAmenities);
@@ -232,7 +232,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
           }
         }
 
-        let query = sb
+        let query = supabase
           .from("properties")
           .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,geolocation", { count: "exact" })
           .eq("status", "approved")
@@ -495,14 +495,14 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {properties.map((p) => (
                 <PropertyCard key={p.id} property={p} isFavorited={favIds.has(p.id)} onToggleFavorite={async (id, next) => {
-                  const { data: auth } = await sb.auth.getUser();
+                  const { data: auth } = await supabase.auth.getUser();
                   const user = auth?.user;
                   if (!user) { toast.message("Inicia sesión para guardar favoritos"); return; }
                   if (next) {
-                    const { error } = await sb.from("favorites").insert({ user_id: user.id, property_id: id });
+                    const { error } = await supabase.from("favorites").insert({ user_id: user.id, property_id: id });
                     if (!error) setFavIds((prev) => new Set(prev).add(id));
                   } else {
-                    const { error } = await sb.from("favorites").delete().eq("user_id", user.id).eq("property_id", id);
+                    const { error } = await supabase.from("favorites").delete().eq("user_id", user.id).eq("property_id", id);
                     if (!error) setFavIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
                   }
                 }} />

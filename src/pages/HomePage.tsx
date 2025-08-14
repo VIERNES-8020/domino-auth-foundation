@@ -8,7 +8,6 @@ import heroImage from "@/assets/hero-warm.jpg";
 import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 import PropertyCard from "@/components/PropertyCard";
 
 // SEO helpers

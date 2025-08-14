@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { User, MapPin, Star } from "lucide-react";
 
 interface AgentProfile { 
@@ -34,7 +34,7 @@ function usePageSEO(opts: { title: string; description: string; canonicalPath: s
 
 export default function AgentsPage() {
   usePageSEO({ title: "Nuestros Agentes | DOMINIO", description: "Conoce a nuestros agentes certificados en toda Bolivia.", canonicalPath: "/agents" });
-  const sb = useMemo(() => getSupabaseClient(), []);
+  
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +43,7 @@ export default function AgentsPage() {
     (async () => {
       try {
         // Get full agent profiles with additional information
-        const { data } = await sb
+        const { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url, bio, agent_code, title, corporate_phone")
           .not("agent_code", "is", null)
@@ -58,7 +58,7 @@ export default function AgentsPage() {
       }
     })();
     return () => { active = false; };
-  }, [sb]);
+  }, []);
 
   if (loading) {
     return (

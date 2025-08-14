@@ -2,23 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import brandLogo from "@/assets/logo-dominio.svg";
-import { getSupabaseClient } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Header() {
-  const sb = useMemo(() => getSupabaseClient(), []);
   const [session, setSession] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
 
   useEffect(() => {
-    const { data: { subscription } } = sb.auth.onAuthStateChange(async (_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
       
       if (s?.user?.id) {
         // Fetch user role when session changes
         setTimeout(async () => {
           try {
-            const { data: roleData } = await sb
+        const { data: roleData } = await supabase
               .from('user_roles')
               .select('role')
               .eq('user_id', s.user.id)
@@ -40,14 +39,14 @@ export default function Header() {
       }
     });
     
-    sb.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       
       if (session?.user?.id) {
         // Fetch user role for existing session
         setTimeout(async () => {
           try {
-            const { data: roleData } = await sb
+            const { data: roleData } = await supabase
               .from('user_roles')
               .select('role')
               .eq('user_id', session.user.id)
@@ -68,7 +67,7 @@ export default function Header() {
     });
     
     return () => subscription.unsubscribe();
-  }, [sb]);
+  }, []);
 
   return (
     <header className="container mx-auto py-5">
@@ -125,7 +124,7 @@ export default function Header() {
                   <Link to="/dashboard/agent">Panel de Agente</Link>
                 </Button>
               )}
-              <Button variant="outline" onClick={async () => { await sb.auth.signOut(); }}>
+              <Button variant="outline" onClick={async () => { await supabase.auth.signOut(); }}>
                 Cerrar Sesión
               </Button>
             </div>
