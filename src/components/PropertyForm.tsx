@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import MapPicker from "@/components/MapPicker";
+import MapPicker from "@/components/MapPicker"; // Fixed import
 import { toast } from "sonner";
 import { Home, MapPin, Camera, Settings } from "lucide-react";
 
