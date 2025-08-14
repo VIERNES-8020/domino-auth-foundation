@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,191 +8,56 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Users, Building2, TrendingUp, Archive, Plus, Edit, Trash } from "lucide-react";
-import { Navigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
+import { Users, Building2, TrendingUp, Plus, Edit } from "lucide-react";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("users");
-  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [newFranchise, setNewFranchise] = useState({ name: "", description: "", admin_id: "" });
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const user = useUser();
 
-  // Check if user is super admin
-  const { data: isSuperAdmin, isLoading: checkingAdmin } = useQuery({
-    queryKey: ["check-super-admin", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      
-      const { data, error } = await supabase
-        .from("super_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error || !data) return false;
-      return true;
+  // Mock data for visual display
+  const mockUsers = [
+    {
+      id: "1",
+      full_name: "Juan Pérez",
+      email: "juan@ejemplo.com",
+      role: "Agente Inmobiliario",
+      created_at: "2024-01-15"
     },
-    enabled: !!user?.id,
-  });
+    {
+      id: "2",
+      full_name: "María González",
+      email: "maria@ejemplo.com", 
+      role: "Cliente",
+      created_at: "2024-02-01"
+    }
+  ];
 
-  // Fetch all users with their profiles and roles
-  const { data: users = [] } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: async () => {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select(`
-          *,
-          user_roles (
-            role
-          )
-        `)
-        .order("created_at", { ascending: false });
+  const mockFranchises = [
+    {
+      id: "1",
+      name: "Inmobiliaria Lima Centro",
+      description: "Especialistas en propiedades del centro de Lima",
+      admin_name: "Carlos Rodriguez",
+      created_at: "2024-01-10"
+    }
+  ];
 
-      if (error) throw error;
-      return profiles || [];
-    },
-    enabled: isSuperAdmin,
-  });
+  const mockArchivedProperties = [
+    {
+      id: "1",
+      title: "Casa Archivada",
+      address: "Av. Ejemplo 123",
+      price: 250000,
+      agent_name: "Ana Torres"
+    }
+  ];
 
-  // Fetch franchises
-  const { data: franchises = [] } = useQuery({
-    queryKey: ["admin-franchises"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("franchises")
-        .select(`
-          *,
-          profiles (
-            full_name
-          )
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: isSuperAdmin,
-  });
-
-  // Fetch archived properties
-  const { data: archivedProperties = [] } = useQuery({
-    queryKey: ["admin-archived-properties"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select(`
-          *,
-          profiles (
-            full_name
-          )
-        `)
-        .eq("is_archived", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: isSuperAdmin,
-  });
-
-  // Fetch global stats
-  const { data: globalStats } = useQuery({
-    queryKey: ["admin-global-stats"],
-    queryFn: async () => {
-      const [agentsRes, propertiesRes, salesRes] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact" }),
-        supabase.from("properties").select("id, price, franchise_id", { count: "exact" }),
-        supabase.from("agent_performance").select("properties_sold_month").not("properties_sold_month", "is", null)
-      ]);
-
-      const totalSales = salesRes.data?.reduce((sum, agent) => sum + (agent.properties_sold_month || 0), 0) || 0;
-      const avgPropertyPrice = propertiesRes.data?.length ? 
-        propertiesRes.data.reduce((sum, prop) => sum + (prop.price || 0), 0) / propertiesRes.data.length : 0;
-
-      return {
-        totalAgents: agentsRes.count || 0,
-        totalProperties: propertiesRes.count || 0,
-        totalSales,
-        avgPropertyPrice,
-      };
-    },
-    enabled: isSuperAdmin,
-  });
-
-  // Create franchise mutation
-  const createFranchiseMutation = useMutation({
-    mutationFn: async (franchise: typeof newFranchise) => {
-      const { error } = await supabase
-        .from("franchises")
-        .insert([franchise]);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Franquicia creada",
-        description: "La franquicia ha sido creada exitosamente.",
-      });
-      setNewFranchise({ name: "", description: "", admin_id: "" });
-      queryClient.invalidateQueries({ queryKey: ["admin-franchises"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la franquicia.",
-        variant: "destructive",
-      });
-      console.error("Error creating franchise:", error);
-    },
-  });
-
-  // Update user role mutation
-  const updateUserRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: "agent" | "client" | "admin" }) => {
-      // Delete existing role
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-
-      // Insert new role
-      const { error } = await supabase
-        .from("user_roles")
-        .insert({ user_id: userId, role });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Rol actualizado",
-        description: "El rol del usuario ha sido actualizado exitosamente.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el rol del usuario.",
-        variant: "destructive",
-      });
-      console.error("Error updating user role:", error);
-    },
-  });
-
-  if (checkingAdmin) {
-    return <div className="flex items-center justify-center min-h-screen">Verificando permisos...</div>;
-  }
-
-  if (!isSuperAdmin) {
-    return <Navigate to="/dashboard/agent" replace />;
-  }
+  const mockStats = {
+    totalAgents: 15,
+    totalProperties: 85,
+    totalSales: 12,
+    avgPropertyPrice: 320000
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -211,7 +76,7 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{globalStats?.totalAgents || 0}</div>
+            <div className="text-2xl font-bold">{mockStats.totalAgents}</div>
           </CardContent>
         </Card>
         <Card>
@@ -220,7 +85,7 @@ const AdminDashboard = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{globalStats?.totalProperties || 0}</div>
+            <div className="text-2xl font-bold">{mockStats.totalProperties}</div>
           </CardContent>
         </Card>
         <Card>
@@ -229,7 +94,7 @@ const AdminDashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{globalStats?.totalSales || 0}</div>
+            <div className="text-2xl font-bold">{mockStats.totalSales}</div>
           </CardContent>
         </Card>
         <Card>
@@ -239,7 +104,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${Math.round(globalStats?.avgPropertyPrice || 0).toLocaleString()}
+              ${mockStats.avgPropertyPrice.toLocaleString()}
             </div>
           </CardContent>
         </Card>
@@ -274,14 +139,12 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {mockUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell>{user.full_name || "Sin nombre"}</TableCell>
-                      <TableCell>usuario@{user.id.substring(0, 8)}</TableCell>
+                      <TableCell>{user.full_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">
-                          {Array.isArray(user.user_roles) && user.user_roles.length > 0 ? user.user_roles[0].role : "usuario"}
-                        </Badge>
+                        <Badge variant="secondary">{user.role}</Badge>
                       </TableCell>
                       <TableCell>
                         {new Date(user.created_at).toLocaleDateString()}
@@ -289,11 +152,7 @@ const AdminDashboard = () => {
                       <TableCell>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setSelectedUser(user)}
-                            >
+                            <Button variant="outline" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
@@ -307,14 +166,7 @@ const AdminDashboard = () => {
                             <div className="space-y-4">
                               <div>
                                 <Label htmlFor="role">Rol</Label>
-                                <Select
-                                  onValueChange={(value: "agent" | "client" | "admin") => 
-                                    updateUserRoleMutation.mutate({ 
-                                      userId: user.id, 
-                                      role: value 
-                                    })
-                                  }
-                                >
+                                <Select>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Seleccionar rol" />
                                   </SelectTrigger>
@@ -389,19 +241,15 @@ const AdminDashboard = () => {
                           <SelectValue placeholder="Seleccionar administrador" />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.map((user) => (
+                          {mockUsers.map((user) => (
                             <SelectItem key={user.id} value={user.id}>
-                              {user.full_name || `Usuario ${user.id.substring(0, 8)}`}
+                              {user.full_name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button
-                      onClick={() => createFranchiseMutation.mutate(newFranchise)}
-                      disabled={!newFranchise.name || createFranchiseMutation.isPending}
-                      className="w-full"
-                    >
+                    <Button className="w-full">
                       Crear Franquicia
                     </Button>
                   </div>
@@ -419,11 +267,11 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {franchises.map((franchise) => (
+                  {mockFranchises.map((franchise) => (
                     <TableRow key={franchise.id}>
                       <TableCell className="font-medium">{franchise.name}</TableCell>
                       <TableCell>{franchise.description}</TableCell>
-                      <TableCell>{Array.isArray(franchise.profiles) && franchise.profiles.length > 0 ? franchise.profiles[0].full_name : "Sin asignar"}</TableCell>
+                      <TableCell>{franchise.admin_name}</TableCell>
                       <TableCell>
                         {new Date(franchise.created_at).toLocaleDateString()}
                       </TableCell>
@@ -448,12 +296,16 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Total de Agentes Activos:</span>
-                    <span className="font-semibold">{globalStats?.totalAgents || 0}</span>
+                    <span>Agentes Activos:</span>
+                    <span className="font-bold">12</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Ventas Totales del Mes:</span>
-                    <span className="font-semibold">{globalStats?.totalSales || 0}</span>
+                    <span>Promedio de Ventas:</span>
+                    <span className="font-bold">3.2/mes</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Top Performer:</span>
+                    <span className="font-bold">Ana Torres</span>
                   </div>
                 </div>
               </CardContent>
@@ -463,20 +315,22 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle>Reporte de Propiedades</CardTitle>
                 <CardDescription>
-                  Estadísticas del inventario
+                  Estado actual del inventario
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Total de Propiedades:</span>
-                    <span className="font-semibold">{globalStats?.totalProperties || 0}</span>
+                    <span>Propiedades Activas:</span>
+                    <span className="font-bold">75</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Precio Promedio:</span>
-                    <span className="font-semibold">
-                      ${Math.round(globalStats?.avgPropertyPrice || 0).toLocaleString()}
-                    </span>
+                    <span>Propiedades Vendidas:</span>
+                    <span className="font-bold">10</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tiempo Promedio en Mercado:</span>
+                    <span className="font-bold">45 días</span>
                   </div>
                 </div>
               </CardContent>
@@ -490,7 +344,7 @@ const AdminDashboard = () => {
             <CardHeader>
               <CardTitle>Propiedades Archivadas</CardTitle>
               <CardDescription>
-                Auditoría de propiedades archivadas por los agentes
+                Propiedades que han sido archivadas por los agentes
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -498,33 +352,22 @@ const AdminDashboard = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Título</TableHead>
-                    <TableHead>Agente</TableHead>
-                    <TableHead>Precio</TableHead>
                     <TableHead>Dirección</TableHead>
-                    <TableHead>Fecha de Creación</TableHead>
+                    <TableHead>Precio</TableHead>
+                    <TableHead>Agente</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {archivedProperties.map((property) => (
+                  {mockArchivedProperties.map((property) => (
                     <TableRow key={property.id}>
                       <TableCell className="font-medium">{property.title}</TableCell>
-                      <TableCell>{Array.isArray(property.profiles) && property.profiles.length > 0 ? property.profiles[0].full_name : "Agente desconocido"}</TableCell>
-                      <TableCell>
-                        ${property.price?.toLocaleString()} {property.price_currency}
-                      </TableCell>
                       <TableCell>{property.address}</TableCell>
-                      <TableCell>
-                        {new Date(property.created_at).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell>${property.price.toLocaleString()}</TableCell>
+                      <TableCell>{property.agent_name}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-              {archivedProperties.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No hay propiedades archivadas.
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
