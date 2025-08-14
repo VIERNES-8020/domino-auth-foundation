@@ -1,10 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, Facebook, Instagram, Linkedin, Twitter, Globe } from "lucide-react";
-
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Star, 
+  Facebook, 
+  Instagram, 
+  Linkedin, 
+  Twitter, 
+  Globe, 
+  Phone, 
+  Mail, 
+  Award,
+  GraduationCap,
+  User,
+  MessageSquare,
+  Send,
+  ArrowLeft,
+  MapPin,
+  Bed,
+  Bath,
+  Square
+} from "lucide-react";
 
 interface Profile {
   id: string;
@@ -23,7 +44,6 @@ interface Profile {
   website_url?: string | null;
 }
 
-
 interface Property {
   id: string;
   title: string;
@@ -31,6 +51,9 @@ interface Property {
   price: number;
   price_currency: string | null;
   image_urls: string[] | null;
+  bedrooms?: number;
+  bathrooms?: number;
+  area_m2?: number;
 }
 
 function usePageSEO(title: string, description: string, canonicalPath?: string) {
@@ -65,10 +88,12 @@ export default function AgentPublicPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<{ average_rating: number; total_ratings: number } | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
   usePageSEO(
-    profile?.full_name ? `Agente ${profile.full_name} | DOMIN10` : "Agente Inmobiliario | DOMIN10",
-    profile?.bio || "Conoce al agente inmobiliario DOMIN10, su experiencia y propiedades activas.",
+    profile?.full_name ? `${profile.full_name} | Agente DOMINIO` : "Agente Inmobiliario | DOMINIO",
+    profile?.bio || "Conoce al agente inmobiliario DOMINIO, su experiencia y propiedades activas.",
     code ? `/agente/${code}` : undefined
   );
 
@@ -76,22 +101,27 @@ export default function AgentPublicPage() {
     let active = true;
     (async () => {
       if (!code) return;
-      const { data, error } = await supabase.functions.invoke('get-agent-profile', {
-        body: { code },
-      });
-      if (error) {
-        console.error('get-agent-profile error', error);
-        return;
+      try {
+        const { data, error } = await supabase.functions.invoke('get-agent-profile', {
+          body: { code },
+        });
+        if (error) {
+          console.error('get-agent-profile error', error);
+          return;
+        }
+        if (!active) return;
+        const payload = data as any;
+        setProfile(payload.profile as Profile);
+        setStats(payload.stats as { average_rating: number; total_ratings: number });
+        setProperties((payload.properties ?? []) as Property[]);
+      } catch (err) {
+        console.error('Error fetching agent profile:', err);
+      } finally {
+        setLoading(false);
       }
-      if (!active) return;
-      const payload = data as any;
-      setProfile(payload.profile as Profile);
-      setStats(payload.stats as { average_rating: number; total_ratings: number });
-      setProperties((payload.properties ?? []) as Property[]);
     })();
     return () => { active = false; };
   }, [code]);
-
 
   const whatsappUrl = useMemo(() => {
     if (!profile?.corporate_phone) return null;
@@ -99,6 +129,30 @@ export default function AgentPublicPage() {
     const phone = profile.corporate_phone.replace(/\D+/g, "");
     return `https://wa.me/${phone}?text=${msg}`;
   }, [profile]);
+
+  const maskedPhone = useMemo(() => {
+    if (!profile?.corporate_phone) return null;
+    // For non-registered users, show masked number
+    const phone = profile.corporate_phone;
+    return phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2');
+  }, [profile?.corporate_phone]);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { name, email, message } = formData;
+    const text = encodeURIComponent(`Hola ${profile?.full_name ?? ''}, soy ${name} (${email}). ${message}`);
+    
+    if (whatsappUrl) {
+      const base = whatsappUrl.split('?')[0];
+      const phone = base.replace('https://wa.me/', '');
+      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    } else {
+      window.location.href = `mailto:info@dominio.com?subject=Contacto agente ${profile?.agent_code ?? ''}&body=${text}`;
+    }
+    
+    // Reset form
+    setFormData({ name: "", email: "", message: "" });
+  };
 
   const personJsonLd = profile ? {
     "@context": "https://schema.org",
@@ -116,169 +170,344 @@ export default function AgentPublicPage() {
     } : undefined,
   } : null;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
-      <header className="container mx-auto py-10">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Perfil del Agente</h1>
-        <p className="mt-2 text-muted-foreground">Identidad única y propiedades activas.</p>
-      </header>
-      <main className="container mx-auto pb-16">
-        {!profile ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No se encontró el agente</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Verifica el código del agente o vuelve al <Link to="/agents" className="underline">listado de agentes</Link>.</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+        <div className="container mx-auto py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Cargando perfil del agente...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30">
+        <div className="container mx-auto py-20">
+          <Card className="max-w-md mx-auto text-center">
+            <CardContent className="pt-8">
+              <User className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Agente no encontrado</h2>
+              <p className="text-muted-foreground mb-6">
+                No se pudo encontrar un agente con el código proporcionado.
+              </p>
+              <Button asChild>
+                <Link to="/agents">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Volver a Agentes
+                </Link>
+              </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle>Información</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={profile.avatar_url || "/default-placeholder.jpg"}
-                    alt={`Foto de perfil del agente ${profile.full_name ?? ''}`}
-                    className="h-20 w-20 rounded-full object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; }}
-                  />
-                  <div>
-                    <p className="font-semibold">{profile.full_name ?? "Agente"}</p>
-                    {profile.title && (<p className="text-sm text-muted-foreground">{profile.title}</p>)}
-                    <p className="text-sm text-muted-foreground">Código: {profile.agent_code ?? "—"}</p>
-                    {stats && (
-                      <div className="flex items-center gap-1 text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={`h-4 w-4 ${i < Math.round(stats.average_rating) ? '' : 'opacity-30'}`} />
-                        ))}
-                        <span className="ml-1 text-xs text-muted-foreground">({stats.total_ratings})</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
+      {/* Hero Section */}
+      <section className="relative py-12 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+        <div className="container mx-auto">
+          <div className="mb-6">
+            <Button variant="ghost" asChild className="mb-4">
+              <Link to="/agents">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver a Agentes
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <main className="container mx-auto py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Agent Info */}
+          <div className="lg:col-span-2">
+            <Card className="mb-8">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Agent Photo */}
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <img
+                        src={profile.avatar_url || "/default-placeholder.jpg"}
+                        alt={`Foto de ${profile.full_name ?? 'Agente'}`}
+                        className="w-48 h-48 rounded-2xl object-cover shadow-xl"
+                        onError={(e) => { 
+                          (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
+                        }}
+                      />
+                      {stats && (
+                        <div className="absolute -bottom-3 -right-3 bg-white rounded-full p-2 shadow-lg border">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                            <span className="font-semibold text-sm">{Number(stats.average_rating || 0).toFixed(1)}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center">
+                            {stats.total_ratings} reseñas
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Agent Details */}
+                  <div className="flex-1">
+                    <div className="mb-4">
+                      <h1 className="text-3xl font-bold text-foreground mb-2">
+                        {profile.full_name ?? "Agente Inmobiliario"}
+                      </h1>
+                      <p className="text-xl text-primary font-semibold mb-1">
+                        {profile.title || "Corredor de Bienes Raíces"}
+                      </p>
+                      <Badge variant="outline" className="mb-4">
+                        Código: {profile.agent_code || "N/A"}
+                      </Badge>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-3 mb-6">
+                      {profile.corporate_phone && (
+                        <div className="flex items-center gap-3">
+                          <Phone className="h-5 w-5 text-primary" />
+                          <span className="text-muted-foreground">{maskedPhone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-primary" />
+                        <span className="text-muted-foreground">info@dominio.com</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <span className="text-muted-foreground">Bolivia</span>
+                      </div>
+                    </div>
+
+                    {/* Social Links */}
+                    <div className="flex flex-wrap gap-3">
+                      {profile.website_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.website_url} target="_blank" rel="noreferrer">
+                            <Globe className="h-4 w-4 mr-2" />
+                            Website
+                          </a>
+                        </Button>
+                      )}
+                      {profile.facebook_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.facebook_url} target="_blank" rel="noreferrer">
+                            <Facebook className="h-4 w-4 mr-2" />
+                            Facebook
+                          </a>
+                        </Button>
+                      )}
+                      {profile.instagram_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.instagram_url} target="_blank" rel="noreferrer">
+                            <Instagram className="h-4 w-4 mr-2" />
+                            Instagram
+                          </a>
+                        </Button>
+                      )}
+                      {profile.linkedin_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={profile.linkedin_url} target="_blank" rel="noreferrer">
+                            <Linkedin className="h-4 w-4 mr-2" />
+                            LinkedIn
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                {profile.experience_summary && (
-                  <div>
-                    <p className="text-sm font-medium">Experiencia</p>
-                    <p className="text-sm text-muted-foreground">{profile.experience_summary}</p>
-                  </div>
-                )}
-                {profile.education && (
-                  <div>
-                    <p className="text-sm font-medium">Estudios</p>
-                    <p className="text-sm text-muted-foreground">{profile.education}</p>
-                  </div>
-                )}
+
+                {/* About Me Section */}
                 {profile.bio && (
-                  <div>
-                    <p className="text-sm font-medium">Acerca de mí</p>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line">{profile.bio}</p>
+                  <div className="mt-8 pt-8 border-t">
+                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                      <User className="h-6 w-6 text-primary" />
+                      Acerca de mí
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                      {profile.bio}
+                    </p>
                   </div>
                 )}
-                <div className="flex flex-wrap items-center gap-3">
-                  {profile.website_url && (
-                    <a href={profile.website_url} target="_blank" rel="noreferrer" aria-label="Sitio web" className="text-muted-foreground hover:text-primary">
-                      <Globe className="h-5 w-5" />
-                    </a>
+
+                {/* Experience & Education */}
+                <div className="mt-8 pt-8 border-t grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {profile.experience_summary && (
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <Award className="h-5 w-5 text-primary" />
+                        Experiencia
+                      </h3>
+                      <p className="text-muted-foreground">{profile.experience_summary}</p>
+                    </div>
                   )}
-                  {profile.facebook_url && (
-                    <a href={profile.facebook_url} target="_blank" rel="noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-primary">
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                  )}
-                  {profile.instagram_url && (
-                    <a href={profile.instagram_url} target="_blank" rel="noreferrer" aria-label="Instagram" className="text-muted-foreground hover:text-primary">
-                      <Instagram className="h-5 w-5" />
-                    </a>
-                  )}
-                  {profile.linkedin_url && (
-                    <a href={profile.linkedin_url} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary">
-                      <Linkedin className="h-5 w-5" />
-                    </a>
-                  )}
-                  {profile.twitter_url && (
-                    <a href={profile.twitter_url} target="_blank" rel="noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-primary">
-                      <Twitter className="h-5 w-5" />
-                    </a>
+                  {profile.education && (
+                    <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-primary" />
+                        Educación
+                      </h3>
+                      <p className="text-muted-foreground">{profile.education}</p>
+                    </div>
                   )}
                 </div>
-                {whatsappUrl && !(/\*/.test(profile.corporate_phone ?? '')) && (
-                  <Button asChild className="w-full"><a href={whatsappUrl} target="_blank" rel="noreferrer">Contactar por WhatsApp</a></Button>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Propiedades activas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {properties.length === 0 ? (
-                  <p className="text-muted-foreground">Sin propiedades aprobadas por el momento.</p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {properties.map((p) => (
-                      <div key={p.id} className="border rounded-lg overflow-hidden">
-                        <div className="aspect-[16/9] bg-muted">
-                          {p.image_urls?.length ? (
-                            <img src={p.image_urls[0]} alt={`Imagen de ${p.title}`} className="h-full w-full object-cover" loading="lazy" />
-                          ) : (
-                            <img src="/default-placeholder.jpg" alt={`Imagen de ${p.title}`} className="h-full w-full object-cover" loading="lazy" />
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <p className="font-medium line-clamp-1">{p.title}</p>
-                          <p className="text-sm text-muted-foreground line-clamp-1">{p.address}</p>
-                          <p className="mt-1 text-sm">{p.price_currency === 'BOB' ? 'Bs.' : '$us.'} {p.price.toLocaleString()}</p>
-                          <Button asChild variant="outline" className="mt-2 w-full"><Link to={`/properties/${p.id}`}>Ver detalle</Link></Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle>Contacto directo</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const form = e.target as HTMLFormElement;
-                    const name = (form.querySelector('#c-name') as HTMLInputElement).value;
-                    const email = (form.querySelector('#c-email') as HTMLInputElement).value;
-                    const msg = (form.querySelector('#c-msg') as HTMLTextAreaElement).value;
-                    const text = encodeURIComponent(`Hola ${profile.full_name ?? ''}, soy ${name} (${email}). ${msg}`);
-                    if (whatsappUrl) {
-                      const base = whatsappUrl.split('?')[0];
-                      const phone = base.replace('https://wa.me/', '');
-                      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-                    } else {
-                      window.location.href = `mailto:info@dominio.com?subject=Contacto agente ${profile.agent_code ?? ''}&body=${text}`;
-                    }
-                  }}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                >
-                  <input id="c-name" required placeholder="Tu nombre" className="border rounded-md px-3 py-2 bg-background" />
-                  <input id="c-email" required type="email" placeholder="Tu email" className="border rounded-md px-3 py-2 bg-background" />
-                  <div className="md:col-span-3">
-                    <textarea id="c-msg" required placeholder="Tu mensaje" className="border rounded-md px-3 py-2 w-full h-24 bg-background" />
-                  </div>
-                  <div className="md:col-span-3 flex justify-end">
-                    <Button type="submit">Enviar</Button>
-                  </div>
-                </form>
               </CardContent>
             </Card>
           </div>
-        )}
+
+          {/* Right Column - Contact Form */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <MessageSquare className="h-12 w-12 text-primary mx-auto mb-3" />
+                  <h3 className="text-2xl font-bold mb-2">Contactar Agente</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Envía un mensaje directo a {profile.full_name?.split(' ')[0] || 'este agente'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div>
+                    <Input
+                      placeholder="Tu nombre completo"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      required
+                      className="bg-background"
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      type="email"
+                      placeholder="Tu email"
+                      value={formData.email}
+                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      className="bg-background"
+                    />
+                  </div>
+                  <div>
+                    <Textarea
+                      placeholder="Escribe tu mensaje o consulta..."
+                      value={formData.message}
+                      onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                      required
+                      className="bg-background min-h-[120px]"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Mensaje
+                  </Button>
+                </form>
+
+                {whatsappUrl && (
+                  <div className="mt-4 pt-4 border-t">
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                        <Phone className="h-4 w-4 mr-2" />
+                        WhatsApp Directo
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Properties Section */}
+        <section className="mt-12">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mb-2">Propiedades Activas</h2>
+            <p className="text-muted-foreground">
+              Descubre las propiedades disponibles de {profile.full_name?.split(' ')[0] || 'este agente'}
+            </p>
+          </div>
+
+          {properties.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <div className="mb-4">
+                  <Square className="h-16 w-16 text-muted-foreground/40 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Sin propiedades activas</h3>
+                <p className="text-muted-foreground">
+                  Este agente no tiene propiedades disponibles en este momento.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((property) => (
+                <Card key={property.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300">
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <img
+                      src={property.image_urls?.[0] || "/default-placeholder.jpg"}
+                      alt={`Imagen de ${property.title}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-primary text-primary-foreground">
+                        {property.price_currency === 'BOB' ? 'Bs.' : '$'} {property.price.toLocaleString()}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-4">
+                    <h3 className="font-bold text-lg mb-2 line-clamp-1">{property.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-3 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {property.address}
+                    </p>
+
+                    {/* Property Features */}
+                    <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                      {property.bedrooms && (
+                        <div className="flex items-center gap-1">
+                          <Bed className="h-3 w-3" />
+                          <span>{property.bedrooms}</span>
+                        </div>
+                      )}
+                      {property.bathrooms && (
+                        <div className="flex items-center gap-1">
+                          <Bath className="h-3 w-3" />
+                          <span>{property.bathrooms}</span>
+                        </div>
+                      )}
+                      {property.area_m2 && (
+                        <div className="flex items-center gap-1">
+                          <Square className="h-3 w-3" />
+                          <span>{property.area_m2}m²</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button asChild className="w-full">
+                      <Link to={`/properties/${property.id}`}>
+                        Ver Detalles
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
+
+      {/* JSON-LD Schema */}
       {personJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
       )}

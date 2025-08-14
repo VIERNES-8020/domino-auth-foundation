@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabaseClient";
+import { User, MapPin, Star } from "lucide-react";
 
-interface AgentProfile { id: string; full_name: string | null; avatar_url?: string | null; bio?: string | null }
+interface AgentProfile { 
+  id: string; 
+  full_name: string | null; 
+  avatar_url?: string | null; 
+  bio?: string | null;
+  agent_code?: string | null;
+  title?: string | null;
+  corporate_phone?: string | null;
+}
 
 function usePageSEO(opts: { title: string; description: string; canonicalPath: string }) {
   const { title, description, canonicalPath } = opts;
@@ -27,46 +36,149 @@ export default function AgentsPage() {
   usePageSEO({ title: "Nuestros Agentes | DOMINIO", description: "Conoce a nuestros agentes certificados en toda Bolivia.", canonicalPath: "/agents" });
   const sb = useMemo(() => getSupabaseClient(), []);
   const [agents, setAgents] = useState<AgentProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
-        // Basic list from profiles
-        const { data } = await sb.from("profiles").select("id, full_name").order("full_name", { ascending: true });
+        // Get full agent profiles with additional information
+        const { data } = await sb
+          .from("profiles")
+          .select("id, full_name, avatar_url, bio, agent_code, title, corporate_phone")
+          .not("agent_code", "is", null)
+          .order("full_name", { ascending: true });
+        
         if (!active) return;
         setAgents((data as AgentProfile[]) ?? []);
-      } catch (e) { /* noop */ }
+        setLoading(false);
+      } catch (e) { 
+        console.error("Error loading agents:", e);
+        setLoading(false);
+      }
     })();
     return () => { active = false; };
   }, [sb]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
+        <main className="container mx-auto py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Cargando agentes...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
-      <main className="container mx-auto py-10">
-        <header className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Nuestros Agentes</h1>
-          <p className="mt-2 text-muted-foreground">Profesionales listos para ayudarte a encontrar tu hogar ideal.</p>
+      <main className="container mx-auto py-16">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Nuestros Agentes
+          </h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Profesionales certificados y experimentados, listos para ayudarte a encontrar la propiedad perfecta en toda Bolivia.
+          </p>
         </header>
 
-        <section>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {agents.map((a) => (
-              <Card key={a.id} className="overflow-hidden">
-                <AspectRatio ratio={1}>
-                  <img src="/placeholder.svg" alt={`Agente ${a.full_name ?? a.id}`} className="w-full h-full object-cover" />
-                </AspectRatio>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold line-clamp-1">{a.full_name ?? `Agente ${a.id.slice(0,8)}`}</h3>
-                  <Button variant="outline" size="sm" className="mt-2">Ver Perfil</Button>
-                </CardContent>
-              </Card>
-            ))}
-            {agents.length === 0 && (
-              <p className="text-muted-foreground">Pronto listaremos a nuestros agentes.</p>
-            )}
-          </div>
+        <section className="animate-fade-in">
+          {agents.length === 0 ? (
+            <div className="text-center py-16">
+              <User className="h-24 w-24 text-muted-foreground/40 mx-auto mb-6" />
+              <h3 className="text-2xl font-semibold text-muted-foreground mb-2">Próximamente</h3>
+              <p className="text-muted-foreground">Estamos preparando el perfil de nuestros agentes profesionales.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {agents.map((agent) => (
+                <Card key={agent.id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card border-0 shadow-lg">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-all duration-300" />
+                  
+                  <CardContent className="p-0 relative">
+                    {/* Profile Image */}
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <img 
+                        src={agent.avatar_url || "/default-placeholder.jpg"}
+                        alt={`Agente ${agent.full_name ?? agent.id}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => { 
+                          (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      
+                      {/* Agent Rating/Badge */}
+                      <div className="absolute top-4 right-4">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-medium">4.8</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Agent Info */}
+                    <div className="p-6">
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                          {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
+                        </h3>
+                        <p className="text-primary font-medium text-sm mt-1">
+                          {agent.title || "Corredor de Bienes Raíces"}
+                        </p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          Código: {agent.agent_code || "N/A"}
+                        </p>
+                      </div>
+
+                      {/* Bio snippet */}
+                      {agent.bio && (
+                        <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
+                          {agent.bio}
+                        </p>
+                      )}
+
+                      {/* Contact indicator */}
+                      <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>Disponible en Bolivia</span>
+                      </div>
+
+                      {/* Action Button */}
+                      <Button 
+                        asChild 
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
+                      >
+                        <Link to={`/agente/${agent.agent_code}`}>
+                          Ver Perfil Completo
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
+
+        {/* Call to Action Section */}
+        {agents.length > 0 && (
+          <section className="mt-20 text-center">
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 border border-primary/20">
+              <h2 className="text-2xl font-bold mb-4">¿Necesitas ayuda personalizada?</h2>
+              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                Nuestros agentes están listos para asesorarte en la búsqueda de tu propiedad ideal. 
+                Contacta directamente con cualquiera de ellos.
+              </p>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/contact">Contactar Ahora</Link>
+              </Button>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
