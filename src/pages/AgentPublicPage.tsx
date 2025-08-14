@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import ClientReviewsSection from "@/components/ClientReviewsSection";
 import { 
   Star, 
   Facebook, 
@@ -24,7 +25,8 @@ import {
   MapPin,
   Bed,
   Bath,
-  Square
+  Square,
+  Quote
 } from "lucide-react";
 
 interface Profile {
@@ -54,6 +56,16 @@ interface Property {
   bedrooms?: number;
   bathrooms?: number;
   area_m2?: number;
+}
+
+interface ClientReview {
+  id: string;
+  client_name: string;
+  transaction_type: string;
+  company_rating: number;
+  agent_rating: number;
+  comment: string | null;
+  created_at: string;
 }
 
 function usePageSEO(title: string, description: string, canonicalPath?: string) {
@@ -425,6 +437,11 @@ export default function AgentPublicPage() {
             </Card>
           </div>
         </div>
+
+        {/* Client Reviews Section */}
+        <section className="mt-12">
+          <ClientReviewsSection agentId={profile.id} />
+        </section>
 
         {/* Properties Section */}
         <section className="mt-12">

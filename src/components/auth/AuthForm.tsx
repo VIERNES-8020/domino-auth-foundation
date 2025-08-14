@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const roles = [
+const agentRoles = [
   "Super Administrador",
   "Administrador de Franquicia",
   "Gerente de Oficina",
@@ -29,31 +29,44 @@ const roles = [
   "Supervisor",
 ] as const;
 
+
 const baseSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
   password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
 });
 
-const signupSchema = baseSchema.extend({
+const clientSchema = baseSchema.extend({
   full_name: z.string().min(2, { message: "Ingresa tu nombre" }),
-  role: z.enum(roles, { required_error: "Selecciona un rol" }),
+  identity_card: z.string().min(5, { message: "Ingresa tu CI" }),
+  corporate_phone: z.string().min(6, { message: "Ingresa tu celular" }),
+  whatsapp: z.string().optional(),
+});
+
+const agentSignupSchema = baseSchema.extend({
+  full_name: z.string().min(2, { message: "Ingresa tu nombre" }),
+  role: z.enum(agentRoles, { required_error: "Selecciona un rol" }),
   identity_card: z.string().min(5, { message: "Ingresa tu CI" }),
   corporate_phone: z.string().min(6, { message: "Ingresa tu celular corporativo" }),
 });
 
-type SignupValues = z.infer<typeof signupSchema>;
+type AgentSignupValues = z.infer<typeof agentSignupSchema>;
+type ClientSignupValues = z.infer<typeof clientSchema>;
 type LoginValues = z.infer<typeof baseSchema>;
 
-type Mode = "login" | "signup";
+type Mode = "login" | "agent-signup" | "client-signup";
 
 export default function AuthForm() {
-  const [mode, setMode] = useState<Mode>("signup");
+  const [mode, setMode] = useState<Mode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
-  const form = useForm<SignupValues | LoginValues>({
-    resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
+  const form = useForm<AgentSignupValues | ClientSignupValues | LoginValues>({
+    resolver: zodResolver(
+      mode === "agent-signup" ? agentSignupSchema : 
+      mode === "client-signup" ? clientSchema : 
+      baseSchema
+    ),
     defaultValues: {
       email: "",
       password: "",
@@ -61,6 +74,7 @@ export default function AuthForm() {
       role: undefined,
       identity_card: "",
       corporate_phone: "",
+      whatsapp: "",
     },
   });
 
@@ -157,8 +171,8 @@ export default function AuthForm() {
     setSuccessMessage("");
 
     try {
-      if (mode === "signup") {
-        const { email, password, full_name, role, identity_card, corporate_phone } = values as SignupValues;
+      if (mode === "agent-signup") {
+        const { email, password, full_name, role, identity_card, corporate_phone } = values as AgentSignupValues;
         const redirectUrl = `${window.location.origin}/`;
         
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -215,6 +229,53 @@ export default function AuthForm() {
             await handleSuccessfulLogin(sessionData.session);
           }
         }
+      } else if (mode === "client-signup") {
+        const { email, password, full_name, identity_card, corporate_phone, whatsapp } = values as ClientSignupValues;
+        const redirectUrl = `${window.location.origin}/`;
+        
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: { full_name, role: "Cliente" },
+          },
+        });
+        
+        if (signUpError) throw signUpError;
+
+        // Si hay usuario, actualizar el perfil
+        if (data.user) {
+          console.log("Cliente registrado:", data.user.id);
+          
+          // Upsert profile con información del cliente
+          const { error: upsertErr } = await supabase.from('profiles').upsert({
+            id: data.user.id,
+            full_name,
+            identity_card,
+            corporate_phone,
+          });
+          
+          if (upsertErr) console.warn('Error al guardar perfil de cliente:', upsertErr);
+
+          // Insertar rol de cliente en user_roles
+          const { error: roleError } = await supabase.from('user_roles').upsert({
+            user_id: data.user.id,
+            role: 'client',
+          });
+          
+          if (roleError) console.warn('Error al guardar rol de cliente:', roleError);
+
+          toast.success("Registro de cliente exitoso", {
+            description: "Tu cuenta ha sido creada. Ya puedes explorar propiedades.",
+          });
+
+          // Redirigir a la página principal
+          setSuccessMessage("✅ Registro exitoso. Redirigiendo...");
+          setTimeout(() => {
+            navigate('/');
+          }, 1500);
+        }
       } else {
         // Proceso de login
         const { email, password } = values as LoginValues;
@@ -244,7 +305,9 @@ export default function AuthForm() {
     <Card className="w-full max-w-md border-border/60">
       <CardHeader>
         <CardTitle>
-          {mode === "signup" ? "Crear cuenta" : "Iniciar sesión"}
+          {mode === "login" ? "Iniciar sesión" : 
+           mode === "agent-signup" ? "Crear cuenta (Agente / Staff)" : 
+           "Crear cuenta (Cliente)"}
         </CardTitle>
         <CardDescription>
           Inmobiliaria DOMIN10 — Accede a tu panel seguro
@@ -262,7 +325,7 @@ export default function AuthForm() {
           onSubmit={form.handleSubmit(onSubmit)}
           noValidate
         >
-          {mode === "signup" && (
+          {(mode === "agent-signup" || mode === "client-signup") && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="full_name">Nombre completo</Label>
@@ -281,12 +344,21 @@ export default function AuthForm() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="corporate_phone">Celular corporativo</Label>
+                <Label htmlFor="corporate_phone">
+                  {mode === "agent-signup" ? "Celular corporativo" : "Celular"}
+                </Label>
                 <Input id="corporate_phone" placeholder="Ej. 7XXXXXXXX" {...form.register("corporate_phone")} />
                 {(form.formState.errors as any)?.corporate_phone && (
                   <p className="text-sm text-destructive">{((form.formState.errors as any).corporate_phone.message as string) ?? ""}</p>
                 )}
               </div>
+
+              {mode === "client-signup" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="whatsapp">WhatsApp (opcional)</Label>
+                  <Input id="whatsapp" placeholder="Ej. 7XXXXXXXX" {...form.register("whatsapp")} />
+                </div>
+              )}
             </>
           )}
 
@@ -322,12 +394,12 @@ export default function AuthForm() {
             )}
           </div>
 
-          {mode === "signup" && (
+          {mode === "agent-signup" && (
             <div className="grid gap-2">
               <Label>Rol</Label>
               <Select
                 onValueChange={(val) =>
-                  form.setValue("role" as any, val as (typeof roles)[number], {
+                  form.setValue("role" as any, val as (typeof agentRoles)[number], {
                     shouldValidate: true,
                   })
                 }
@@ -336,7 +408,7 @@ export default function AuthForm() {
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  {roles.map((r) => (
+                  {agentRoles.map((r) => (
                     <SelectItem key={r} value={r}>
                       {r}
                     </SelectItem>
@@ -351,14 +423,40 @@ export default function AuthForm() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Procesando..." : (mode === "signup" ? "Crear cuenta" : "Entrar")}
-            </Button>
-          </div>
+          {mode === "login" ? (
+            <div className="flex flex-col gap-3 pt-2">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Procesando..." : "Iniciar Sesión"}
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setMode("agent-signup")}
+                >
+                  Crear Cuenta (Agente / Staff)
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setMode("client-signup")}
+                >
+                  Crear Cuenta (Cliente)
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2 pt-2">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Procesando..." : "Crear cuenta"}
+              </Button>
+            </div>
+          )}
 
-          <div className="text-sm text-muted-foreground pt-2">
-            {mode === "signup" ? (
+          {mode !== "login" && (
+            <div className="text-sm text-muted-foreground pt-2 text-center">
               <button
                 type="button"
                 className="underline underline-offset-4 hover:text-foreground transition-colors"
@@ -366,16 +464,8 @@ export default function AuthForm() {
               >
                 ¿Ya tienes cuenta? Inicia sesión
               </button>
-            ) : (
-              <button
-                type="button"
-                className="underline underline-offset-4 hover:text-foreground transition-colors"
-                onClick={() => setMode("signup")}
-              >
-                ¿Aún no tienes cuenta? Regístrate
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

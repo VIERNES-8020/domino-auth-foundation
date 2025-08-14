@@ -96,6 +96,12 @@ export default function Header() {
               Nuestros Agentes
             </Link>
             <Link 
+              to="/nuestros-clientes" 
+              className={`nav-link ${location.pathname === '/nuestros-clientes' ? 'active' : ''}`}
+            >
+              Nuestros Clientes
+            </Link>
+            <Link 
               to="/about" 
               className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}
             >

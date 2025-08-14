@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { User, MapPin, Star } from "lucide-react";
+import { User, MapPin, Star, Search, Filter } from "lucide-react";
 
 interface AgentProfile { 
   id: string; 
@@ -36,7 +38,12 @@ export default function AgentsPage() {
   usePageSEO({ title: "Nuestros Agentes | DOMINIO", description: "Conoce a nuestros agentes certificados en toda Bolivia.", canonicalPath: "/agents" });
   
   const [agents, setAgents] = useState<AgentProfile[]>([]);
+  const [filteredAgents, setFilteredAgents] = useState<AgentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [minRating, setMinRating] = useState<string>("");
+  const [displayCount, setDisplayCount] = useState(12);
+  const [agentPerformance, setAgentPerformance] = useState<Record<string, {average_rating: number, total_ratings: number}>>({});
 
   useEffect(() => {
     let active = true;
@@ -51,6 +58,23 @@ export default function AgentsPage() {
         
         if (!active) return;
         setAgents((data as AgentProfile[]) ?? []);
+        
+        // Get agent performance data
+        const { data: performanceData } = await supabase
+          .from("agent_performance")
+          .select("agent_id, average_rating, total_ratings");
+        
+        if (performanceData) {
+          const performanceMap = performanceData.reduce((acc, perf) => {
+            acc[perf.agent_id] = {
+              average_rating: Number(perf.average_rating) || 4.8,
+              total_ratings: perf.total_ratings || 0
+            };
+            return acc;
+          }, {} as Record<string, {average_rating: number, total_ratings: number}>);
+          setAgentPerformance(performanceMap);
+        }
+        
         setLoading(false);
       } catch (e) { 
         console.error("Error loading agents:", e);
@@ -59,6 +83,31 @@ export default function AgentsPage() {
     })();
     return () => { active = false; };
   }, []);
+
+  // Filter agents based on search and rating
+  useEffect(() => {
+    let filtered = agents;
+    
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(agent => 
+        agent.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agent.agent_code?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (minRating) {
+      const minRatingNum = Number(minRating);
+      filtered = filtered.filter(agent => {
+        const performance = agentPerformance[agent.id];
+        return performance && performance.average_rating >= minRatingNum;
+      });
+    }
+    
+    setFilteredAgents(filtered);
+  }, [agents, searchTerm, minRating, agentPerformance]);
+
+  const displayedAgents = filteredAgents.slice(0, displayCount);
+  const hasMore = filteredAgents.length > displayCount;
 
   if (loading) {
     return (
@@ -85,6 +134,45 @@ export default function AgentsPage() {
           </p>
         </header>
 
+        {/* Search and Filter Section */}
+        <section className="mb-12">
+          <Card className="p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Buscar por nombre o código de agente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="w-full md:w-48">
+                <Select value={minRating} onValueChange={setMinRating}>
+                  <SelectTrigger>
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Calificación mínima" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas las calificaciones</SelectItem>
+                    <SelectItem value="4.5">4.5+ estrellas</SelectItem>
+                    <SelectItem value="4.0">4.0+ estrellas</SelectItem>
+                    <SelectItem value="3.5">3.5+ estrellas</SelectItem>
+                    <SelectItem value="3.0">3.0+ estrellas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {(searchTerm || minRating) && (
+              <div className="mt-4 text-sm text-muted-foreground">
+                Mostrando {filteredAgents.length} de {agents.length} agentes
+              </div>
+            )}
+          </Card>
+        </section>
+
         <section className="animate-fade-in">
           {agents.length === 0 ? (
             <div className="text-center py-16">
@@ -94,77 +182,85 @@ export default function AgentsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {agents.map((agent) => (
-                <Card key={agent.id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card border-0 shadow-lg">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-all duration-300" />
-                  
-                  <CardContent className="p-0 relative">
-                    {/* Profile Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      <img 
-                        src={agent.avatar_url || "/default-placeholder.jpg"}
-                        alt={`Agente ${agent.full_name ?? agent.id}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => { 
-                          (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      
-                      {/* Agent Rating/Badge */}
-                      <div className="absolute top-4 right-4">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-medium">4.8</span>
+              {displayedAgents.map((agent) => {
+                const performance = agentPerformance[agent.id] || { average_rating: 4.8, total_ratings: 0 };
+                return (
+                  <Card key={agent.id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card border-0 shadow-lg">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-all duration-300" />
+                    
+                    <CardContent className="p-0 relative">
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <img 
+                          src={agent.avatar_url || "/default-placeholder.jpg"}
+                          alt={`Agente ${agent.full_name ?? agent.id}`}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => { 
+                            (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        
+                        <div className="absolute top-4 right-4">
+                          <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span className="text-xs font-medium">{performance.average_rating.toFixed(1)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Agent Info */}
-                    <div className="p-6">
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                          {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
-                        </h3>
-                        <p className="text-primary font-medium text-sm mt-1">
-                          {agent.title || "Corredor de Bienes Raíces"}
-                        </p>
-                        <p className="text-muted-foreground text-xs mt-1">
-                          Código: {agent.agent_code || "N/A"}
-                        </p>
+                      <div className="p-6">
+                        <div className="mb-4">
+                          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                            {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
+                          </h3>
+                          <p className="text-primary font-medium text-sm mt-1">
+                            {agent.title || "Corredor de Bienes Raíces"}
+                          </p>
+                          <p className="text-muted-foreground text-xs mt-1">
+                            Código: {agent.agent_code || "N/A"}
+                          </p>
+                        </div>
+
+                        {agent.bio && (
+                          <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
+                            {agent.bio}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          <span>Disponible en Bolivia</span>
+                        </div>
+
+                        <Button 
+                          asChild 
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
+                        >
+                          <Link to={`/agente/${agent.agent_code}`}>
+                            Ver Perfil Completo
+                          </Link>
+                        </Button>
                       </div>
-
-                      {/* Bio snippet */}
-                      {agent.bio && (
-                        <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
-                          {agent.bio}
-                        </p>
-                      )}
-
-                      {/* Contact indicator */}
-                      <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        <span>Disponible en Bolivia</span>
-                      </div>
-
-                      {/* Action Button */}
-                      <Button 
-                        asChild 
-                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
-                      >
-                        <Link to={`/agente/${agent.agent_code}`}>
-                          Ver Perfil Completo
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
+            
+            {hasMore && (
+              <div className="text-center mt-12">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => setDisplayCount(prev => prev + 12)}
+                >
+                  Cargar más agentes
+                </Button>
+              </div>
+            )}
           )}
         </section>
 
-        {/* Call to Action Section */}
         {agents.length > 0 && (
           <section className="mt-20 text-center">
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 border border-primary/20">
