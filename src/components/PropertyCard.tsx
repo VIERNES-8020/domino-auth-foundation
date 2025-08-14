@@ -112,7 +112,11 @@ return (
             <span>Ver Detalles</span>
           </Button>
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">Match Score AURA — próximamente</div>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            AURA Match: <span className="font-semibold text-primary">{75 + (br || 0) * 5 + (ba || 0) * 3}%</span>
+          </span>
+        </div>
       </CardContent>
     </Card>
   </Link>

@@ -272,6 +272,7 @@ export type Database = {
         Row: {
           address: string
           agent_id: string
+          archive_reason: string | null
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
@@ -302,6 +303,7 @@ export type Database = {
         Insert: {
           address: string
           agent_id: string
+          archive_reason?: string | null
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -332,6 +334,7 @@ export type Database = {
         Update: {
           address?: string
           agent_id?: string
+          archive_reason?: string | null
           area_m2?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -944,6 +947,7 @@ export type Database = {
         Returns: {
           address: string
           agent_id: string
+          archive_reason: string | null
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null
@@ -1228,6 +1232,7 @@ export type Database = {
         Returns: {
           address: string
           agent_id: string
+          archive_reason: string | null
           area_m2: number | null
           bathrooms: number | null
           bedrooms: number | null

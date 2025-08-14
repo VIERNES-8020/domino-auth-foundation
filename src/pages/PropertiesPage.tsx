@@ -345,10 +345,11 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                       <SelectValue placeholder="Selecciona" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="house">Casa</SelectItem>
-                      <SelectItem value="apartment">Departamento</SelectItem>
-                      <SelectItem value="land">Terreno</SelectItem>
-                      <SelectItem value="office">Oficina</SelectItem>
+                      <SelectItem value="casa">Casa</SelectItem>
+                      <SelectItem value="departamento">Departamento</SelectItem>
+                      <SelectItem value="terreno">Terreno</SelectItem>
+                      <SelectItem value="oficina">Oficina</SelectItem>
+                      <SelectItem value="local_comercial">Local Comercial</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

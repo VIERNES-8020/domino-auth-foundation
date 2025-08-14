@@ -21,13 +21,16 @@ serve(async (req) => {
     // For now, we'll return the original image URL
     // In a production environment, you would:
     // 1. Download the image from imageUrl
-    // 2. Download the DOMINIO logo
+    // 2. Download the DOMINIO logo from logoUrl or storage
     // 3. Apply watermark using a library like ImageMagick or canvas
     // 4. Upload the watermarked image to storage
     // 5. Return the new URL
 
     console.log('[WATERMARK] Processing image:', imageUrl);
     console.log('[WATERMARK] Logo URL:', logoUrl);
+
+    // For now, simulate watermark processing
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Placeholder response - in production, implement actual watermarking
     const response = {
