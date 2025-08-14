@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-interface ArchivePropertyModalProps {
+export interface ArchivePropertyModalProps {
   property: any; // The property to archive/unarchive
   isOpen: boolean;
   onClose: () => void;

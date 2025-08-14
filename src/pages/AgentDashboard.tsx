@@ -7,7 +7,7 @@ import PropertyForm from "@/components/PropertyForm";
 import ProfileForm from "@/components/ProfileForm";
 import PropertyViewModal from "@/components/PropertyViewModal";
 import DeletePropertyModal from "@/components/DeletePropertyModal";
-import ArchivePropertyModal from "@/components/ArchivePropertyModal";
+import ArchivePropertyModal, { ArchivePropertyModalProps } from "@/components/ArchivePropertyModal";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
