@@ -101,6 +101,53 @@ export default function AgentDashboard() {
     }
   };
 
+  const handleArchiveProperty = async (propertyId: string, isArchived: boolean) => {
+    if (!user) return;
+    
+    if (!isArchived) {
+      // Show modal for justification when archiving
+      const justification = prompt("¿Por qué estás archivando esta propiedad? (ej: 'Propiedad Vendida')");
+      if (!justification) return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ is_archived: isArchived })
+        .eq('id', propertyId)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      // Refresh properties list
+      await fetchProperties(user.id);
+    } catch (error: any) {
+      console.error('Error archiving property:', error);
+    }
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    if (!user) return;
+    
+    const confirmDelete = confirm("¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer.");
+    if (!confirmDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      // Refresh properties list
+      await fetchProperties(user.id);
+    } catch (error: any) {
+      console.error('Error deleting property:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -112,9 +159,22 @@ export default function AgentDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="propiedades">Mis Propiedades</TabsTrigger>
-          <TabsTrigger value="caracteristicas">Características</TabsTrigger>
-          <TabsTrigger value="notificaciones">
+          <TabsTrigger 
+            value="propiedades" 
+            className={`${activeTab === 'propiedades' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
+          >
+            Mis Propiedades
+          </TabsTrigger>
+          <TabsTrigger 
+            value="caracteristicas"
+            className={`${activeTab === 'caracteristicas' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
+          >
+            Características
+          </TabsTrigger>
+          <TabsTrigger 
+            value="notificaciones"
+            className={`${activeTab === 'notificaciones' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
+          >
             Mis Notificaciones
             {notifications.filter(n => !n.read).length > 0 && (
               <span className="ml-2 bg-red-500 text-white rounded-full text-xs px-2 py-1">
@@ -122,7 +182,12 @@ export default function AgentDashboard() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="perfil">Mi Perfil</TabsTrigger>
+          <TabsTrigger 
+            value="perfil"
+            className={`${activeTab === 'perfil' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
+          >
+            Mi Perfil
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="propiedades" className="space-y-6">
@@ -181,19 +246,36 @@ export default function AgentDashboard() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`/properties/${property.id}`, '_blank')}
+                        title="Ver propiedad"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowPropertyForm(true)}
+                        title="Editar propiedad"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant={showArchived ? "default" : "secondary"}
                         size="sm"
+                        onClick={() => handleArchiveProperty(property.id, !property.is_archived)}
+                        title={showArchived ? "Desarchivar" : "Archivar"}
                       >
                         {showArchived ? <Eye className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
                       </Button>
-                      <Button variant="destructive" size="sm">
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteProperty(property.id)}
+                        title="Eliminar propiedad"
+                      >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>

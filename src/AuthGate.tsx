@@ -45,13 +45,32 @@ export default function AuthGate() {
   const fetchUserProfile = async (user: User) => {
     try {
       setLoading(true);
+      
+      // First check profiles table for super admin flag
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileData?.is_super_admin) {
+        setProfile({ id: user.id, role: 'super_admin' });
+        return;
+      }
+      
+      // Then check user_roles for other roles
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
-      if (error) throw error;
-      setProfile({ id: user.id, role: data.role });
+      
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      const role = data?.role || 'user';
+      setProfile({ id: user.id, role });
     } catch (error) {
       console.error("Error al obtener perfil:", error);
       await supabase.auth.signOut();

@@ -15,6 +15,7 @@ export interface PropertyCardProps {
     bedrooms?: number | null;
     bathrooms?: number | null;
     area_m2?: number | null;
+    constructed_area_m2?: number | null;
     transaction_type?: string | null;
   };
   isFavorited?: boolean;
@@ -34,6 +35,7 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
   const br = typeof property.bedrooms === "number" ? property.bedrooms : undefined;
   const ba = typeof property.bathrooms === "number" ? property.bathrooms : undefined;
   const ar = typeof property.area_m2 === "number" ? property.area_m2 : undefined;
+  const car = typeof property.constructed_area_m2 === "number" ? property.constructed_area_m2 : undefined;
   const txLabel = property.transaction_type === "rent"
     ? "Alquiler"
     : property.transaction_type === "anticretico"
@@ -102,6 +104,7 @@ return (
           <span className="inline-flex items-center gap-1">
             <Ruler className="h-4 w-4" aria-hidden="true" />
             {typeof ar === "number" ? `${ar} m²` : "—"}
+            {typeof car === "number" && ` (${car} m² const.)` }
           </span>
         </div>
         <div className="mt-4">

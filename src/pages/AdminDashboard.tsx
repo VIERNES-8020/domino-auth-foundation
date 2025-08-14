@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import AmenitiesManagement from "@/components/AmenitiesManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -52,12 +54,33 @@ const AdminDashboard = () => {
     }
   ];
 
-  const mockStats = {
-    totalAgents: 15,
-    totalProperties: 85,
-    totalSales: 12,
-    avgPropertyPrice: 320000
-  };
+  const [realMetrics, setRealMetrics] = useState({
+    totalAgents: 0,
+    totalProperties: 0,
+    totalSales: 0,
+    avgPropertyPrice: 0
+  });
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_platform_metrics');
+        if (error) throw error;
+        if (data && data.length > 0) {
+          const metrics = data[0];
+          setRealMetrics({
+            totalAgents: metrics.total_agents || 0,
+            totalProperties: metrics.total_properties || 0,
+            totalSales: metrics.monthly_sales || 0,
+            avgPropertyPrice: metrics.avg_property_price || 0
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -76,7 +99,7 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockStats.totalAgents}</div>
+            <div className="text-2xl font-bold">{realMetrics.totalAgents}</div>
           </CardContent>
         </Card>
         <Card>
@@ -85,7 +108,7 @@ const AdminDashboard = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockStats.totalProperties}</div>
+            <div className="text-2xl font-bold">{realMetrics.totalProperties}</div>
           </CardContent>
         </Card>
         <Card>
@@ -94,7 +117,7 @@ const AdminDashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockStats.totalSales}</div>
+            <div className="text-2xl font-bold">{realMetrics.totalSales}</div>
           </CardContent>
         </Card>
         <Card>
@@ -104,16 +127,17 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${mockStats.avgPropertyPrice.toLocaleString()}
+              ${realMetrics.avgPropertyPrice.toLocaleString()}
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
           <TabsTrigger value="franchises">Gestión de Franquicias</TabsTrigger>
+          <TabsTrigger value="amenities">Amenidades</TabsTrigger>
           <TabsTrigger value="reports">Reportes Globales</TabsTrigger>
           <TabsTrigger value="archived">Propiedades Archivadas</TabsTrigger>
         </TabsList>
@@ -187,6 +211,11 @@ const AdminDashboard = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Amenities Management */}
+        <TabsContent value="amenities" className="space-y-6">
+          <AmenitiesManagement />
         </TabsContent>
 
         {/* Franchises Management */}

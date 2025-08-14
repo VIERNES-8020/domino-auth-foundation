@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,37 +50,65 @@ export default function HomePage() {
     canonicalPath: "/",
   });
 
-  const sb = useMemo(() => getSupabaseClient(), []);
   const [featHouse, setFeatHouse] = useState<any[]>([]);
   const [featApt, setFeatApt] = useState<any[]>([]);
   const [featLand, setFeatLand] = useState<any[]>([]);
   const [featOffice, setFeatOffice] = useState<any[]>([]);
+  const [realMetrics, setRealMetrics] = useState({
+    totalProperties: 1200,
+    totalFranchises: 25,
+    totalCities: 9,
+    monthlySales: 150
+  });
 
 
   useEffect(() => {
     let active = true;
     (async () => {
       const fetchType = async (type: string) => {
-        const { data } = await sb
+        const { data } = await supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2")
           .eq("status", "approved")
           .eq("property_type", type)
           .order("created_at", { ascending: false })
           .limit(10);
         return (data ?? []) as any[];
       };
+
+      // Fetch metrics
+      const fetchMetrics = async () => {
+        try {
+          const { data, error } = await supabase.rpc('get_platform_metrics');
+          if (error) throw error;
+          if (data && data.length > 0) {
+            const metrics = data[0];
+            setRealMetrics({
+              totalProperties: metrics.total_properties || 1200,
+              totalFranchises: metrics.total_franchises || 25,
+              totalCities: 9, // Static for now
+              monthlySales: metrics.monthly_sales || 150
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching metrics:', error);
+        }
+      };
+
       const [houses, apts, lands, offices] = await Promise.all([
         fetchType("house"),
         fetchType("apartment"),
         fetchType("land"),
         fetchType("office"),
       ]);
+      
+      await fetchMetrics();
+      
       if (!active) return;
       setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices);
     })();
     return () => { active = false; };
-  }, [sb]);
+  }, []);
 
   const orgJsonLd = {
     "@context": "https://schema.org",
@@ -201,7 +230,7 @@ export default function HomePage() {
             <Link to="/properties" aria-label="Ver propiedades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">1,200+</div>
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
                   <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
                 </CardContent>
               </Card>
@@ -209,7 +238,7 @@ export default function HomePage() {
             <Link to="/properties" aria-label="Ver franquicias" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">25</div>
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
                   <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
                 </CardContent>
               </Card>
@@ -217,7 +246,7 @@ export default function HomePage() {
             <Link to="/properties" aria-label="Ver ciudades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">9</div>
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalCities}</div>
                   <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
                 </CardContent>
               </Card>
@@ -225,7 +254,7 @@ export default function HomePage() {
             <Link to="/properties" aria-label="Ver ventas mensuales" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">150+</div>
+                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.monthlySales}+</div>
                   <p className="mt-1 text-sm text-muted-foreground">Ventas / mes</p>
                 </CardContent>
               </Card>

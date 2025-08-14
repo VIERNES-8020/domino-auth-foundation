@@ -489,16 +489,6 @@ export type Database = {
         }
         Relationships: []
       }
-      platform_metrics: {
-        Row: {
-          avg_property_price: number | null
-          monthly_sales: number | null
-          total_agents: number | null
-          total_franchises: number | null
-          total_properties: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       _postgis_deprecate: {
@@ -996,6 +986,16 @@ export type Database = {
           name: string
           rank: number
           sales_month: number
+        }[]
+      }
+      get_platform_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_property_price: number
+          monthly_sales: number
+          total_agents: number
+          total_franchises: number
+          total_properties: number
         }[]
       }
       get_proj4_from_srid: {
