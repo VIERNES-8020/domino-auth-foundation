@@ -828,7 +828,12 @@ const [videoUrl, setVideoUrl] = useState("");
                           className="flex flex-wrap gap-2"
                         >
                           {amenities.map((a) => (
-                            <ToggleGroupItem key={a.id} value={a.id} aria-label={a.name}>
+                            <ToggleGroupItem 
+                              key={a.id} 
+                              value={a.id} 
+                              aria-label={a.name}
+                              className="amenity-button"
+                            >
                               {a.name}
                             </ToggleGroupItem>
                           ))}
