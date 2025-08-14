@@ -181,83 +181,85 @@ export default function AgentsPage() {
               <p className="text-muted-foreground">Estamos preparando el perfil de nuestros agentes profesionales.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {displayedAgents.map((agent) => {
-                const performance = agentPerformance[agent.id] || { average_rating: 4.8, total_ratings: 0 };
-                return (
-                  <Card key={agent.id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card border-0 shadow-lg">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-all duration-300" />
-                    
-                    <CardContent className="p-0 relative">
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <img 
-                          src={agent.avatar_url || "/default-placeholder.jpg"}
-                          alt={`Agente ${agent.full_name ?? agent.id}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          onError={(e) => { 
-                            (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        
-                        <div className="absolute top-4 right-4">
-                          <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                            <span className="text-xs font-medium">{performance.average_rating.toFixed(1)}</span>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {displayedAgents.map((agent) => {
+                  const performance = agentPerformance[agent.id] || { average_rating: 4.8, total_ratings: 0 };
+                  return (
+                    <Card key={agent.id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-card border-0 shadow-lg">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent group-hover:from-primary/10 transition-all duration-300" />
+                      
+                      <CardContent className="p-0 relative">
+                        <div className="relative aspect-[4/3] overflow-hidden">
+                          <img 
+                            src={agent.avatar_url || "/default-placeholder.jpg"}
+                            alt={`Agente ${agent.full_name ?? agent.id}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            onError={(e) => { 
+                              (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          
+                          <div className="absolute top-4 right-4">
+                            <div className="bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                              <span className="text-xs font-medium">{performance.average_rating.toFixed(1)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="p-6">
-                        <div className="mb-4">
-                          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                            {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
-                          </h3>
-                          <p className="text-primary font-medium text-sm mt-1">
-                            {agent.title || "Corredor de Bienes Raíces"}
-                          </p>
-                          <p className="text-muted-foreground text-xs mt-1">
-                            Código: {agent.agent_code || "N/A"}
-                          </p>
+                        <div className="p-6">
+                          <div className="mb-4">
+                            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
+                              {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
+                            </h3>
+                            <p className="text-primary font-medium text-sm mt-1">
+                              {agent.title || "Corredor de Bienes Raíces"}
+                            </p>
+                            <p className="text-muted-foreground text-xs mt-1">
+                              Código: {agent.agent_code || "N/A"}
+                            </p>
+                          </div>
+
+                          {agent.bio && (
+                            <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
+                              {agent.bio}
+                            </p>
+                          )}
+
+                          <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span>Disponible en Bolivia</span>
+                          </div>
+
+                          <Button 
+                            asChild 
+                            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
+                          >
+                            <Link to={`/agente/${agent.agent_code}`}>
+                              Ver Perfil Completo
+                            </Link>
+                          </Button>
                         </div>
-
-                        {agent.bio && (
-                          <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
-                            {agent.bio}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          <span>Disponible en Bolivia</span>
-                        </div>
-
-                        <Button 
-                          asChild 
-                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
-                        >
-                          <Link to={`/agente/${agent.agent_code}`}>
-                            Ver Perfil Completo
-                          </Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-            
-            {hasMore && (
-              <div className="text-center mt-12">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => setDisplayCount(prev => prev + 12)}
-                >
-                  Cargar más agentes
-                </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-            )}
+              
+              {hasMore && (
+                <div className="text-center mt-12">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => setDisplayCount(prev => prev + 12)}
+                  >
+                    Cargar más agentes
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </section>
 
