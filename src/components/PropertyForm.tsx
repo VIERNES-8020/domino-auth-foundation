@@ -13,6 +13,8 @@ import { Home, MapPin, Camera, Settings, Upload, FileText, Video } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "@/components/FileUpload";
 
+const supabaseUrl = "https://rzsailqcijraplggryyy.supabase.co";
+
 interface PropertyFormData {
   title: string;
   description: string;
@@ -112,6 +114,52 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     };
     getMapboxToken();
   }, []);
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      toast.success("Subiendo video...");
+      const fileExt = file.name.split('.').pop();
+      const fileName = `video-${Math.random()}.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from('property-videos')
+        .upload(fileName, file);
+      
+      if (error) throw error;
+      const videoUrl = `${supabaseUrl}/storage/v1/object/public/property-videos/${fileName}`;
+      updateFormData("video_url", videoUrl);
+      toast.success("Video subido exitosamente");
+    } catch (error: any) {
+      toast.error("Error subiendo video: " + error.message);
+    }
+  };
+
+  const handlePlansUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    try {
+      toast.success("Subiendo planos...");
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `plan-${Math.random()}.${fileExt}`;
+        const { data, error } = await supabase.storage
+          .from('property-plans')
+          .upload(fileName, file);
+        
+        if (error) throw error;
+        return `${supabaseUrl}/storage/v1/object/public/property-plans/${fileName}`;
+      });
+      
+      const urls = await Promise.all(uploadPromises);
+      updateFormData("plans_url", [...formData.plans_url, ...urls]);
+      toast.success("Planos subidos exitosamente");
+    } catch (error: any) {
+      toast.error("Error subiendo planos: " + error.message);
+    }
+  };
 
   const generateAuraDescription = async () => {
     if (!formData.title || !formData.property_type) {
