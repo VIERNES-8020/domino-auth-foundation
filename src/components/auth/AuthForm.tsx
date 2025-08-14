@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ type Mode = "login" | "signup";
 
 export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("signup");
+  const navigate = useNavigate();
 
   const form = useForm<SignupValues | LoginValues>({
 resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
@@ -56,6 +58,58 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
       corporate_phone: "",
     },
   });
+
+  // Role-based redirection helper
+  const handleSuccessfulLogin = async (session: any) => {
+    if (!session?.user?.id) return;
+
+    const supabase = getSupabaseClient();
+
+    try {
+      // Get user profile from database
+      const { data: profile, error } = await supabase.from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error || !profile) {
+        console.error("Error al obtener el perfil del usuario:", error);
+        // Default redirect for users without profile
+        navigate('/');
+        return;
+      }
+
+      // Get user role from metadata or profiles table
+      const userRole = session.user.user_metadata?.role;
+      let targetPath = '/'; // Default route
+
+      switch (userRole) {
+        case 'Super Administrador':
+          targetPath = '/admin/dashboard';
+          break;
+        case 'Agente Inmobiliario':
+          targetPath = '/dashboard/agent';
+          break;
+        case 'Administrador de Franquicia':
+          targetPath = '/dashboard/franchise';
+          break;
+        case 'Gerente de Oficina':
+          targetPath = '/dashboard/office';
+          break;
+        case 'Supervisor':
+          targetPath = '/dashboard/supervisor';
+          break;
+        default:
+          targetPath = '/'; // Fallback for unknown roles
+      }
+
+      // Execute redirection
+      navigate(targetPath);
+    } catch (err) {
+      console.error("Error en redirección basada en roles:", err);
+      navigate('/');
+    }
+  };
 
   const onSubmit = async (values: any) => {
     const supabase = getSupabaseClient();
@@ -99,11 +153,23 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
         toast.success("Registro exitoso", {
           description: "Revisa tu correo para verificar la cuenta si es requerido.",
         });
+
+        // Handle redirection after successful signup
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          await handleSuccessfulLogin(sessionData.session);
+        }
       } else {
         const { email, password } = values as LoginValues;
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        
         toast.success("Inicio de sesión correcto");
+        
+        // Handle redirection after successful login
+        if (data.session) {
+          await handleSuccessfulLogin(data.session);
+        }
       }
     } catch (err: any) {
       toast.error("Error de autenticación", {
