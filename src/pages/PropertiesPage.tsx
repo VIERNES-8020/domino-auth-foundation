@@ -450,25 +450,64 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((p) => (
-              <PropertyCard key={p.id} property={p} isFavorited={favIds.has(p.id)} onToggleFavorite={async (id, next) => {
-                const { data: auth } = await sb.auth.getUser();
-                const user = auth?.user;
-                if (!user) { toast.message("Inicia sesión para guardar favoritos"); return; }
-                if (next) {
-                  const { error } = await sb.from("favorites").insert({ user_id: user.id, property_id: id });
-                  if (!error) setFavIds((prev) => new Set(prev).add(id));
-                } else {
-                  const { error } = await sb.from("favorites").delete().eq("user_id", user.id).eq("property_id", id);
-                  if (!error) setFavIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
-                }
-              }} />
-            ))}
-          </div>
-
-          {!loading && properties.length === 0 && (
-            <p className="mt-6 text-muted-foreground">No encontramos propiedades con esos filtros. Intenta ajustar los criterios.</p>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-64 bg-muted animate-pulse rounded-lg" />
+              ))}
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="text-center py-12 space-y-4">
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6 max-w-md mx-auto">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-primary font-bold text-sm">A</span>
+                  </div>
+                  <span className="font-medium text-primary">AURA</span>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  {usingNearMe 
+                    ? "No he encontrado propiedades cerca de tu ubicación." 
+                    : "No he encontrado propiedades con esos detalles específicos."
+                  }
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Quizás te interesen estas opciones populares en la zona...
+                </p>
+                <Button 
+                  className="mt-3 w-full" 
+                  variant="outline"
+                  onClick={() => {
+                    // Clear some filters to show more results
+                    setPriceMin("");
+                    setPriceMax("");
+                    setBedrooms("");
+                    setBathrooms("");
+                    setSelectedAmenities([]);
+                    toast.success("Mostrando opciones similares sugeridas por AURA");
+                  }}
+                >
+                  Ver opciones similares
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((p) => (
+                <PropertyCard key={p.id} property={p} isFavorited={favIds.has(p.id)} onToggleFavorite={async (id, next) => {
+                  const { data: auth } = await sb.auth.getUser();
+                  const user = auth?.user;
+                  if (!user) { toast.message("Inicia sesión para guardar favoritos"); return; }
+                  if (next) {
+                    const { error } = await sb.from("favorites").insert({ user_id: user.id, property_id: id });
+                    if (!error) setFavIds((prev) => new Set(prev).add(id));
+                  } else {
+                    const { error } = await sb.from("favorites").delete().eq("user_id", user.id).eq("property_id", id);
+                    if (!error) setFavIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+                  }
+                }} />
+              ))}
+            </div>
           )}
         </section>
       </main>
