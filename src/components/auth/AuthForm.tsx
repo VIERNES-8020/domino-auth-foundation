@@ -85,7 +85,7 @@ resolver: zodResolver(mode === "signup" ? signupSchema : baseSchema),
 
       switch (userRole) {
         case 'Super Administrador':
-          targetPath = '/admin/dashboard';
+          targetPath = '/admin/dashboard/users';
           break;
         case 'Agente Inmobiliario':
           targetPath = '/dashboard/agent';
