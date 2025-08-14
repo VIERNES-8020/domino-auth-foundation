@@ -392,6 +392,18 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 </div>
 
                 <div className="self-end">
+                  <Button 
+                    type="button" 
+                    onClick={() => {
+                      // The search is already reactive - filters update automatically
+                      toast.success("Búsqueda actualizada con nuevos filtros");
+                    }}
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    Buscar
+                  </Button>
+                </div>
+                <div className="self-end">
                   <Button type="button" variant="ghost" onClick={() => {
                     setCity("");
                     setPriceMin("");
