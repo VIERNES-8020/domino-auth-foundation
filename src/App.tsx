@@ -1,82 +1,88 @@
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import Index from "./pages/Index";
-import AgentDashboard from "./pages/AgentDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import LeaderboardPage from "./pages/LeaderboardPage";
-import PropertiesPage from "./pages/PropertiesPage";
-import PropertyDetailPage from "./pages/PropertyDetailPage";
-import NotFound from "./pages/NotFound";
-import AgentsPage from "./pages/AgentsPage";
-import AboutPage from "./pages/AboutPage";
-import ContactPage from "./pages/ContactPage";
-import AgentPublicPage from "./pages/AgentPublicPage";
-import AdminUserManagement from "./pages/AdminUserManagement";
-import FranchiseApplicationPage from "./pages/FranchiseApplicationPage";
-import VendePage from "./pages/VendePage";
-import ClientsPage from "./pages/ClientsPage";
-import Footer from "./components/Footer";
-import Header from "./components/Header";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabaseClient';
+import { Session, User } from '@supabase/supabase-js';
 
-const queryClient = new QueryClient();
+// Importa TODOS los componentes de tus páginas
+import AuthPage from './pages/AuthPage';
+import AgentDashboard from './pages/AgentDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import PublicPortal from './pages/PublicPortal';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/properties" element={<PropertiesPage />} />
-          <Route path="/auth" element={<Index />} />
-          <Route path="/solicitar-franquicia" element={<FranchiseApplicationPage />} />
-          <Route path="/vende" element={<VendePage />} />
-          <Route path="/nuestros-clientes" element={<ClientsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-          <Route 
-            path="/dashboard/agent" 
-            element={
-              <ProtectedRoute requiredRole="Agente Inmobiliario">
-                <AgentDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/dashboard" 
-            element={
-              <ProtectedRoute requiredRole="Super Administrador">
-                <AdminDashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/dashboard/users" 
-            element={
-              <ProtectedRoute requiredRole="Super Administrador">
-                <AdminUserManagement />
-              </ProtectedRoute>
-            } 
-          />
-          <Route path="/dashboard/franchise/:franchiseId/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/properties/:id" element={<PropertyDetailPage />} />
-          <Route path="/agente/:code" element={<AgentPublicPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Footer />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+interface Profile {
+  id: string;
+  role: string;
+}
+
+const AccessDenied = () => (
+  <div style={{ padding: '50px', textAlign: 'center' }}>
+    <h1>Acceso Denegado</h1>
+    <p>No tienes los permisos necesarios para acceder a esta página.</p>
+  </div>
 );
 
-export default App;
+export default function AuthGate() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      if (session) {
+        await fetchUserProfile(session.user);
+      }
+      setLoading(false);
+    };
+    initializeSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) {
+        fetchUserProfile(newSession.user);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserProfile = async (user: User) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      setProfile(data as Profile);
+    } catch (error) {
+      console.error("Error al obtener perfil:", error);
+      await supabase.auth.signOut();
+    }
+  };
+  
+  if (loading) {
+    return <div>Cargando y verificando sesión...</div>;
+  }
+
+  if (!session) {
+    return <AuthPage />;
+  }
+
+  if (profile) {
+    if (profile.role === 'Super Administrador') {
+      return <AdminDashboard />;
+    }
+    if (profile.role === 'Agente Inmobiliario') {
+      return <AgentDashboard />;
+    }
+    // Si tiene un rol sin panel asignado (como 'Cliente')
+    // lo dejamos en el portal público.
+    return <PublicPortal />;
+  }
+
+  // Si hay sesión pero aún no se ha cargado el perfil
+  return <div>Verificando permisos...</div>;
+}
