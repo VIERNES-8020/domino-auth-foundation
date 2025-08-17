@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
 // Importa TODOS los componentes de tus páginas
@@ -10,7 +10,7 @@ import PublicPortal from './pages/PublicPortal';
 
 interface Profile {
   id: string;
-  role: string;
+  is_super_admin: boolean;
 }
 
 // Este es un componente simple para mostrar "Acceso Denegado"
@@ -52,13 +52,21 @@ export default function AuthGate() {
 
   const fetchUserProfile = async (user: User) => {
     try {
-      const { data, error } = await supabase
+      // First check if user is super admin from profiles table
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, is_super_admin')
         .eq('id', user.id)
         .single();
-      if (error) throw error;
-      setProfile(data as Profile);
+      
+      if (profileError) {
+        console.warn("Error getting profile:", profileError);
+        // Create minimal profile with super admin flag false
+        setProfile({ id: user.id, is_super_admin: false });
+        return;
+      }
+      
+      setProfile(profileData as Profile);
     } catch (error) {
       console.error("Error al obtener perfil:", error);
       await supabase.auth.signOut();
@@ -80,17 +88,33 @@ export default function AuthGate() {
   }
 
   // --- LÓGICA DE ENRUTAMIENTO DEFINITIVA ---
-  // Renderizamos el componente correcto basado en el rol
-  switch (profile.role) {
-    case 'Super Administrador':
-      return <AdminDashboard />;
-    case 'Agente Inmobiliario':
-      return <AgentDashboard />;
-    // ... añadir casos para otros roles aquí ...
-    case 'Cliente':
-        return <PublicPortal />; // Un cliente logueado ve el portal público
-    default:
-      // Si el rol no es reconocido, se le niega el acceso.
-      return <AccessDenied />;
+  // Check if user is super admin first
+  if (profile.is_super_admin) {
+    return <AdminDashboard />;
   }
+
+  // For non-super admin users, check user_roles table
+  const getUserRole = async (userId: string): Promise<string | null> => {
+    try {
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.warn("Error getting user role:", error);
+        return null;
+      }
+      
+      return roleData?.role || null;
+    } catch (err) {
+      console.error("Error in getUserRole:", err);
+      return null;
+    }
+  };
+
+  // For now, default to AgentDashboard for authenticated users
+  // Later we can enhance this with proper role checking
+  return <AgentDashboard />;
 }

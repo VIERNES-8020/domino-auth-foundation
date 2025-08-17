@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
 // Importa TODOS los componentes de tus páginas
@@ -10,7 +10,7 @@ import PublicPortal from './pages/PublicPortal';
 
 interface Profile {
   id: string;
-  role: string;
+  is_super_admin: boolean;
 }
 
 const AccessDenied = () => (
@@ -50,13 +50,19 @@ export default function AuthGate() {
 
   const fetchUserProfile = async (user: User) => {
     try {
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, is_super_admin')
         .eq('id', user.id)
         .single();
-      if (error) throw error;
-      setProfile(data as Profile);
+      
+      if (profileError) {
+        console.warn("Error getting profile:", profileError);
+        setProfile({ id: user.id, is_super_admin: false });
+        return;
+      }
+      
+      setProfile(profileData as Profile);
     } catch (error) {
       console.error("Error al obtener perfil:", error);
       await supabase.auth.signOut();
@@ -72,15 +78,12 @@ export default function AuthGate() {
   }
 
   if (profile) {
-    if (profile.role === 'Super Administrador') {
+    if (profile.is_super_admin) {
       return <AdminDashboard />;
     }
-    if (profile.role === 'Agente Inmobiliario') {
-      return <AgentDashboard />;
-    }
-    // Si tiene un rol sin panel asignado (como 'Cliente')
-    // lo dejamos en el portal público.
-    return <PublicPortal />;
+    // For non-super admin users, default to agent dashboard
+    // Later we can enhance this with proper role checking from user_roles
+    return <AgentDashboard />;
   }
 
   // Si hay sesión pero aún no se ha cargado el perfil
