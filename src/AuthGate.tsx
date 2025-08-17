@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from './lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
 
-// Importa TODAS las páginas que hemos creado
-import AuthForm from './components/auth/AuthForm';
+// Importa TODOS los componentes de tus páginas
+import AuthPage from './pages/AuthPage';
 import AgentDashboard from './pages/AgentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import AccessDenied from './pages/AccessDenied';
-import Index from './pages/Index'; // Tu página de inicio pública
+import PublicPortal from './pages/PublicPortal';
 
 interface Profile {
   id: string;
   role: string;
 }
+
+// Este es un componente simple para mostrar "Acceso Denegado"
+const AccessDenied = () => (
+  <div style={{ padding: '50px', textAlign: 'center' }}>
+    <h1>Acceso Denegado</h1>
+    <p>No tienes los permisos necesarios para acceder a esta página.</p>
+  </div>
+);
+
 
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
@@ -30,10 +38,10 @@ export default function AuthGate() {
     };
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) {
+        fetchUserProfile(newSession.user);
       } else {
         setProfile(null);
       }
@@ -44,80 +52,45 @@ export default function AuthGate() {
 
   const fetchUserProfile = async (user: User) => {
     try {
-      setLoading(true);
-      
-      // First check profiles table for super admin flag
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('is_super_admin')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-      }
-      
-      if (profileData?.is_super_admin === true) {
-        setProfile({ id: user.id, role: 'super_admin' });
-        setLoading(false);
-        return;
-      }
-      
-      // Then check user_roles for other roles
       const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error("Error fetching user role:", error);
-      }
-      
-      const role = data?.role || 'client';
-      setProfile({ id: user.id, role });
+        .from('profiles')
+        .select('id, role')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      setProfile(data as Profile);
     } catch (error) {
       console.error("Error al obtener perfil:", error);
-      // Don't sign out on profile fetch errors, just set default role
-      setProfile({ id: user.id, role: 'client' });
-    } finally {
-      setLoading(false);
+      await supabase.auth.signOut();
     }
   };
   
-  // Lógica de Renderizado y Enrutamiento
-  // Usaremos un enfoque de renderizado condicional en lugar de cambiar la URL,
-  // ya que esto es más compatible con la estructura simple de Vite.
-
   if (loading) {
-    return <div>Cargando...</div>;
+    return <div>Cargando y verificando sesión...</div>;
   }
 
+  // Si no hay sesión, siempre mostramos la página de autenticación
   if (!session) {
-    // Si no hay sesión, siempre mostramos la página de autenticación/registro.
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
-        <AuthForm />
-      </div>
-    );
+    return <AuthPage />;
   }
 
-  // Si hay sesión pero el perfil aún se está cargando
+  // Si hay sesión pero el perfil aún se está cargando (justo después del login)
   if (!profile) {
-      return <div>Verificando permisos...</div>;
+    return <div>Verificando permisos...</div>;
   }
 
-  // Una vez que tenemos la sesión Y el perfil, decidimos qué panel mostrar
-  console.log('Current user role:', profile.role);
-  
+  // --- LÓGICA DE ENRUTAMIENTO DEFINITIVA ---
+  // Renderizamos el componente correcto basado en el rol
   switch (profile.role) {
-    case 'super_admin':
+    case 'Super Administrador':
       return <AdminDashboard />;
-    case 'agent':
+    case 'Agente Inmobiliario':
       return <AgentDashboard />;
-    case 'client':
+    // ... añadir casos para otros roles aquí ...
+    case 'Cliente':
+        return <PublicPortal />; // Un cliente logueado ve el portal público
     default:
-      // Clientes y usuarios por defecto van al portal público
-      return <Index />;
+      // Si el rol no es reconocido, se le niega el acceso.
+      return <AccessDenied />;
   }
 }
