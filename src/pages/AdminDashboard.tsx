@@ -5,9 +5,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, CheckCircle, XCircle, Bell, MailIcon, Users, Building2, TrendingUp } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Bell, MailIcon, Users, Building2, TrendingUp, Image } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
+import WatermarkManagement from "@/components/admin/WatermarkManagement";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
@@ -151,7 +152,7 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="mensajes" className="relative">
@@ -183,6 +184,10 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="sobre-nosotros">
             Sobre Nosotros
+          </TabsTrigger>
+          <TabsTrigger value="marca-agua">
+            <Image className="h-4 w-4 mr-1" />
+            Marca de Agua
           </TabsTrigger>
           <TabsTrigger value="notificaciones" className="relative">
             Notificaciones
@@ -479,6 +484,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="testimonios" className="space-y-6">
           <TestimonialManagement />
+        </TabsContent>
+
+        <TabsContent value="marca-agua" className="space-y-6">
+          <WatermarkManagement />
         </TabsContent>
 
         <TabsContent value="sobre-nosotros" className="space-y-6">

@@ -33,10 +33,16 @@ export default function PropertyViewModal({ property, isOpen, onClose }: Propert
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-xl font-bold">{property.title}</DialogTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="flex-1">
+            <DialogTitle className="text-xl font-bold text-primary">{property.title}</DialogTitle>
+            <div className="flex items-center gap-2 text-muted-foreground mt-1">
+              <MapPin className="h-4 w-4" />
+              {property.address}
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
