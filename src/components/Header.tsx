@@ -9,30 +9,42 @@ export default function Header() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      // First check profiles table for super admin flag
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (profileData?.is_super_admin === true) {
+        setUserRole('super_admin');
+        return;
+      }
+      
+      // Then check user_roles for other roles
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      const role = roleData?.role || 'client';
+      setUserRole(role);
+    } catch (error) {
+      console.warn("Could not fetch user role:", error);
+      setUserRole('client');
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
       
       if (s?.user?.id) {
-        // Fetch user role when session changes
-        setTimeout(async () => {
-          try {
-        const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', s.user.id)
-              .single();
-            
-            // Map database roles to UI expectations
-            const dbRole = roleData?.role;
-            const displayRole = dbRole === 'super_admin' || dbRole === 'admin' 
-              ? 'Super Administrador' 
-              : s.user.user_metadata?.role || 'Agente Inmobiliario';
-            setUserRole(displayRole);
-          } catch (error) {
-            console.warn("Could not fetch user role:", error);
-            setUserRole(null);
-          }
+        setTimeout(() => {
+          fetchUserRole(s.user.id);
         }, 0);
       } else {
         setUserRole(null);
@@ -43,25 +55,8 @@ export default function Header() {
       setSession(session);
       
       if (session?.user?.id) {
-        // Fetch user role for existing session
-        setTimeout(async () => {
-          try {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            // Map database roles to UI expectations
-            const dbRole = roleData?.role;
-            const displayRole = dbRole === 'super_admin' || dbRole === 'admin' 
-              ? 'Super Administrador' 
-              : session.user.user_metadata?.role || 'Agente Inmobiliario';
-            setUserRole(displayRole);
-          } catch (error) {
-            console.warn("Could not fetch user role:", error);
-            setUserRole(null);
-          }
+        setTimeout(() => {
+          fetchUserRole(session.user.id);
         }, 0);
       }
     });
@@ -116,7 +111,7 @@ export default function Header() {
           </div>
           {session ? (
             <div className="flex items-center gap-2">
-              {userRole === 'Super Administrador' ? (
+              {userRole === 'super_admin' ? (
                 <>
                   <Button asChild>
                     <Link to="/admin/dashboard">Panel Super Admin</Link>
@@ -125,9 +120,13 @@ export default function Header() {
                     <Link to="/dashboard/agent">Vista Agente</Link>
                   </Button>
                 </>
-              ) : (
+              ) : userRole === 'agent' ? (
                 <Button asChild>
-                  <Link to="/dashboard/agent">Panel de Agente</Link>
+                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" asChild>
+                  <Link to="/">Portal Público</Link>
                 </Button>
               )}
               <Button variant="outline" onClick={async () => { await supabase.auth.signOut(); }}>

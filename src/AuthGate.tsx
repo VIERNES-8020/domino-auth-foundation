@@ -59,6 +59,7 @@ export default function AuthGate() {
       
       if (profileData?.is_super_admin === true) {
         setProfile({ id: user.id, role: 'super_admin' });
+        setLoading(false);
         return;
       }
       
@@ -73,12 +74,12 @@ export default function AuthGate() {
         console.error("Error fetching user role:", error);
       }
       
-      const role = data?.role || 'user';
+      const role = data?.role || 'client';
       setProfile({ id: user.id, role });
     } catch (error) {
       console.error("Error al obtener perfil:", error);
       // Don't sign out on profile fetch errors, just set default role
-      setProfile({ id: user.id, role: 'user' });
+      setProfile({ id: user.id, role: 'client' });
     } finally {
       setLoading(false);
     }
@@ -107,16 +108,14 @@ export default function AuthGate() {
   }
 
   // Una vez que tenemos la sesión Y el perfil, decidimos qué panel mostrar
+  console.log('Current user role:', profile.role);
+  
   switch (profile.role) {
     case 'super_admin':
-    case 'admin':
-    case 'Super Administrador':
       return <AdminDashboard />;
     case 'agent':
-    case 'Agente Inmobiliario':
       return <AgentDashboard />;
     case 'client':
-    case 'user':
     default:
       // Clientes y usuarios por defecto van al portal público
       return <Index />;
