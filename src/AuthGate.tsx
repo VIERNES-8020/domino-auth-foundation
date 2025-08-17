@@ -53,24 +53,44 @@ export default function AuthGate() {
 
   const fetchUserProfile = async (user: User) => {
     try {
+      console.log('Fetching profile for user:', user.id);
+      
       // First check if user is super admin from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, is_super_admin')
+        .select('id, is_super_admin, full_name')
         .eq('id', user.id)
         .single();
       
       if (profileError) {
-        console.warn("Error getting profile:", profileError);
-        // Create minimal profile with super admin flag false
-        setProfile({ id: user.id, is_super_admin: false });
+        console.warn("Profile not found, creating one:", profileError);
+        // Try to create a profile first
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            full_name: user.email?.split('@')[0] || 'Usuario',
+            is_super_admin: false
+          })
+          .select('id, is_super_admin, full_name')
+          .single();
+          
+        if (createError) {
+          console.error("Error creating profile:", createError);
+          setProfile({ id: user.id, is_super_admin: false });
+          return;
+        }
+        
+        console.log('Created new profile:', newProfile);
+        setProfile(newProfile as Profile);
         return;
       }
       
+      console.log('Profile data:', profileData);
       setProfile(profileData as Profile);
     } catch (error) {
       console.error("Error al obtener perfil:", error);
-      await supabase.auth.signOut();
+      setProfile({ id: user.id, is_super_admin: false });
     }
   };
   

@@ -225,6 +225,26 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       // Call onSubmit if provided
       if (onSubmit) {
         await onSubmit(formData);
+        // Reset form after successful submission
+        setFormData({
+          title: "",
+          description: "",
+          price: "",
+          currency: "USD",
+          property_type: "",
+          bedrooms: "",
+          bathrooms: "",
+          area: "",
+          constructed_area_m2: "",
+          address: "",
+          latitude: null,
+          longitude: null,
+          features: [],
+          image_urls: [],
+          video_url: "",
+          plans_url: []
+        });
+        setActiveTab("general");
       }
       
       toast.success("Propiedad guardada exitosamente");

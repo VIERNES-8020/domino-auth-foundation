@@ -155,9 +155,6 @@ export default function AgentDashboard() {
       await fetchProperties(user.id);
       setShowPropertyForm(false);
       setEditingProperty(null);
-      
-      // Reset form and return to first tab
-      setActiveTab("propiedades");
     } catch (error: any) {
       console.error('Error saving property:', error);
     }
