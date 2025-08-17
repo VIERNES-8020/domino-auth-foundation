@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import Header from "@/components/Header";
@@ -19,29 +19,27 @@ import NotFound from "@/pages/NotFound";
 export default function PublicPortal() {
   return (
     <SidebarProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/propiedades" element={<PropertiesPage />} />
-              <Route path="/propiedad/:id" element={<PropertyDetailPage />} />
-              <Route path="/vende" element={<VendePage />} />
-              <Route path="/agentes" element={<AgentsPage />} />
-              <Route path="/agente/:agentCode" element={<AgentPublicPage />} />
-              <Route path="/clientes" element={<ClientsPage />} />
-              <Route path="/sobre-nosotros" element={<AboutPage />} />
-              <Route path="/contacto" element={<ContactPage />} />
-              <Route path="/franquicia" element={<FranchiseApplicationPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-        <Toaster />
-      </Router>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/propiedades" element={<PropertiesPage />} />
+            <Route path="/propiedad/:id" element={<PropertyDetailPage />} />
+            <Route path="/vende" element={<VendePage />} />
+            <Route path="/agentes" element={<AgentsPage />} />
+            <Route path="/agente/:agentCode" element={<AgentPublicPage />} />
+            <Route path="/clientes" element={<ClientsPage />} />
+            <Route path="/sobre-nosotros" element={<AboutPage />} />
+            <Route path="/contacto" element={<ContactPage />} />
+            <Route path="/franquicia" element={<FranchiseApplicationPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+      <Toaster />
     </SidebarProvider>
   );
 }

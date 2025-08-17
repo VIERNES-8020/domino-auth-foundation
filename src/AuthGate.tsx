@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
+import { BrowserRouter as Router } from 'react-router-dom';
 
 // Importa TODOS los componentes de tus páginas
 import AuthPage from './pages/AuthPage';
@@ -79,7 +80,11 @@ export default function AuthGate() {
 
   // Si no hay sesión, siempre mostramos la página de autenticación
   if (!session) {
-    return <AuthPage />;
+    return (
+      <Router>
+        <AuthPage />
+      </Router>
+    );
   }
 
   // Si hay sesión pero el perfil aún se está cargando (justo después del login)
@@ -90,7 +95,11 @@ export default function AuthGate() {
   // --- LÓGICA DE ENRUTAMIENTO DEFINITIVA ---
   // Check if user is super admin first
   if (profile.is_super_admin) {
-    return <AdminDashboard />;
+    return (
+      <Router>
+        <AdminDashboard />
+      </Router>
+    );
   }
 
   // For non-super admin users, check user_roles table
@@ -116,5 +125,9 @@ export default function AuthGate() {
 
   // For now, default to AgentDashboard for authenticated users
   // Later we can enhance this with proper role checking
-  return <AgentDashboard />;
+  return (
+    <Router>
+      <AgentDashboard />
+    </Router>
+  );
 }
