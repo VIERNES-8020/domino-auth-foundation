@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './lib/supabaseClient'; // Asegúrate de que la ruta sea correcta
+import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
 // Importa TODOS los componentes de tus páginas
@@ -56,11 +56,40 @@ export default function AuthGate() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id, is_super_admin, full_name')
         .eq('id', user.id)
         .single();
-      if (error) throw error;
-      setProfile(data as Profile);
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({ 
+              id: user.id, 
+              full_name: user.email || 'Usuario',
+              is_super_admin: false 
+            })
+            .select('id, is_super_admin, full_name')
+            .single();
+          
+          if (insertError) throw insertError;
+          
+          // Convert to our expected format
+          setProfile({ 
+            id: newProfile.id, 
+            role: newProfile.is_super_admin ? 'Super Administrador' : 'Cliente' 
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        // Convert existing profile to our expected format
+        setProfile({ 
+          id: data.id, 
+          role: data.is_super_admin ? 'Super Administrador' : 'Cliente' 
+        });
+      }
     } catch (error) {
       console.error("Error crítico al obtener el perfil:", error);
       // Si hay un error, cerramos sesión para evitar bucles
