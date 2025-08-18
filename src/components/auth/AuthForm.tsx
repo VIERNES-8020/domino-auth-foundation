@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 
@@ -59,7 +59,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const navigate = useNavigate();
+  
 
   const form = useForm<AgentSignupValues | ClientSignupValues | LoginValues>({
     resolver: zodResolver(
@@ -104,7 +104,7 @@ export default function AuthForm() {
     }
   };
 
-  // Función de redirección basada en roles
+  // Función de redirección basada en roles - AuthGate handles navigation
   const handleSuccessfulLogin = async (session: any) => {
     if (!session?.user?.id) {
       console.error("No hay sesión o usuario");
@@ -112,62 +112,9 @@ export default function AuthForm() {
     }
 
     console.log("Usuario logueado:", session.user.id);
-
-    try {
-      // Obtener el rol del usuario
-      const userRole = await getUserRole(session.user.id);
-      console.log("Rol detectado:", userRole);
-      
-      let targetPath = '/'; // Ruta por defecto para clientes
-
-      // Lógica de enrutamiento basada en roles (usando valores de la base de datos)
-      switch (userRole) {
-        case 'super_admin':
-          targetPath = '/admin/dashboard';
-          console.log("Redirigiendo a Super Admin dashboard");
-          break;
-        case 'agent':
-          targetPath = '/dashboard/agent';
-          console.log("Redirigiendo a Agent dashboard");
-          break;
-        case 'franchise_admin':
-          targetPath = '/dashboard/franchise';
-          console.log("Redirigiendo a Franchise dashboard");
-          break;
-        case 'office_manager':
-          targetPath = '/dashboard/office';
-          console.log("Redirigiendo a Office dashboard");
-          break;
-        case 'supervisor':
-          targetPath = '/dashboard/supervisor';
-          console.log("Redirigiendo a Supervisor dashboard");
-          break;
-        case 'client':
-          targetPath = '/';
-          console.log("Redirigiendo a Portal Público para cliente");
-          break;
-        default:
-          console.warn("Rol no reconocido o no encontrado, redirigiendo a portal público");
-          targetPath = '/';
-      }
-
-      // Mostrar mensaje de éxito
-      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
-      
-      // Redirigir después de un breve delay
-      setTimeout(() => {
-        console.log("Navegando a:", targetPath);
-        navigate(targetPath);
-      }, 1500);
-
-    } catch (err) {
-      console.error("Error en redirección basada en roles:", err);
-      // Fallback navigation to public portal
-      setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
-    }
+    
+    // Just show success message - AuthGate will handle navigation automatically
+    setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
   };
 
   const onSubmit = async (values: any) => {
@@ -274,11 +221,8 @@ export default function AuthForm() {
             description: "Tu cuenta ha sido creada. Ya puedes explorar propiedades.",
           });
 
-          // Redirigir a la página principal
+          // Show success message - AuthGate will handle navigation
           setSuccessMessage("✅ Registro exitoso. Redirigiendo...");
-          setTimeout(() => {
-            navigate('/');
-          }, 1500);
         }
       } else {
         // Proceso de login
