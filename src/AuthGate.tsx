@@ -103,8 +103,12 @@ export default function AuthGate() {
   }
 
   if (!session) {
-    // Si no hay sesión, siempre va a la página de autenticación
-    return <AuthPage />;
+    // If no session, always go to auth page
+    return (
+      <BrowserRouter>
+        <AuthPage />
+      </BrowserRouter>
+    );
   }
 
   // Si hay sesión pero el perfil aún no se carga, esperamos
