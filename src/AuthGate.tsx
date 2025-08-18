@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
@@ -112,15 +113,21 @@ export default function AuthGate() {
   }
 
   // --- LÓGICA DE ENRUTAMIENTO DEFINITIVA ---
-  switch (profile.role) {
-    case 'Super Administrador':
-      return <AdminDashboard />;
-    case 'Agente Inmobiliario':
-      return <AgentDashboard />;
-    case 'Cliente':
-      return <PublicPortal />;
-    default:
-      // Si el rol es desconocido, negamos el acceso
-      return <AccessDenied />;
-  }
+  return (
+    <BrowserRouter>
+      {(() => {
+        switch (profile.role) {
+          case 'Super Administrador':
+            return <AdminDashboard />;
+          case 'Agente Inmobiliario':
+            return <AgentDashboard />;
+          case 'Cliente':
+            return <PublicPortal />;
+          default:
+            // Si el rol es desconocido, negamos el acceso
+            return <AccessDenied />;
+        }
+      })()}
+    </BrowserRouter>
+  );
 }
