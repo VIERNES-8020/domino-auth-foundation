@@ -55,40 +55,59 @@ export default function AuthGate() {
   // Función CLAVE para obtener el ROL del usuario
   const fetchUserProfile = async (user: User) => {
     try {
-      const { data, error } = await supabase
+      // First check profiles table for super admin flag
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('id, is_super_admin, full_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist, create one
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({ 
-              id: user.id, 
-              full_name: user.email || 'Usuario',
-              is_super_admin: false 
-            })
-            .select('id, is_super_admin, full_name')
-            .single();
-          
-          if (insertError) throw insertError;
-          
-          // Convert to our expected format
-          setProfile({ 
-            id: newProfile.id, 
-            role: newProfile.is_super_admin ? 'Super Administrador' : 'Cliente' 
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        // Convert existing profile to our expected format
+      if (profileData?.is_super_admin === true) {
         setProfile({ 
-          id: data.id, 
-          role: data.is_super_admin ? 'Super Administrador' : 'Cliente' 
+          id: profileData.id, 
+          role: 'Super Administrador' 
+        });
+        return;
+      }
+      
+      // Then check user_roles for other roles
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (roleData?.role === 'agent') {
+        setProfile({ 
+          id: user.id, 
+          role: 'Agente Inmobiliario' 
+        });
+        return;
+      }
+      
+      // If no profile exists, create one with default client role
+      if (!profileData) {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({ 
+            id: user.id, 
+            full_name: user.email || 'Usuario',
+            is_super_admin: false 
+          })
+          .select('id, is_super_admin, full_name')
+          .single();
+        
+        if (insertError) throw insertError;
+        
+        setProfile({ 
+          id: newProfile.id, 
+          role: 'Cliente' 
+        });
+      } else {
+        // Default to client role
+        setProfile({ 
+          id: profileData.id, 
+          role: 'Cliente' 
         });
       }
     } catch (error) {

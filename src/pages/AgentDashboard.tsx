@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Edit, Trash, Archive, Plus, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
 import ProfileForm from "@/components/ProfileForm";
 import PropertyViewModal from "@/components/PropertyViewModal";
 import DeletePropertyModal from "@/components/DeletePropertyModal";
-import ArchivePropertyModal, { ArchivePropertyModalProps } from "@/components/ArchivePropertyModal";
+import ArchivePropertyModal from "@/components/ArchivePropertyModal";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
@@ -24,6 +25,7 @@ export default function AgentDashboard() {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -33,6 +35,7 @@ export default function AgentDashboard() {
         await fetchProperties(user.id);
         await fetchNotifications(user.id);
       }
+      setLoading(false);
     };
     getCurrentUser();
   }, []);
@@ -49,6 +52,7 @@ export default function AgentDashboard() {
       setProperties(data || []);
     } catch (error) {
       console.error('Error fetching properties:', error);
+      toast.error('Error al cargar propiedades');
     }
   };
 
@@ -118,12 +122,16 @@ export default function AgentDashboard() {
             geolocation: propertyData.latitude && propertyData.longitude 
               ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
               : null,
-            tags: propertyData.features
+            tags: propertyData.features,
+            image_urls: propertyData.image_urls,
+            video_url: propertyData.video_url,
+            plans_url: propertyData.plans_url
           })
           .eq('id', editingProperty.id)
           .eq('agent_id', user.id);
 
         if (error) throw error;
+        toast.success('Propiedad actualizada exitosamente');
       } else {
         // Create new property
         const { data, error } = await supabase
@@ -144,11 +152,15 @@ export default function AgentDashboard() {
               : null,
             agent_id: user.id,
             status: 'approved',
-            tags: propertyData.features
+            tags: propertyData.features,
+            image_urls: propertyData.image_urls,
+            video_url: propertyData.video_url,
+            plans_url: propertyData.plans_url
           })
           .select();
 
         if (error) throw error;
+        toast.success('Propiedad creada exitosamente');
       }
       
       // Refresh properties list
@@ -157,6 +169,7 @@ export default function AgentDashboard() {
       setEditingProperty(null);
     } catch (error: any) {
       console.error('Error saving property:', error);
+      toast.error('Error al guardar la propiedad: ' + error.message);
     }
   };
 
@@ -168,17 +181,21 @@ export default function AgentDashboard() {
         .from('properties')
         .update({ 
           is_archived: isArchived,
-          // You could add an archive_reason field to store justification
+          archive_reason: justification
         })
         .eq('id', propertyId)
         .eq('agent_id', user.id);
 
       if (error) throw error;
       
+      toast.success(`Propiedad ${isArchived ? 'archivada' : 'desarchivada'} exitosamente`);
+      
       // Refresh properties list
       await fetchProperties(user.id);
+      setArchivingProperty(null);
     } catch (error: any) {
       console.error('Error archiving property:', error);
+      toast.error('Error al archivar la propiedad');
     }
   };
 
@@ -194,11 +211,14 @@ export default function AgentDashboard() {
 
       if (error) throw error;
       
+      toast.success('Propiedad eliminada exitosamente');
+      
       // Refresh properties list
       await fetchProperties(user.id);
       setDeletingProperty(null);
     } catch (error: any) {
       console.error('Error deleting property:', error);
+      toast.error('Error al eliminar la propiedad');
       throw error; // Re-throw for modal to handle
     }
   };
@@ -228,6 +248,20 @@ export default function AgentDashboard() {
     }
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-8">
+          <p>Cargando panel del agente...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -235,43 +269,28 @@ export default function AgentDashboard() {
           <h1 className="text-3xl font-bold">Panel del Agente</h1>
           <p className="text-muted-foreground">Gestiona tus propiedades y perfil</p>
         </div>
+        <Button variant="outline" onClick={signOut}>
+          Cerrar Sesión
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger 
-            value="propiedades" 
-            className={`${activeTab === 'propiedades' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
-          >
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="propiedades">
             Mis Propiedades
           </TabsTrigger>
-          <TabsTrigger 
-            value="caracteristicas"
-            className={`${activeTab === 'caracteristicas' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
-          >
+          <TabsTrigger value="caracteristicas">
             Características
           </TabsTrigger>
-          <TabsTrigger 
-            value="notificaciones"
-            className={`${activeTab === 'notificaciones' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
-          >
+          <TabsTrigger value="notificaciones">
             Mis Notificaciones
             {notifications.filter(n => !n.read).length > 0 && (
-              <span className="ml-2 bg-red-500 text-white rounded-full text-xs px-2 py-1">
+              <Badge variant="destructive" className="ml-2">
                 {notifications.filter(n => !n.read).length}
-              </span>
+              </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger 
-            value="concluidas"
-            className={`${activeTab === 'concluidas' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
-          >
-            Propiedades Concluidas
-          </TabsTrigger>
-          <TabsTrigger 
-            value="perfil"
-            className={`${activeTab === 'perfil' ? 'bg-primary text-primary-foreground border-b-2 border-primary' : ''}`}
-          >
+          <TabsTrigger value="perfil">
             Mi Perfil
           </TabsTrigger>
         </TabsList>
@@ -319,91 +338,101 @@ export default function AgentDashboard() {
                   </Button>
                 </div>
               </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {(!showArchived ? properties.filter(p => !p.is_archived && !p.concluded_status) : properties.filter(p => p.is_archived)).map((property) => (
-                  <div
-                    key={property.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{property.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {property.address}
-                      </p>
-                      <p className="text-lg font-bold">
-                        ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
-                      </p>
+              <CardContent>
+                <div className="grid gap-4">
+                  {(!showArchived ? properties.filter(p => !p.is_archived && !p.concluded_status) : properties.filter(p => p.is_archived)).map((property) => (
+                    <div
+                      key={property.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{property.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {property.address}
+                        </p>
+                        <p className="text-lg font-bold">
+                          ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
+                            {property.status}
+                          </Badge>
+                          {property.concluded_status && (
+                            <Badge variant="destructive">
+                              {property.concluded_status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setViewingProperty(property)}
+                          title="Ver propiedad"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingProperty(property);
+                            setShowPropertyForm(true);
+                          }}
+                          title="Editar propiedad"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {!showArchived && !property.concluded_status && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" title="Marcar como concluida">
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'vendido')}>
+                                Marcar como Vendido
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'alquilado')}>
+                                Marcar como Alquilado
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'anticretico')}>
+                                Marcar como En Anticrético
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                        <Button
+                          variant={showArchived ? "default" : "secondary"}
+                          size="sm"
+                          onClick={() => setArchivingProperty(property)}
+                          title={showArchived ? "Desarchivar" : "Archivar"}
+                        >
+                          {showArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => setDeletingProperty(property)}
+                          title="Eliminar propiedad"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setViewingProperty(property)}
-                        title="Ver propiedad"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setEditingProperty(property);
-                          setShowPropertyForm(true);
-                        }}
-                        title="Editar propiedad"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {!showArchived && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" title="Marcar como concluida">
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'vendido')}>
-                              Marcar como Vendido
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'alquilado')}>
-                              Marcar como Alquilado
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'anticretico')}>
-                              Marcar como En Anticrético
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                      <Button
-                        variant={showArchived ? "default" : "secondary"}
-                        size="sm"
-                        onClick={() => setArchivingProperty(property)}
-                        title={showArchived ? "Desarchivar" : "Archivar"}
-                      >
-                        {showArchived ? <Eye className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => setDeletingProperty(property)}
-                        title="Eliminar propiedad"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                  ))}
+                  {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived && !p.concluded_status)).length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {showArchived 
+                        ? "No tienes propiedades archivadas." 
+                        : "No tienes propiedades publicadas aún."}
                     </div>
-                  </div>
-                ))}
-                {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived && !p.concluded_status)).length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    {showArchived 
-                      ? "No tienes propiedades archivadas." 
-                      : "No tienes propiedades publicadas aún."}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
@@ -445,36 +474,25 @@ export default function AgentDashboard() {
             <CardHeader>
               <CardTitle>Mis Notificaciones</CardTitle>
               <CardDescription>
-                Mensajes de clientes interesados en tus propiedades
+                Mensajes y leads recibidos
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {notifications.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No tienes notificaciones nuevas.
+                    No tienes notificaciones
                   </div>
                 ) : (
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50 border-blue-200' : ''}`}
+                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50' : ''}`}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium">
-                            {notification.message}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {new Date(notification.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        {!notification.read && (
-                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                            Nuevo
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-sm">{notification.message}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {new Date(notification.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   ))
                 )}
@@ -483,109 +501,49 @@ export default function AgentDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="concluidas" className="space-y-6">
+        <TabsContent value="perfil" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Mis Propiedades Concluidas</CardTitle>
+              <CardTitle>Mi Perfil</CardTitle>
               <CardDescription>
-                Propiedades que has vendido, alquilado o puesto en anticrético
+                Actualiza tu información personal y profesional
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4">
-                {properties.filter(p => p.concluded_status).map((property) => (
-                  <div
-                    key={property.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-green-50"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{property.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {property.address}
-                      </p>
-                      <p className="text-lg font-bold">
-                        ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
-                      </p>
-                      <div className="mt-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {property.concluded_status === 'vendido' && 'VENDIDO'}
-                          {property.concluded_status === 'alquilado' && 'ALQUILADO'}
-                          {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setViewingProperty(property)}
-                        title="Ver propiedad"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {properties.filter(p => p.concluded_status).length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No tienes propiedades concluidas aún.
-                  </div>
-                )}
-              </div>
+              <ProfileForm user={user} />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="perfil" className="space-y-6">
-          {user ? (
-            <ProfileForm user={user} />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Mi Perfil</CardTitle>
-                <CardDescription>
-                  Gestiona tu información personal y profesional
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Cargando perfil...
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
       </Tabs>
 
       {/* Modals */}
-      <PropertyViewModal
-        property={viewingProperty}
-        isOpen={!!viewingProperty}
-        onClose={() => setViewingProperty(null)}
-      />
-      
-      <DeletePropertyModal
-        isOpen={!!deletingProperty}
-        onClose={() => setDeletingProperty(null)}
-        onConfirm={handleDeleteProperty}
-        propertyTitle={deletingProperty?.title || ""}
-      />
-      
-      <ArchivePropertyModal
-        property={archivingProperty}
-        isOpen={!!archivingProperty}
-        onClose={() => setArchivingProperty(null)}
-        onConfirm={(justification) => {
-          if (archivingProperty) {
-            handleArchiveProperty(
-              archivingProperty.id, 
-              !archivingProperty.is_archived, 
-              justification
-            );
-            setArchivingProperty(null);
-          }
-        }}
-      />
+      {viewingProperty && (
+        <PropertyViewModal
+          property={viewingProperty}
+          isOpen={!!viewingProperty}
+          onClose={() => setViewingProperty(null)}
+        />
+      )}
+
+      {deletingProperty && (
+        <DeletePropertyModal
+          isOpen={!!deletingProperty}
+          onClose={() => setDeletingProperty(null)}
+          onConfirm={handleDeleteProperty}
+          propertyTitle={deletingProperty?.title || ""}
+        />
+      )}
+
+      {archivingProperty && (
+        <ArchivePropertyModal
+          property={archivingProperty}
+          isOpen={!!archivingProperty}
+          onClose={() => setArchivingProperty(null)}
+          onConfirm={(justification) => {
+            handleArchiveProperty(archivingProperty.id, !archivingProperty.is_archived, justification);
+          }}
+        />
+      )}
     </div>
   );
 }

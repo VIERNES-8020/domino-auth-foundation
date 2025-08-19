@@ -5,19 +5,23 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, CheckCircle, XCircle, Bell, MailIcon, Users, Building2, TrendingUp, Image } from "lucide-react";
+import { Eye, CheckCircle, XCircle, Bell, MailIcon, Users, Building2, TrendingUp, Image, UserCheck, UserX, Settings } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
 import WatermarkManagement from "@/components/admin/WatermarkManagement";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("propiedades");
   const [properties, setProperties] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [franchises, setFranchises] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
   const [listingLeads, setListingLeads] = useState<any[]>([]);
+  const [userRoles, setUserRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,13 +39,28 @@ export default function AdminDashboard() {
       
       setProperties(propertiesData || []);
 
-      // Fetch users
+      // Fetch users with profiles
       const { data: usersData } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
       setUsers(usersData || []);
+
+      // Fetch user roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('*');
+      
+      setUserRoles(rolesData || []);
+
+      // Fetch franchises
+      const { data: franchisesData } = await supabase
+        .from('franchises')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      setFranchises(franchisesData || []);
 
       // Fetch contact messages
       const { data: messagesData } = await supabase
@@ -102,6 +121,89 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateUserRole = async (userId: string, newRole: "agent" | "client") => {
+    try {
+      // Check if user already has a role
+      const existingRole = userRoles.find(r => r.user_id === userId);
+      
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from('user_roles')
+          .update({ role: newRole as any })
+          .eq('user_id', userId);
+        
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: newRole as any });
+        
+        if (error) throw error;
+      }
+      
+      // If setting as agent, make sure they're not super admin
+      if (newRole === 'agent') {
+        await supabase
+          .from('profiles')
+          .update({ is_super_admin: false })
+          .eq('id', userId);
+      }
+      
+      await fetchAllData();
+      toast.success('Rol de usuario actualizado exitosamente');
+    } catch (error: any) {
+      toast.error('Error actualizando rol: ' + error.message);
+    }
+  };
+
+  const toggleSuperAdmin = async (userId: string, isSuperAdmin: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_super_admin: isSuperAdmin })
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      // If making super admin, remove from user_roles
+      if (isSuperAdmin) {
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId);
+      }
+      
+      await fetchAllData();
+      toast.success(`Usuario ${isSuperAdmin ? 'promovido a' : 'removido de'} Super Administrador`);
+    } catch (error: any) {
+      toast.error('Error actualizando Super Admin: ' + error.message);
+    }
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const getUserRole = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user?.is_super_admin) return 'Super Admin';
+    
+    const role = userRoles.find(r => r.user_id === userId);
+    return role?.role || 'client';
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-8">
+          <p>Cargando panel de administración...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -109,6 +211,9 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold">Panel de Super Administrador</h1>
           <p className="text-muted-foreground">Control total de la plataforma DOMINIO</p>
         </div>
+        <Button variant="outline" onClick={signOut}>
+          Cerrar Sesión
+        </Button>
       </div>
 
       {/* Global Stats */}
@@ -120,6 +225,9 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{properties.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {properties.filter(p => p.status === 'approved').length} aprobadas
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -129,6 +237,9 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
+            <p className="text-xs text-muted-foreground">
+              {users.filter(u => u.is_super_admin).length} super admins
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -138,65 +249,45 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{contactMessages.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Nuevos mensajes recibidos
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Notificaciones</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Franquicias</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{notifications.filter(n => !n.read).length}</div>
+            <div className="text-2xl font-bold">{franchises.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Franquicias activas
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
-          <TabsTrigger value="mensajes" className="relative">
-            Mensajes de Contacto
+          <TabsTrigger value="franquicias">Franquicias</TabsTrigger>
+          <TabsTrigger value="mensajes">
+            Mensajes
             {contactMessages.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {contactMessages.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="franquicias" className="relative">
-            Solicitudes de Franquicia
-            {franchiseApplications.length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {franchiseApplications.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="relative">
-            Leads Venta/Alquiler
-            {listingLeads.length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {listingLeads.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="testimonios">
-            Testimonios
-          </TabsTrigger>
-          <TabsTrigger value="sobre-nosotros">
-            Sobre Nosotros
-          </TabsTrigger>
+          <TabsTrigger value="testimonios">Testimonios</TabsTrigger>
+          <TabsTrigger value="sobre-nosotros">Sobre Nosotros</TabsTrigger>
           <TabsTrigger value="marca-agua">
             <Image className="h-4 w-4 mr-1" />
             Marca de Agua
           </TabsTrigger>
-          <TabsTrigger value="notificaciones" className="relative">
-            Notificaciones
-            {notifications.filter(n => !n.read).length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {notifications.filter(n => !n.read).length}
-              </Badge>
-            )}
-          </TabsTrigger>
+          <TabsTrigger value="reportes">Reportes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="propiedades" className="space-y-6">
@@ -209,11 +300,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {loading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Cargando propiedades...
-                  </div>
-                ) : properties.length === 0 ? (
+                {properties.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     No hay propiedades registradas
                   </div>
@@ -268,34 +355,108 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle>Gestión de Usuarios</CardTitle>
               <CardDescription>
-                Lista de todos los usuarios registrados en la plataforma
+                Administra los roles y permisos de todos los usuarios
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rol Actual</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.full_name || 'Sin nombre'}</div>
+                          <div className="text-sm text-muted-foreground">ID: {user.id.substring(0, 8)}...</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{user.agent_code || 'No disponible'}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.is_super_admin ? 'default' : 'secondary'}>
+                          {getUserRole(user.id)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {!user.is_super_admin && (
+                            <Select 
+                              value={getUserRole(user.id)} 
+                              onValueChange={(value) => updateUserRole(user.id, value as "agent" | "client")}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="client">Cliente</SelectItem>
+                                <SelectItem value="agent">Agente</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          <Button
+                            size="sm"
+                            variant={user.is_super_admin ? "destructive" : "default"}
+                            onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
+                          >
+                            {user.is_super_admin ? (
+                              <>
+                                <UserX className="h-4 w-4 mr-1" />
+                                Remover Admin
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                Hacer Admin
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="franquicias" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestión de Franquicias</CardTitle>
+              <CardDescription>
+                Administra las franquicias de la red DOMINIO
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {loading ? (
+                {franchises.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    Cargando usuarios...
-                  </div>
-                ) : users.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay usuarios registrados
+                    No hay franquicias registradas
                   </div>
                 ) : (
-                  users.map((user) => (
-                    <div key={user.id} className="border rounded-lg p-4 space-y-2">
+                  franchises.map((franchise) => (
+                    <div key={franchise.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold">{user.full_name || 'Sin nombre'}</h4>
-                          <p className="text-sm text-muted-foreground">ID: {user.id}</p>
-                          <p className="text-sm">Agente: {user.agent_code || 'No asignado'}</p>
-                          <span className="text-xs text-muted-foreground">
-                            Registrado: {new Date(user.created_at).toLocaleDateString()}
-                          </span>
+                          <h4 className="font-semibold">{franchise.name}</h4>
+                          <p className="text-sm text-muted-foreground">{franchise.description}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Creada: {new Date(franchise.created_at).toLocaleDateString()}
+                          </p>
                         </div>
-                        <Badge variant="secondary">
-                          {user.is_super_admin ? 'Super Admin' : 'Usuario'}
-                        </Badge>
+                        <Button size="sm" variant="outline">
+                          <Settings className="h-4 w-4 mr-1" />
+                          Gestionar
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -351,187 +512,93 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="franquicias" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Solicitudes de Franquicia</CardTitle>
-              <CardDescription>
-                Gestiona las solicitudes de nuevas franquicias
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {franchiseApplications.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay solicitudes de franquicia.
-                  </div>
-                ) : (
-                  franchiseApplications.map((application) => (
-                    <div
-                      key={application.id}
-                      className="p-4 border rounded-lg"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{application.full_name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {application.email} | {application.phone}
-                          </p>
-                          <p className="text-sm">
-                            <strong>Ciudad:</strong> {application.city}, {application.country}
-                          </p>
-                          {application.message && (
-                            <p className="text-sm mt-2">
-                              <strong>Mensaje:</strong> {application.message}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Recibido: {new Date(application.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            application.status === 'pending' 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : application.status === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {application.status === 'pending' ? 'Pendiente' : 
-                             application.status === 'approved' ? 'Aprobado' : 'Rechazado'}
-                          </span>
-                          {application.photo_url && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={application.photo_url} target="_blank" rel="noreferrer">
-                                Ver Foto
-                              </a>
-                            </Button>
-                          )}
-                          {application.cv_url && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={application.cv_url} target="_blank" rel="noreferrer">
-                                Ver CV
-                              </a>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="leads" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Leads de Venta/Alquiler</CardTitle>
-              <CardDescription>
-                Clientes que quieren vender o alquilar su propiedad
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {listingLeads.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay leads de venta/alquiler aún.
-                  </div>
-                ) : (
-                  listingLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="p-4 border rounded-lg space-y-2"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold">{lead.full_name}</h3>
-                          <p className="text-sm text-muted-foreground">{lead.email}</p>
-                          {lead.phone && (
-                            <p className="text-sm text-muted-foreground">Tel: {lead.phone}</p>
-                          )}
-                          {lead.whatsapp && (
-                            <p className="text-sm text-muted-foreground">WhatsApp: {lead.whatsapp}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            lead.request_type === 'venta' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-purple-100 text-purple-800'
-                          }`}>
-                            {lead.request_type === 'venta' ? 'VENTA' : 'ALQUILER'}
-                          </span>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(lead.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      {lead.city_country && (
-                        <p className="text-sm"><strong>Ciudad:</strong> {lead.city_country}</p>
-                      )}
-                      {lead.property_location && (
-                        <p className="text-sm"><strong>Ubicación:</strong> {lead.property_location}</p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="testimonios" className="space-y-6">
           <TestimonialManagement />
-        </TabsContent>
-
-        <TabsContent value="marca-agua" className="space-y-6">
-          <WatermarkManagement />
         </TabsContent>
 
         <TabsContent value="sobre-nosotros" className="space-y-6">
           <AboutPageManagement />
         </TabsContent>
 
-        <TabsContent value="notificaciones" className="space-y-6">
+        <TabsContent value="marca-agua" className="space-y-6">
+          <WatermarkManagement />
+        </TabsContent>
+
+        <TabsContent value="reportes" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Notificaciones del Sistema
-              </CardTitle>
+              <CardTitle>Reportes Globales</CardTitle>
               <CardDescription>
-                Notificaciones administrativas y alertas del sistema
+                Estadísticas y métricas de rendimiento de la plataforma
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {notifications.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay notificaciones
-                  </div>
-                ) : (
-                  notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`border rounded-lg p-4 ${!notification.read ? 'bg-blue-50 border-blue-200' : ''}`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{notification.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(notification.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {!notification.read && (
-                          <Badge variant="destructive">Nuevo</Badge>
-                        )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Propiedades por Estado</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Aprobadas:</span>
+                        <span className="font-medium">{properties.filter(p => p.status === 'approved').length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Pendientes:</span>
+                        <span className="font-medium">{properties.filter(p => p.status === 'pending').length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Rechazadas:</span>
+                        <span className="font-medium">{properties.filter(p => p.status === 'rejected').length}</span>
                       </div>
                     </div>
-                  ))
-                )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Usuarios por Rol</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Super Admins:</span>
+                        <span className="font-medium">{users.filter(u => u.is_super_admin).length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Agentes:</span>
+                        <span className="font-medium">{userRoles.filter(r => r.role === 'agent').length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Clientes:</span>
+                        <span className="font-medium">{users.length - users.filter(u => u.is_super_admin).length - userRoles.filter(r => r.role === 'agent').length}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Actividad Reciente</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm">Solicitudes Franquicia:</span>
+                        <span className="font-medium">{franchiseApplications.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Leads de Listado:</span>
+                        <span className="font-medium">{listingLeads.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">Mensajes de Contacto:</span>
+                        <span className="font-medium">{contactMessages.length}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </CardContent>
           </Card>
