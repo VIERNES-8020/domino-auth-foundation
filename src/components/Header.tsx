@@ -79,32 +79,32 @@ export default function Header() {
               Inicio
             </Link>
             <Link 
-              to="/properties" 
-              className={`nav-link ${location.pathname === '/properties' ? 'active' : ''}`}
+              to="/propiedades" 
+              className={`nav-link ${location.pathname === '/propiedades' ? 'active' : ''}`}
             >
               Propiedades
             </Link>
             <Link 
-              to="/agents" 
-              className={`nav-link ${location.pathname === '/agents' ? 'active' : ''}`}
+              to="/agentes" 
+              className={`nav-link ${location.pathname === '/agentes' ? 'active' : ''}`}
             >
               Nuestros Agentes
             </Link>
             <Link 
-              to="/nuestros-clientes" 
-              className={`nav-link ${location.pathname === '/nuestros-clientes' ? 'active' : ''}`}
+              to="/clientes" 
+              className={`nav-link ${location.pathname === '/clientes' ? 'active' : ''}`}
             >
               Nuestros Clientes
             </Link>
             <Link 
-              to="/about" 
-              className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}
+              to="/sobre-nosotros" 
+              className={`nav-link ${location.pathname === '/sobre-nosotros' ? 'active' : ''}`}
             >
               Sobre Nosotros
             </Link>
             <Link 
-              to="/contact" 
-              className={`nav-link ${location.pathname === '/contact' ? 'active' : ''}`}
+              to="/contacto" 
+              className={`nav-link ${location.pathname === '/contacto' ? 'active' : ''}`}
             >
               Contacto
             </Link>
