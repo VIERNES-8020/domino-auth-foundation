@@ -40,10 +40,10 @@ export default function AuthGate() {
     initializeSession();
 
     // Escucha cambios futuros (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) {
+        fetchUserProfile(newSession.user);
       } else {
         setProfile(null);
       }
@@ -122,7 +122,7 @@ export default function AuthGate() {
   }
 
   if (!session) {
-    // If no session, always go to auth page
+    // Si no hay sesión, mostramos la página de autenticación/registro
     return (
       <BrowserRouter>
         <AuthPage />
@@ -130,7 +130,7 @@ export default function AuthGate() {
     );
   }
 
-  // Si hay sesión pero el perfil aún no se carga, esperamos
+  // Si hay sesión, pero el perfil aún se está cargando
   if (!profile) {
     return <div>Verificando permisos...</div>;
   }
@@ -144,11 +144,9 @@ export default function AuthGate() {
             return <AdminDashboard />;
           case 'Agente Inmobiliario':
             return <AgentDashboard />;
-          case 'Cliente':
-            return <PublicPortal />;
           default:
-            // Si el rol es desconocido, negamos el acceso
-            return <AccessDenied />;
+            // Cualquier otro rol (como 'Cliente') va al portal público
+            return <PublicPortal />;
         }
       })()}
     </BrowserRouter>

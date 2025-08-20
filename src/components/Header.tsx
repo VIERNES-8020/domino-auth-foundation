@@ -112,21 +112,16 @@ export default function Header() {
           {session ? (
             <div className="flex items-center gap-2">
               {userRole === 'super_admin' ? (
-                <>
-                  <Button asChild>
-                    <Link to="/admin/dashboard">Panel Super Admin</Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link to="/dashboard/agent">Vista Agente</Link>
-                  </Button>
-                </>
+                <Button asChild>
+                  <span onClick={() => window.location.reload()}>Panel Super Admin</span>
+                </Button>
               ) : userRole === 'agent' ? (
                 <Button asChild>
-                  <Link to="/dashboard/agent">Ir a mi Panel</Link>
+                  <span onClick={() => window.location.reload()}>Mi Panel</span>
                 </Button>
               ) : (
                 <Button variant="outline" asChild>
-                  <Link to="/">Portal Público</Link>
+                  <span onClick={() => window.location.reload()}>Portal Público</span>
                 </Button>
               )}
               <Button variant="outline" onClick={async () => { await supabase.auth.signOut(); }}>
@@ -135,11 +130,11 @@ export default function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="outline" asChild>
-                <Link to="/auth">Iniciar Sesión</Link>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Iniciar Sesión
               </Button>
-              <Button asChild>
-                <Link to="/auth">Registrarse</Link>
+              <Button onClick={() => window.location.reload()}>
+                Registrarse
               </Button>
             </div>
           )}
