@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 
@@ -6,14 +7,20 @@ import { Session, User } from '@supabase/supabase-js';
 import AuthPage from './pages/AuthPage';
 import AgentDashboard from './pages/AgentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import HomePage from './pages/HomePage'; // Tu página de inicio pública
+import PublicPortal from './pages/PublicPortal';
+
+// Componente simple para mostrar "Acceso Denegado"
+const AccessDenied = () => (
+  <div style={{ padding: '50px', textAlign: 'center' }}>
+    <h1>Acceso Denegado</h1>
+    <p>No tienes los permisos necesarios para acceder a esta página.</p>
+  </div>
+);
 
 interface Profile {
   id: string;
   role: string;
 }
-
-const AccessDenied = () => <div>Acceso Denegado</div>;
 
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,6 +28,7 @@ export default function AuthGate() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Establece el estado inicial al cargar
     const initializeSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -31,10 +39,11 @@ export default function AuthGate() {
     };
     initializeSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      if (newSession) {
-        fetchUserProfile(newSession.user);
+    // Escucha cambios futuros (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        fetchUserProfile(session.user);
       } else {
         setProfile(null);
       }
@@ -43,6 +52,7 @@ export default function AuthGate() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Función CLAVE para obtener el ROL del usuario
   const fetchUserProfile = async (user: User) => {
     try {
       // First check profiles table for super admin flag
@@ -101,34 +111,46 @@ export default function AuthGate() {
         });
       }
     } catch (error) {
-      console.error("Error al obtener perfil:", error);
+      console.error("Error crítico al obtener el perfil:", error);
+      // Si hay un error, cerramos sesión para evitar bucles
       await supabase.auth.signOut();
     }
   };
   
   if (loading) {
-    return <div>Cargando...</div>;
+    return <div>Cargando y verificando sesión...</div>;
   }
 
   if (!session) {
-    // Si no hay sesión, mostramos la página de autenticación/registro
-    return <AuthPage />;
+    // If no session, always go to auth page
+    return (
+      <BrowserRouter>
+        <AuthPage />
+      </BrowserRouter>
+    );
   }
 
-  // Si hay sesión, pero el perfil aún se está cargando
+  // Si hay sesión pero el perfil aún no se carga, esperamos
   if (!profile) {
     return <div>Verificando permisos...</div>;
   }
 
   // --- LÓGICA DE ENRUTAMIENTO DEFINITIVA ---
-  switch (profile.role) {
-    case 'Super Administrador':
-      return <AdminDashboard />;
-    case 'Agente Inmobiliario':
-      return <AgentDashboard />;
-    // ... otros roles ...
-    default:
-      // Cualquier otro rol (como 'Cliente') va al portal público
-      return <HomePage />;
-  }
+  return (
+    <BrowserRouter>
+      {(() => {
+        switch (profile.role) {
+          case 'Super Administrador':
+            return <AdminDashboard />;
+          case 'Agente Inmobiliario':
+            return <AgentDashboard />;
+          case 'Cliente':
+            return <PublicPortal />;
+          default:
+            // Si el rol es desconocido, negamos el acceso
+            return <AccessDenied />;
+        }
+      })()}
+    </BrowserRouter>
+  );
 }
