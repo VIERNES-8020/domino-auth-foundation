@@ -151,15 +151,12 @@ export default function Header() {
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={userProfile?.avatar_url || ''} alt="Avatar del usuario" />
                       <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                        {userProfile?.full_name?.charAt(0) || session.user?.email?.charAt(0) || 'U'}
+                        {userProfile?.full_name?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-semibold">
                         {userProfile?.full_name || 'Usuario'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {session.user?.email}
                       </p>
                       {userRole && (
                         <p className="text-xs text-primary font-medium">
@@ -169,12 +166,21 @@ export default function Header() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="flex items-center gap-2 w-full cursor-pointer">
-                      <User className="h-4 w-4" />
-                      Ir a mi Panel
-                    </Link>
-                  </DropdownMenuItem>
+                  {location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/" className="flex items-center gap-2 w-full cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Ir al Portal Principal
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem asChild>
+                      <Link to={getDashboardLink()} className="flex items-center gap-2 w-full cursor-pointer">
+                        <User className="h-4 w-4" />
+                        Ir a mi Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={async () => { await supabase.auth.signOut(); }}
