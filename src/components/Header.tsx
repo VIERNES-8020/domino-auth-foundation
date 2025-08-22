@@ -23,9 +23,9 @@ export default function Header() {
       
       setUserProfile(profileData);
 
-      // Determine role
+      // Determine role using same logic as App.tsx
       if (profileData?.is_super_admin === true) {
-        setUserRole('super_admin');
+        setUserRole('Super Administrador');
         return;
       }
       
@@ -36,18 +36,26 @@ export default function Header() {
         .eq('user_id', userId)
         .maybeSingle();
       
-      const role = roleData?.role || 'client';
-      setUserRole(role);
+      if (roleData?.role === 'agent') {
+        setUserRole('Agente Inmobiliario');
+        return;
+      }
+      
+      // Default to client role
+      setUserRole('Cliente');
     } catch (error) {
       console.warn("Could not fetch user profile:", error);
-      setUserRole('client');
+      setUserRole('Cliente');
     }
   };
 
   const getDashboardLink = () => {
-    if (userRole === 'super_admin') return '/admin';
-    if (userRole === 'agent') return '/dashboard';
-    return '/'; // Client stays on public portal
+    if (userRole === 'Super Administrador') {
+      return '/admin/dashboard';
+    } else if (userRole === 'Agente Inmobiliario') {
+      return '/dashboard/agent';
+    }
+    return '/'; // Default fallback
   };
 
   useEffect(() => {
@@ -98,14 +106,14 @@ export default function Header() {
               Propiedades
             </Link>
             <Link 
-              to="/agentes" 
-              className={`nav-link ${location.pathname === '/agentes' ? 'active' : ''}`}
+              to="/nuestros-agentes" 
+              className={`nav-link ${location.pathname === '/nuestros-agentes' ? 'active' : ''}`}
             >
               Nuestros Agentes
             </Link>
             <Link 
-              to="/clientes" 
-              className={`nav-link ${location.pathname === '/clientes' ? 'active' : ''}`}
+              to="/nuestros-clientes" 
+              className={`nav-link ${location.pathname === '/nuestros-clientes' ? 'active' : ''}`}
             >
               Nuestros Clientes
             </Link>
@@ -153,10 +161,10 @@ export default function Header() {
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
-                <Link to="/">Iniciar Sesión</Link>
+                <Link to="/auth">Iniciar Sesión</Link>
               </Button>
               <Button asChild>
-                <Link to="/">Registrarse</Link>
+                <Link to="/auth">Registrarse</Link>
               </Button>
             </div>
           )}
