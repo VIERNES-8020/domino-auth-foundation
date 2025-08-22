@@ -185,17 +185,20 @@ export default function AuthForm() {
         if (data.user) {
           console.log("Usuario registrado:", data.user.id);
           
-          // Upsert profile con información adicional
-          const { error: upsertErr } = await supabase.from('profiles').upsert({
-            id: data.user.id,
+          // Actualizar perfil con información completa del agente
+          const { error: upsertErr } = await supabase.from('profiles').update({
             full_name,
             identity_card,
             corporate_phone,
-          });
+          }).eq('id', data.user.id);
           
-          if (upsertErr) console.warn('Error al guardar perfil:', upsertErr);
+          if (upsertErr) {
+            console.error('Error al actualizar perfil:', upsertErr);
+          } else {
+            console.log("Perfil de agente actualizado correctamente");
+          }
 
-          // Insertar rol en user_roles
+          // Insertar rol específico en user_roles
           const roleValue = role === 'Super Administrador' ? 'super_admin' : 
                            role === 'Administrador de Franquicia' ? 'franchise_admin' :
                            role === 'Gerente de Oficina' ? 'office_manager' :
@@ -203,7 +206,7 @@ export default function AuthForm() {
           
           console.log(`Guardando rol "${roleValue}" para usuario ${data.user.id}`);
           
-          const { error: roleError } = await supabase.from('user_roles').upsert({
+          const { error: roleError } = await supabase.from('user_roles').insert({
             user_id: data.user.id,
             role: roleValue,
           });
@@ -251,18 +254,17 @@ export default function AuthForm() {
         if (data.user) {
           console.log("Cliente registrado:", data.user.id);
           
-          // Upsert profile con información del cliente
-          const { error: upsertErr } = await supabase.from('profiles').upsert({
-            id: data.user.id,
+          // Actualizar perfil con información del cliente
+          const { error: upsertErr } = await supabase.from('profiles').update({
             full_name,
             identity_card,
             corporate_phone,
-          });
+          }).eq('id', data.user.id);
           
-          if (upsertErr) console.warn('Error al guardar perfil de cliente:', upsertErr);
+          if (upsertErr) console.warn('Error al actualizar perfil de cliente:', upsertErr);
 
           // Insertar rol de cliente en user_roles
-          const { error: roleError } = await supabase.from('user_roles').upsert({
+          const { error: roleError } = await supabase.from('user_roles').insert({
             user_id: data.user.id,
             role: 'client',
           });
