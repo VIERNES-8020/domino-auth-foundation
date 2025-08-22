@@ -61,6 +61,17 @@ export default function Header() {
     return '/'; // Default fallback
   };
 
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+      }
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
       setSession(s);
@@ -183,7 +194,7 @@ export default function Header() {
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={async () => { await supabase.auth.signOut(); }}
+                    onClick={handleSignOut}
                     className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -269,9 +270,14 @@ export default function AgentDashboard() {
           <h1 className="text-3xl font-bold">Panel del Agente</h1>
           <p className="text-muted-foreground">Gestiona tus propiedades y perfil</p>
         </div>
-        <Button variant="outline" onClick={signOut}>
-          Cerrar Sesión
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/">Portal Principal</Link>
+          </Button>
+          <Button variant="outline" onClick={signOut}>
+            Cerrar Sesión
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
