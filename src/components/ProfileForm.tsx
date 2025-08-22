@@ -68,7 +68,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     const lastFourDigits = digits.slice(-4);
     
     if (initials && lastFourDigits.length === 4) {
-      return `${initials}${lastFourDigits}AURA`;
+      return `${initials}${lastFourDigits}`;
     }
     
     return "";
@@ -358,14 +358,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                       id="agent_code"
                       value={profile.agent_code || ""}
                       onChange={(e) => setProfile(prev => ({ ...prev, agent_code: e.target.value }))}
-                      placeholder="ABC1234AURA"
+                      placeholder="ABC1234"
                       className="h-12 border-primary/20 focus:border-primary bg-gradient-to-r from-primary/5 to-primary/10 focus:shadow-lg transition-all duration-300 font-mono text-center font-semibold"
                       readOnly={!!generateAgentCode(profile.full_name || '', profile.identity_card || '')}
                     />
                     {profile.full_name && profile.identity_card && (
                       <p className="text-xs text-primary flex items-center gap-1 mt-2">
                         <Sparkles className="h-3 w-3" />
-                        Generado automáticamente con iniciales + carnet + AURA
+                        Generado automáticamente con iniciales + carnet
                       </p>
                     )}
                   </div>
@@ -384,35 +384,49 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <Label htmlFor="bio" className="text-sm font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary" />
-                    Biografía profesional
-                  </Label>
-                  <Textarea
-                    id="bio"
-                    value={profile.bio || ""}
-                    onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                    placeholder="Cuéntanos sobre ti, tu experiencia y especialidades en el sector inmobiliario..."
-                    rows={4}
-                    className="border-primary/20 focus:border-primary bg-gradient-to-br from-background to-secondary/10 focus:shadow-lg transition-all duration-300 resize-none"
-                  />
-                </div>
+                  <div className="space-y-4">
+                    <Label htmlFor="bio" className="text-sm font-semibold flex items-center gap-2">
+                      <User className="h-4 w-4 text-primary" />
+                      Biografía profesional
+                      <div className="ml-auto flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                        <Sparkles className="h-3 w-3" />
+                        AURA Asistente
+                      </div>
+                    </Label>
+                    <Textarea
+                      id="bio"
+                      value={profile.bio || ""}
+                      onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="✨ AURA te ayuda: Describe tu pasión por bienes raíces, años de experiencia, especialidades (residencial, comercial, lujo), logros destacados, y qué te diferencia como agente inmobiliario profesional..."
+                      rows={4}
+                      className="border-primary/20 focus:border-primary bg-gradient-to-br from-background to-secondary/10 focus:shadow-lg transition-all duration-300 resize-none"
+                    />
+                    <div className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
+                      <strong className="text-primary">💡 Sugerencia AURA:</strong> Menciona tu experiencia, especialidades, certificaciones, y filosofía de servicio al cliente. Ejemplo: "Soy un profesional apasionado por bienes raíces con X años de experiencia..."
+                    </div>
+                  </div>
 
-                <div className="space-y-4">
-                  <Label htmlFor="education" className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    Educación y certificaciones
-                  </Label>
-                  <Textarea
-                    id="education"
-                    value={profile.education || ""}
-                    onChange={(e) => setProfile(prev => ({ ...prev, education: e.target.value }))}
-                    placeholder="Tu formación académica, certificaciones inmobiliarias, cursos especializados..."
-                    rows={3}
-                    className="border-primary/20 focus:border-primary bg-gradient-to-br from-background to-secondary/10 focus:shadow-lg transition-all duration-300 resize-none"
-                  />
-                </div>
+                  <div className="space-y-4">
+                    <Label htmlFor="education" className="text-sm font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Educación y certificaciones
+                      <div className="ml-auto flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                        <Sparkles className="h-3 w-3" />
+                        AURA Asistente
+                      </div>
+                    </Label>
+                    <Textarea
+                      id="education"
+                      value={profile.education || ""}
+                      onChange={(e) => setProfile(prev => ({ ...prev, education: e.target.value }))}
+                      placeholder="✨ AURA te ayuda: Lista tu título universitario, certificaciones inmobiliarias, licencias, cursos de especialización, diplomados, y formación continua..."
+                      rows={3}
+                      className="border-primary/20 focus:border-primary bg-gradient-to-br from-background to-secondary/10 focus:shadow-lg transition-all duration-300 resize-none"
+                    />
+                    <div className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
+                      <strong className="text-primary">💡 Sugerencia AURA:</strong> Incluye grado académico, certificaciones profesionales, licencias vigentes, y cursos recientes. Ejemplo: "Licenciado en Administración de Empresas, Certificado en Avalúos Inmobiliarios..."
+                    </div>
+                  </div>
               </CardContent>
             </Card>
 
