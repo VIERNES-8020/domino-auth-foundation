@@ -1,29 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import brandLogo from "@/assets/logo-dominio.svg";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { User, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Header() {
   const [session, setSession] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserProfile = async (userId: string) => {
     try {
-      // First check profiles table for super admin flag
+      // Get full user profile including avatar
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_super_admin')
+        .select('*')
         .eq('id', userId)
         .maybeSingle();
       
+      setUserProfile(profileData);
+
+      // Determine role
       if (profileData?.is_super_admin === true) {
         setUserRole('super_admin');
         return;
       }
       
-      // Then check user_roles for other roles
+      // Check user_roles for other roles
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
@@ -33,9 +39,15 @@ export default function Header() {
       const role = roleData?.role || 'client';
       setUserRole(role);
     } catch (error) {
-      console.warn("Could not fetch user role:", error);
+      console.warn("Could not fetch user profile:", error);
       setUserRole('client');
     }
+  };
+
+  const getDashboardLink = () => {
+    if (userRole === 'super_admin') return '/admin';
+    if (userRole === 'agent') return '/dashboard';
+    return '/'; // Client stays on public portal
   };
 
   useEffect(() => {
@@ -44,10 +56,11 @@ export default function Header() {
       
       if (s?.user?.id) {
         setTimeout(() => {
-          fetchUserRole(s.user.id);
+          fetchUserProfile(s.user.id);
         }, 0);
       } else {
         setUserRole(null);
+        setUserProfile(null);
       }
     });
     
@@ -56,7 +69,7 @@ export default function Header() {
       
       if (session?.user?.id) {
         setTimeout(() => {
-          fetchUserRole(session.user.id);
+          fetchUserProfile(session.user.id);
         }, 0);
       }
     });
@@ -111,12 +124,31 @@ export default function Header() {
           </div>
           {session ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {session.user?.email || 'Usuario'}
-              </span>
-              <Button variant="outline" onClick={async () => { await supabase.auth.signOut(); }}>
-                Cerrar Sesión
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+                    <AvatarImage src={userProfile?.avatar_url || ''} alt="Avatar del usuario" />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link to={getDashboardLink()} className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Ir a mi Panel
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={async () => { await supabase.auth.signOut(); }}
+                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Cerrar Sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <div className="flex items-center gap-2">
