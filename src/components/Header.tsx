@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { User, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { User, LogOut, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Header() {
@@ -137,23 +137,48 @@ export default function Header() {
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
-                    <AvatarImage src={userProfile?.avatar_url || ''} alt="Avatar del usuario" />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={userProfile?.avatar_url || ''} alt="Avatar del usuario" />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        {userProfile?.full_name?.charAt(0) || session.user?.email?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={userProfile?.avatar_url || ''} alt="Avatar del usuario" />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        {userProfile?.full_name?.charAt(0) || session.user?.email?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-semibold">
+                        {userProfile?.full_name || 'Usuario'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {session.user?.email}
+                      </p>
+                      {userRole && (
+                        <p className="text-xs text-primary font-medium">
+                          {userRole}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="flex items-center gap-2">
+                    <Link to={getDashboardLink()} className="flex items-center gap-2 w-full cursor-pointer">
                       <User className="h-4 w-4" />
                       Ir a mi Panel
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={async () => { await supabase.auth.signOut(); }}
-                    className="flex items-center gap-2 text-destructive focus:text-destructive"
+                    className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     Cerrar Sesión
