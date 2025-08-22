@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
+import SuccessCounters from "@/components/SuccessCounters";
+import MapPicker from "@/components/MapPicker";
+import { boliviaDepartments, type Department } from "@/data/bolivia-locations";
 
 export default function VendePage() {
   const navigate = useNavigate();
@@ -18,13 +21,36 @@ export default function VendePage() {
     email: "",
     phone: "",
     whatsapp: "",
-    city_country: "",
+    department: "",
+    province: "",
     request_type: "",
-    property_location: ""
+    property_location: "",
+    property_lat: null as number | null,
+    property_lng: null as number | null
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+
+  const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDepartmentChange = (departmentId: string) => {
+    const department = boliviaDepartments.find(d => d.id === departmentId);
+    setSelectedDepartment(department || null);
+    setFormData(prev => ({ 
+      ...prev, 
+      department: departmentId,
+      province: "" // Reset province when department changes
+    }));
+  };
+
+  const handleMapChange = (coords: { lat: number; lng: number }) => {
+    setFormData(prev => ({
+      ...prev,
+      property_lat: coords.lat,
+      property_lng: coords.lng
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +72,7 @@ export default function VendePage() {
           email: formData.email.trim(),
           phone: formData.phone.trim() || null,
           whatsapp: formData.whatsapp.trim() || null,
-          city_country: formData.city_country.trim() || null,
+          city_country: `${selectedDepartment?.name || ''}, ${boliviaDepartments.find(d => d.id === formData.department)?.provinces.find(p => p.id === formData.province)?.name || ''}, Bolivia`.trim(),
           request_type: formData.request_type,
           property_location: formData.property_location.trim() || null
         });
@@ -61,10 +87,14 @@ export default function VendePage() {
         email: "",
         phone: "",
         whatsapp: "",
-        city_country: "",
+        department: "",
+        province: "",
         request_type: "",
-        property_location: ""
+        property_location: "",
+        property_lat: null,
+        property_lng: null
       });
+      setSelectedDepartment(null);
 
       // Redirect to home after success
       setTimeout(() => {
@@ -83,16 +113,18 @@ export default function VendePage() {
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-2xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="mb-6 flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver al Inicio
-          </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/")}
+              className="mb-6 flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver al Inicio
+            </Button>
 
-          <Card>
+            <SuccessCounters />
+
+            <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">
                 ¿Quieres Vender o Alquilar tu Propiedad?
@@ -164,17 +196,47 @@ export default function VendePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city_country" className="text-sm font-medium">
-                      Ciudad/País
+                    <Label htmlFor="department" className="text-sm font-medium">
+                      Departamento *
                     </Label>
-                    <Input
-                      id="city_country"
-                      type="text"
-                      placeholder="La Paz, Bolivia"
-                      value={formData.city_country}
-                      onChange={(e) => handleInputChange("city_country", e.target.value)}
-                    />
+                    <Select value={formData.department} onValueChange={handleDepartmentChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {boliviaDepartments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="province" className="text-sm font-medium">
+                      Provincia *
+                    </Label>
+                    <Select 
+                      value={formData.province} 
+                      onValueChange={(value) => handleInputChange("province", value)}
+                      disabled={!selectedDepartment}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una provincia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedDepartment?.provinces.map((province) => (
+                          <SelectItem key={province.id} value={province.id}>
+                            {province.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                   <div className="space-y-2">
                     <Label htmlFor="request_type" className="text-sm font-medium">
@@ -187,6 +249,7 @@ export default function VendePage() {
                       <SelectContent>
                         <SelectItem value="venta">Quiero Vender</SelectItem>
                         <SelectItem value="alquiler">Quiero Alquilar</SelectItem>
+                        <SelectItem value="anticretico">Quiero dar en Anticrético</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -202,6 +265,21 @@ export default function VendePage() {
                     value={formData.property_location}
                     onChange={(e) => handleInputChange("property_location", e.target.value)}
                     rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Ubicación en el Mapa (Opcional)
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Haz clic en el mapa para marcar la ubicación exacta de tu propiedad
+                  </p>
+                  <MapPicker
+                    lat={formData.property_lat || undefined}
+                    lng={formData.property_lng || undefined}
+                    onChange={handleMapChange}
+                    className="w-full h-64 rounded-lg border"
                   />
                 </div>
 
