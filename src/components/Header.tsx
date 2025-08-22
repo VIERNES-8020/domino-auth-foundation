@@ -111,30 +111,20 @@ export default function Header() {
           </div>
           {session ? (
             <div className="flex items-center gap-2">
-              {userRole === 'super_admin' ? (
-                <Button asChild>
-                  <span onClick={() => window.location.reload()}>Panel Super Admin</span>
-                </Button>
-              ) : userRole === 'agent' ? (
-                <Button asChild>
-                  <span onClick={() => window.location.reload()}>Mi Panel</span>
-                </Button>
-              ) : (
-                <Button variant="outline" asChild>
-                  <span onClick={() => window.location.reload()}>Portal Público</span>
-                </Button>
-              )}
+              <span className="text-sm text-muted-foreground">
+                {session.user?.email || 'Usuario'}
+              </span>
               <Button variant="outline" onClick={async () => { await supabase.auth.signOut(); }}>
                 Cerrar Sesión
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                Iniciar Sesión
+              <Button variant="outline" asChild>
+                <Link to="/">Iniciar Sesión</Link>
               </Button>
-              <Button onClick={() => window.location.reload()}>
-                Registrarse
+              <Button asChild>
+                <Link to="/">Registrarse</Link>
               </Button>
             </div>
           )}

@@ -172,7 +172,7 @@ export default function HomePage() {
               <Link to="/vende">Vende o Alquila</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/properties">Explorar Propiedades</Link>
+              <Link to="/propiedades">Explorar Propiedades</Link>
             </Button>
             <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2 text-primary hover-scale">
               <span>Únete como Franquicia</span>
@@ -325,7 +325,7 @@ export default function HomePage() {
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
           <h2 id="metrics-heading" className="sr-only">Métricas de DOMINIO</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
-            <Link to="/properties" aria-label="Ver propiedades" className="block group">
+            <Link to="/propiedades" aria-label="Ver propiedades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
@@ -333,7 +333,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link to="/properties" aria-label="Ver franquicias" className="block group">
+            <Link to="/propiedades" aria-label="Ver franquicias" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
@@ -341,7 +341,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link to="/properties" aria-label="Ver ciudades" className="block group">
+            <Link to="/propiedades" aria-label="Ver ciudades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalCities}</div>
@@ -349,7 +349,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link to="/properties" aria-label="Ver ventas mensuales" className="block group">
+            <Link to="/propiedades" aria-label="Ver ventas mensuales" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.monthlySales}+</div>

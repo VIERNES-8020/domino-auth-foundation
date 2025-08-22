@@ -62,7 +62,7 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
   };
 
 return (
-  <Link id={`property-${property.id}`} to={`/properties/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
+  <Link id={`property-${property.id}`} to={`/propiedad/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
     <Card key={property.id} className="relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
       {onToggleFavorite && (
         <Button
