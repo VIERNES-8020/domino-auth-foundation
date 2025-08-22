@@ -196,15 +196,23 @@ export default function AuthForm() {
           if (upsertErr) console.warn('Error al guardar perfil:', upsertErr);
 
           // Insertar rol en user_roles
+          const roleValue = role === 'Super Administrador' ? 'super_admin' : 
+                           role === 'Administrador de Franquicia' ? 'franchise_admin' :
+                           role === 'Gerente de Oficina' ? 'office_manager' :
+                           role === 'Supervisor' ? 'supervisor' : 'agent';
+          
+          console.log(`Guardando rol "${roleValue}" para usuario ${data.user.id}`);
+          
           const { error: roleError } = await supabase.from('user_roles').upsert({
             user_id: data.user.id,
-            role: role === 'Super Administrador' ? 'super_admin' : 
-                  role === 'Administrador de Franquicia' ? 'franchise_admin' :
-                  role === 'Gerente de Oficina' ? 'office_manager' :
-                  role === 'Supervisor' ? 'supervisor' : 'agent',
+            role: roleValue,
           });
           
-          if (roleError) console.warn('Error al guardar rol:', roleError);
+          if (roleError) {
+            console.error('Error al guardar rol:', roleError);
+          } else {
+            console.log(`Rol "${roleValue}" guardado correctamente`);
+          }
 
           // Generar código de agente si es necesario
           if (role === 'Agente Inmobiliario') {
