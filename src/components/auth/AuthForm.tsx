@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -59,6 +60,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
   
 
   const form = useForm<AgentSignupValues | ClientSignupValues | LoginValues>({
@@ -104,7 +106,7 @@ export default function AuthForm() {
     }
   };
 
-  // Función de redirección basada en roles - AuthGate handles navigation
+  // Auto-redirect after successful login
   const handleSuccessfulLogin = async (session: any) => {
     if (!session?.user?.id) {
       console.error("No hay sesión o usuario");
@@ -112,9 +114,40 @@ export default function AuthForm() {
     }
 
     console.log("Usuario logueado:", session.user.id);
-    
-    // Just show success message - AuthGate will handle navigation automatically
     setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
+    
+    // Determine user role and redirect accordingly
+    try {
+      // Check if super admin
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      
+      if (profileData?.is_super_admin === true) {
+        setTimeout(() => navigate('/admin/dashboard'), 1000);
+        return;
+      }
+      
+      // Check user role
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      if (roleData?.role === 'agent') {
+        setTimeout(() => navigate('/dashboard/agent'), 1000);
+        return;
+      }
+      
+      // Default redirect to home for clients
+      setTimeout(() => navigate('/'), 1000);
+    } catch (error) {
+      console.error("Error determining user role:", error);
+      setTimeout(() => navigate('/'), 1000);
+    }
   };
 
   const onSubmit = async (values: any) => {

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Toaster } from '@/components/ui/toaster';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 // Import all pages
 import HomePage from '@/pages/HomePage';
@@ -140,6 +141,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function App() {
+  // Initialize auto-logout functionality
+  useAutoLogout();
+  
   return (
     <Router>
       <Routes>

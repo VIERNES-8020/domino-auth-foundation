@@ -39,6 +39,9 @@ export default function Header() {
       if (roleData?.role === 'agent') {
         setUserRole('Agente Inmobiliario');
         return;
+      } else if (roleData?.role === 'super_admin') {
+        setUserRole('Super Administrador');
+        return;
       }
       
       // Default to client role
