@@ -64,6 +64,8 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
 
   const fetchUserProfile = async (user: User) => {
     try {
+      console.log("Obteniendo perfil para usuario:", user.id);
+      
       // First check profiles table for super admin flag
       const { data: profileData } = await supabase
         .from('profiles')
@@ -71,7 +73,10 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         .eq('id', user.id)
         .maybeSingle();
       
+      console.log("Datos del perfil:", profileData);
+      
       if (profileData?.is_super_admin === true) {
+        console.log("Usuario es Super Admin por perfil");
         setProfile({ 
           id: profileData.id, 
           role: 'Super Administrador' 
@@ -86,7 +91,10 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         .eq('user_id', user.id)
         .maybeSingle();
       
+      console.log("Datos del rol:", roleData);
+      
       if (roleData?.role === 'agent') {
+        console.log("Usuario es Agente Inmobiliario");
         setProfile({ 
           id: user.id, 
           role: 'Agente Inmobiliario' 
@@ -94,7 +102,17 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         return;
       }
       
+      if (roleData?.role === 'super_admin') {
+        console.log("Usuario es Super Admin por rol");
+        setProfile({ 
+          id: user.id, 
+          role: 'Super Administrador' 
+        });
+        return;
+      }
+      
       // Default to client role
+      console.log("Usuario es Cliente (default)");
       setProfile({ 
         id: user.id, 
         role: 'Cliente' 
@@ -113,10 +131,19 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
     return <Navigate to="/auth" replace />;
   }
 
+  // Wait for profile to be loaded before checking permissions
+  if (!profile) {
+    return <div className="min-h-screen flex items-center justify-center">Verificando permisos...</div>;
+  }
+
+  console.log("Verificando acceso - Rol requerido:", requiredRole, "Rol del usuario:", profile?.role);
+
   if (requiredRole && profile?.role !== requiredRole) {
+    console.log("Acceso denegado - Rol no coincide");
     return <AccessDenied />;
   }
 
+  console.log("Acceso permitido");
   return <>{children}</>;
 };
 

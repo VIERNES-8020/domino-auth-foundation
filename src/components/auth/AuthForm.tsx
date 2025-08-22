@@ -118,7 +118,7 @@ export default function AuthForm() {
     
     // Determine user role and redirect accordingly
     try {
-      // Check if super admin
+      // Check if super admin first
       const { data: profileData } = await supabase
         .from('profiles')
         .select('is_super_admin')
@@ -126,27 +126,38 @@ export default function AuthForm() {
         .maybeSingle();
       
       if (profileData?.is_super_admin === true) {
-        setTimeout(() => navigate('/admin/dashboard'), 1000);
+        console.log("Redirigiendo Super Admin a /admin/dashboard");
+        navigate('/admin/dashboard');
         return;
       }
       
-      // Check user role
+      // Check user role in user_roles table
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', session.user.id)
         .maybeSingle();
       
+      console.log("Rol encontrado:", roleData?.role);
+      
       if (roleData?.role === 'agent') {
-        setTimeout(() => navigate('/dashboard/agent'), 1000);
+        console.log("Redirigiendo Agente a /dashboard/agent");
+        navigate('/dashboard/agent');
+        return;
+      }
+      
+      if (roleData?.role === 'super_admin') {
+        console.log("Redirigiendo Super Admin (por rol) a /admin/dashboard");
+        navigate('/admin/dashboard');
         return;
       }
       
       // Default redirect to home for clients
-      setTimeout(() => navigate('/'), 1000);
+      console.log("Redirigiendo Cliente a página principal");
+      navigate('/');
     } catch (error) {
       console.error("Error determining user role:", error);
-      setTimeout(() => navigate('/'), 1000);
+      navigate('/');
     }
   };
 
