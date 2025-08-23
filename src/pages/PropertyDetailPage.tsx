@@ -722,19 +722,36 @@ export default function PropertyDetailPage() {
                       
                       if (error) throw error;
                       
-                      // Success confirmation with detailed message
-                      toast.success("✅ ¡Mensaje enviado exitosamente!", {
-                        description: "Tu consulta ha sido enviada al agente seleccionado. Recibirás una respuesta por correo electrónico o teléfono en las próximas horas.",
-                        duration: 8000
+                      // Show success confirmation immediately and make it very visible
+                      toast.success("✅ ¡MENSAJE ENVIADO EXITOSAMENTE!", {
+                        description: "✓ Tu consulta ha sido enviada al agente. ✓ Recibirás respuesta por correo o teléfono pronto.",
+                        duration: 6000,
+                        style: {
+                          background: '#10B981',
+                          color: 'white',
+                          border: '2px solid #059669',
+                          fontSize: '16px',
+                          fontWeight: 'bold'
+                        }
                       });
                       
-                      (e.target as HTMLFormElement).reset();
-                      setSelectedAgentCode("");
+                      // Reset form after showing confirmation
+                      setTimeout(() => {
+                        (e.target as HTMLFormElement).reset();
+                        setSelectedAgentCode("");
+                      }, 200);
                     } catch (error) {
                       console.error("Error sending message:", error);
-                      toast.error("❌ Error al enviar el mensaje", {
-                        description: "No se pudo procesar tu solicitud. Por favor, verifica tu conexión a internet e inténtalo de nuevo en unos momentos.",
-                        duration: 6000
+                      toast.error("❌ ERROR AL ENVIAR MENSAJE", {
+                        description: "❌ No se pudo enviar. Verifica tu conexión e inténtalo de nuevo.",
+                        duration: 6000,
+                        style: {
+                          background: '#EF4444',
+                          color: 'white',
+                          border: '2px solid #DC2626',
+                          fontSize: '16px',
+                          fontWeight: 'bold'
+                        }
                       });
                     } finally {
                       setIsSubmittingContact(false);

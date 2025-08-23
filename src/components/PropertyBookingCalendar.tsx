@@ -63,25 +63,40 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      // Success confirmation with detailed and persistent message
-      toast.success("✅ ¡Visita agendada exitosamente!", {
-        description: `Tu visita está confirmada para el ${selectedDate.toLocaleDateString('es-ES', { 
+      // Show success confirmation FIRST, then wait before closing
+      toast.success("✅ ¡VISITA AGENDADA EXITOSAMENTE!", {
+        description: `✓ Tu visita está confirmada para el ${selectedDate.toLocaleDateString('es-ES', { 
           weekday: 'long', 
           day: 'numeric', 
           month: 'long' 
-        })} a las ${selectedTime}. Recibirás confirmación por correo electrónico y WhatsApp en los próximos minutos.`,
-        duration: 10000
+        })} a las ${selectedTime}. ✓ Recibirás confirmación por correo y WhatsApp.`,
+        duration: 8000,
+        style: {
+          background: '#10B981',
+          color: 'white',
+          border: '2px solid #059669',
+        }
       });
       
-      onClose();
-      setSelectedDate(undefined);
-      setSelectedTime("");
-      setClientData({ name: "", email: "", phone: "", message: "" });
+      // Wait a moment before closing to ensure toast is visible
+      setTimeout(() => {
+        onClose();
+        setSelectedDate(undefined);
+        setSelectedTime("");
+        setClientData({ name: "", email: "", phone: "", message: "" });
+      }, 500);
     } catch (error) {
       console.error("Error scheduling visit:", error);
-      toast.error("Error al agendar la visita", {
-        description: "No se pudo procesar tu solicitud. Por favor, inténtalo de nuevo o contacta al agente directamente.",
-        duration: 4000
+      toast.error("❌ ERROR AL AGENDAR LA VISITA", {
+        description: "❌ No se pudo procesar tu solicitud. Verifica tu conexión e inténtalo de nuevo.",
+        duration: 6000,
+        style: {
+          background: '#EF4444',
+          color: 'white',
+          border: '2px solid #DC2626',
+          fontSize: '16px',
+          fontWeight: 'bold'
+        }
       });
     } finally {
       setLoading(false);

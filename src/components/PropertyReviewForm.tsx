@@ -54,16 +54,27 @@ export default function PropertyReviewForm({
         }
       }
       
-      // Success confirmation with detailed and persistent message
-      toast.success("✅ ¡Reseña enviada exitosamente!", {
-        description: "Tu reseña será revisada y publicada en las próximas 24 horas. Gracias por compartir tu opinión y ayudar a otros usuarios.",
-        duration: 8000
+      // Show success confirmation FIRST, then wait before closing
+      toast.success("✅ ¡RESEÑA ENVIADA EXITOSAMENTE!", {
+        description: "✓ Tu reseña será publicada en 24 horas. ✓ Gracias por tu opinión.",
+        duration: 6000,
+        style: {
+          background: '#10B981',
+          color: 'white',
+          border: '2px solid #059669',
+          fontSize: '16px',
+          fontWeight: 'bold'
+        }
       });
       
       onReviewAdded();
-      onClose();
-      setRating(0);
-      setReviewData({ clientName: "", clientEmail: "", comment: "" });
+      
+      // Wait before closing to ensure toast is visible
+      setTimeout(() => {
+        onClose();
+        setRating(0);
+        setReviewData({ clientName: "", clientEmail: "", comment: "" });
+      }, 800);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("❌ Error al enviar la reseña", {
