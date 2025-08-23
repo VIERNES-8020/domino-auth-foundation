@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,12 @@ interface PropertyBookingCalendarProps {
   onClose: () => void;
 }
 
+interface AgentInfo {
+  full_name: string;
+  agent_code: string;
+  corporate_phone?: string;
+}
+
 export default function PropertyBookingCalendar({ 
   propertyId, 
   agentId, 
@@ -35,6 +41,45 @@ export default function PropertyBookingCalendar({
   });
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
+  const [visitCount, setVisitCount] = useState(0);
+
+  // Fetch agent info and visit count when modal opens
+  useEffect(() => {
+    if (isOpen && agentId && propertyId) {
+      fetchAgentInfo();
+      fetchVisitCount();
+    }
+  }, [isOpen, agentId, propertyId]);
+
+  const fetchAgentInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, agent_code, corporate_phone')
+        .eq('id', agentId)
+        .single();
+
+      if (error) throw error;
+      setAgentInfo(data);
+    } catch (error) {
+      console.error('Error fetching agent info:', error);
+    }
+  };
+
+  const fetchVisitCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('property_visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('property_id', propertyId);
+
+      if (error) throw error;
+      setVisitCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching visit count:', error);
+    }
+  };
 
   const timeSlots = [
     "09:00", "10:00", "11:00", "12:00",
@@ -65,8 +110,9 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      // MOSTRAR CONFIRMACIÓN ELEGANTE
+      // MOSTRAR CONFIRMACIÓN ELEGANTE Y REFRESCAR CONTADOR
       setShowConfirmation(true);
+      fetchVisitCount(); // Actualizar contador
 
     } catch (error) {
       console.error("Error scheduling visit:", error);
@@ -87,11 +133,40 @@ export default function PropertyBookingCalendar({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="space-y-4">
           <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <CalendarDays className="h-6 w-6" />
             Agendar visita a la propiedad
           </DialogTitle>
+          
+          {/* Agent Information Section */}
+          {agentInfo && (
+            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-4 border border-primary/10">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-primary flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Agente Responsable
+                  </h4>
+                  <p className="text-lg font-medium">{agentInfo.full_name}</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>ID: <span className="font-mono text-primary">{agentInfo.agent_code}</span></span>
+                    {agentInfo.corporate_phone && (
+                      <span>📞 {agentInfo.corporate_phone}</span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Interest Counter */}
+                <div className="text-center bg-white rounded-lg p-3 shadow-sm border">
+                  <div className="text-2xl font-bold text-primary">{visitCount}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {visitCount === 1 ? 'persona interesada' : 'personas interesadas'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleBooking} className="grid grid-cols-1 md:grid-cols-2 gap-6">

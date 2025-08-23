@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
@@ -97,20 +97,20 @@ export default function AgentDashboard() {
       if (notificationsResult.error) throw notificationsResult.error;
       if (leadsResult.error) throw leadsResult.error;
 
-        // Combine notifications and leads
-        const combinedNotifications = [
-          ...(notificationsResult.data || []),
-          ...(leadsResult.data || []).map(lead => ({
-            id: lead.id,
-            message: `Nuevo contacto de ${lead.client_name} (${lead.client_email}): ${lead.message}`,
-            created_at: lead.created_at,
-            read: lead.status !== 'new',
-            client_name: lead.client_name,
-            client_email: lead.client_email,
-            client_phone: lead.client_phone,
-            type: 'lead'
-          }))
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Combine notifications and leads
+      const combinedNotifications = [
+        ...(notificationsResult.data || []),
+        ...(leadsResult.data || []).map(lead => ({
+          id: lead.id,
+          message: `Nuevo contacto de ${lead.client_name} (${lead.client_email}): ${lead.message}`,
+          created_at: lead.created_at,
+          read: lead.status !== 'new',
+          client_name: lead.client_name,
+          client_email: lead.client_email,
+          client_phone: lead.client_phone,
+          type: 'lead'
+        }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setNotifications(combinedNotifications);
     } catch (error) {
@@ -326,410 +326,516 @@ export default function AgentDashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center py-8">
-          <p>Cargando panel del agente...</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[600px]">
+            <div className="text-center space-y-6">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/20 to-transparent animate-pulse"></div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-primary">Cargando Panel de Agente</h3>
+                <p className="text-muted-foreground">Preparando tu espacio de trabajo...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Panel del Agente</h1>
-          <p className="text-muted-foreground">Gestiona tus propiedades y perfil</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/">Portal Principal</Link>
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            Cerrar Sesión
-          </Button>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="propiedades">
-            Mis Propiedades
-          </TabsTrigger>
-          <TabsTrigger value="citas">
-            Citas Programadas
-            {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {propertyVisits.filter(v => v.status === 'pending').length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="caracteristicas">
-            Características
-          </TabsTrigger>
-          <TabsTrigger value="notificaciones">
-            Mis Notificaciones
-            {notifications.filter(n => !n.read).length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {notifications.filter(n => !n.read).length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="perfil">
-            Mi Perfil
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="propiedades" className="space-y-6">
-          {showPropertyForm ? (
-            <PropertyForm 
-              onClose={() => {
-                setShowPropertyForm(false);
-                setEditingProperty(null);
-              }}
-              onSubmit={handlePropertySubmit}
-              initialData={editingProperty}
-            />
-          ) : (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>{showArchived ? "Propiedades Archivadas" : "Mis Propiedades"}</CardTitle>
-                  <CardDescription>
-                    {showArchived 
-                      ? "Propiedades que has archivado" 
-                      : "Gestiona todas tus propiedades publicadas"}
-                  </CardDescription>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+      <div className="container mx-auto px-4 py-6">
+        <div className="space-y-6">
+          {/* Modern Header Section */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 rounded-2xl border border-primary/10 shadow-lg">
+            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            <div className="relative p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-pulse"></div>
+                    <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
+                      Panel de Agente
+                    </h1>
+                  </div>
+                  {profile && (
+                    <div className="space-y-2">
+                      <p className="text-lg text-muted-foreground">
+                        Bienvenido, <span className="font-semibold text-primary">{profile.full_name || 'Agente'}</span>
+                      </p>
+                      {profile.agent_code && (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-sm font-mono bg-primary/5 border-primary/20 text-primary">
+                            ID: {profile.agent_code}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {properties.length} Propiedades
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {propertyVisits.length} Citas
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
+                
+                <div className="flex flex-wrap gap-3">
+                  <Button 
                     onClick={() => setShowPropertyForm(true)}
-                    className="flex items-center gap-2"
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
                   >
                     <Plus className="h-4 w-4" />
                     Nueva Propiedad
                   </Button>
-                  <Button
-                    variant={!showArchived ? "default" : "outline"}
-                    onClick={() => setShowArchived(false)}
-                  >
-                    Activas
+                  <Button variant="outline" asChild>
+                    <Link to="/">Portal Principal</Link>
                   </Button>
-                  <Button
-                    variant={showArchived ? "default" : "outline"}
-                    onClick={() => setShowArchived(true)}
-                  >
-                    Archivadas
+                  <Button variant="outline" onClick={signOut}>
+                    Cerrar Sesión
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {(!showArchived ? properties.filter(p => !p.is_archived && !p.concluded_status) : properties.filter(p => p.is_archived)).map((property) => (
-                    <div
-                      key={property.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{property.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {property.address}
-                        </p>
-                        <p className="text-lg font-bold">
-                          ${property.price?.toLocaleString()} {property.price_currency || 'USD'}
-                        </p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
-                            {property.status}
-                          </Badge>
-                          {property.concluded_status && (
-                            <Badge variant="destructive">
-                              {property.concluded_status}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setViewingProperty(property)}
-                          title="Ver propiedad"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setEditingProperty(property);
-                            setShowPropertyForm(true);
-                          }}
-                          title="Editar propiedad"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {!showArchived && !property.concluded_status && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" title="Marcar como concluida">
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'vendido')}>
-                                Marcar como Vendido
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'alquilado')}>
-                                Marcar como Alquilado
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleConcludeProperty(property.id, 'anticretico')}>
-                                Marcar como En Anticrético
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                        <Button
-                          variant={showArchived ? "default" : "secondary"}
-                          size="sm"
-                          onClick={() => setArchivingProperty(property)}
-                          title={showArchived ? "Desarchivar" : "Archivar"}
-                        >
-                          {showArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => setDeletingProperty(property)}
-                          title="Eliminar propiedad"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  {(showArchived ? properties.filter(p => p.is_archived) : properties.filter(p => !p.is_archived && !p.concluded_status)).length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {showArchived 
-                        ? "No tienes propiedades archivadas." 
-                        : "No tienes propiedades publicadas aún."}
-                    </div>
-                  )}
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 dark:from-blue-950 dark:to-blue-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Propiedades Activas</p>
+                    <p className="text-2xl font-bold text-blue-600">{properties.filter(p => !p.is_archived).length}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-blue-500" />
                 </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="citas" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Citas Programadas</CardTitle>
-              <CardDescription>
-                Gestiona las visitas a tus propiedades solicitadas por clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {propertyVisits.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No tienes citas programadas
+            
+            <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 dark:from-green-950 dark:to-green-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Citas Pendientes</p>
+                    <p className="text-2xl font-bold text-green-600">{propertyVisits.filter(v => v.status === 'pending').length}</p>
                   </div>
-                ) : (
-                  propertyVisits.map((visit) => (
-                    <div
-                      key={visit.id}
-                      className={`p-4 border rounded-lg ${visit.status === 'pending' ? 'bg-yellow-50 border-yellow-200' : visit.status === 'confirmed' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} transition-all duration-200`}
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{visit.properties?.title}</h3>
-                            <Badge variant={
-                              visit.status === 'pending' ? 'secondary' : 
-                              visit.status === 'confirmed' ? 'default' : 
-                              'destructive'
-                            }>
-                              {visit.status === 'pending' ? 'Pendiente' : 
-                               visit.status === 'confirmed' ? 'Confirmada' : 
-                               'Cancelada'}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            📍 {visit.properties?.address}
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                            <p><strong>Cliente:</strong> {visit.client_name}</p>
-                            <p><strong>Email:</strong> {visit.client_email}</p>
-                            <p><strong>Teléfono:</strong> {visit.client_phone || 'No proporcionado'}</p>
-                            <p><strong>Fecha programada:</strong> {new Date(visit.scheduled_at).toLocaleDateString()} {new Date(visit.scheduled_at).toLocaleTimeString()}</p>
-                          </div>
-                          {visit.message && (
-                            <div className="mt-3 p-2 bg-muted rounded">
-                              <p className="text-sm"><strong>Mensaje:</strong> {visit.message}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Solicitada el {new Date(visit.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        
-                        {visit.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              ✓ Confirmar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}
-                            >
-                              ✗ Cancelar
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {visit.status !== 'pending' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setRespondingNotification({
-                              id: visit.id,
-                              client_name: visit.client_name,
-                              client_email: visit.client_email,
-                              client_phone: visit.client_phone,
-                              type: 'visit',
-                              property_title: visit.properties?.title
-                            })}
-                          >
-                            <Reply className="h-4 w-4 mr-1" />
-                            Contactar Cliente
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="caracteristicas" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Características de las Propiedades</CardTitle>
-              <CardDescription>
-                Gestiona las amenidades y características disponibles
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Piscina", "Gym", "Estacionamiento", "Jardín", "Balcón", "Terraza", "Seguridad 24h", "Ascensor", "Aire Acondicionado", "Calefacción", "Parrillero", "Cochera"].map((feature) => (
-                  <Button
-                    key={feature}
-                    variant={selectedFeatures.includes(feature) ? "default" : "outline"}
-                    onClick={() => toggleFeature(feature)}
-                    className="p-3 h-auto"
-                  >
-                    <p className="text-sm font-medium">{feature}</p>
-                  </Button>
-                ))}
-              </div>
-              {selectedFeatures.length > 0 && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">Características seleccionadas:</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedFeatures.join(", ")}
-                  </p>
+                  <Clock className="h-8 w-8 text-green-500" />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notificaciones" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mis Notificaciones</CardTitle>
-              <CardDescription>
-                Mensajes y leads recibidos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {notifications.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No tienes notificaciones
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200 dark:from-orange-950 dark:to-orange-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Notificaciones</p>
+                    <p className="text-2xl font-bold text-orange-600">{notifications.filter(n => !n.read).length}</p>
                   </div>
+                  <MessageCircle className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 dark:from-purple-950 dark:to-purple-900">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Citas Confirmadas</p>
+                    <p className="text-2xl font-bold text-purple-600">{propertyVisits.filter(v => v.status === 'confirmed').length}</p>
+                  </div>
+                  <CheckSquare className="h-8 w-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Enhanced Tabs Navigation */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-background to-background/90 border-2 border-primary/10 shadow-lg rounded-xl p-1 backdrop-blur-sm">
+              <TabsTrigger 
+                value="propiedades" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <Eye className="h-4 w-4" />
+                <span className="hidden sm:inline">Mis Propiedades</span>
+                <span className="sm:hidden">Props</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="citas" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Citas Programadas</span>
+                <span className="sm:hidden">Citas</span>
+                {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full animate-pulse">
+                    {propertyVisits.filter(v => v.status === 'pending').length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="caracteristicas" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden lg:inline">Características</span>
+                <span className="lg:hidden">Caract.</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="notificaciones" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Notificaciones</span>
+                <span className="sm:hidden">Notifs</span>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full animate-pulse">
+                    {notifications.filter(n => !n.read).length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="perfil" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Mi Perfil</span>
+                <span className="sm:hidden">Perfil</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab Contents with improved spacing */}
+            <div className="mt-6">
+              <TabsContent value="propiedades" className="space-y-6">
+                {showPropertyForm ? (
+                  <PropertyForm 
+                    onClose={() => {
+                      setShowPropertyForm(false);
+                      setEditingProperty(null);
+                    }}
+                    onSubmit={handlePropertySubmit}
+                    initialData={editingProperty}
+                  />
                 ) : (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/20'} transition-all duration-200`}
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <p className="text-sm mb-2">{notification.message}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(notification.created_at).toLocaleDateString()}
+                  <Card className="shadow-lg border-primary/10">
+                    <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
+                      <div>
+                        <CardTitle className="text-xl">{showArchived ? "Propiedades Archivadas" : "Mis Propiedades"}</CardTitle>
+                        <CardDescription>
+                          {showArchived 
+                            ? "Propiedades que has archivado" 
+                            : "Gestiona y supervisa todas tus propiedades"
+                          }
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowArchived(!showArchived)}
+                        >
+                          {showArchived ? (
+                            <>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Activas
+                            </>
+                          ) : (
+                            <>
+                              <Archive className="h-4 w-4 mr-2" />
+                              Ver Archivadas
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => setShowPropertyForm(true)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Nueva Propiedad
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      {properties.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                            <Eye className="h-12 w-12 text-muted-foreground" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-2">No hay propiedades</h3>
+                          <p className="text-muted-foreground mb-4">
+                            {showArchived 
+                              ? "No tienes propiedades archivadas." 
+                              : "Comienza agregando tu primera propiedad."
+                            }
                           </p>
-                          {notification.type === 'lead' && (
-                            <div className="flex gap-1 mt-2">
-                              {notification.client_email && (
-                                <Badge variant="outline" className="text-xs">
-                                  📧 {notification.client_email}
-                                </Badge>
-                              )}
-                              {notification.client_phone && (
-                                <Badge variant="outline" className="text-xs">
-                                  📱 {notification.client_phone}
-                                </Badge>
-                              )}
-                            </div>
+                          {!showArchived && (
+                            <Button onClick={() => setShowPropertyForm(true)} className="gap-2">
+                              <Plus className="h-4 w-4" />
+                              Agregar Primera Propiedad
+                            </Button>
                           )}
                         </div>
-                        
-                        {notification.type === 'lead' && (
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setRespondingNotification(notification)}
-                              className="flex items-center gap-1 text-xs"
-                            >
-                              <Reply className="h-3 w-3" />
-                              Responder
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {properties
+                            .filter(property => showArchived ? property.is_archived : !property.is_archived)
+                            .map((property) => (
+                              <Card key={property.id} className="group hover:shadow-xl transition-all duration-300 border-primary/10 hover:border-primary/30">
+                                <div className="aspect-video relative overflow-hidden rounded-t-lg">
+                                  <img
+                                    src={property.image_urls?.[0] || '/default-placeholder.jpg'}
+                                    alt={property.title}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = '/default-placeholder.jpg';
+                                    }}
+                                  />
+                                  {property.concluded_status && (
+                                    <Badge className="absolute top-2 left-2 bg-green-500">
+                                      {property.concluded_status.toUpperCase()}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <CardContent className="p-4">
+                                  <div className="space-y-3">
+                                    <div>
+                                      <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                                        {property.title}
+                                      </h3>
+                                      <p className="text-sm text-muted-foreground line-clamp-1">{property.address}</p>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                      <div className="font-bold text-primary text-lg">
+                                        {property.price_currency === 'USD' ? 'US$' : property.price_currency} {property.price?.toLocaleString()}
+                                      </div>
+                                      <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
+                                        {property.status}
+                                      </Badge>
+                                    </div>
 
-        <TabsContent value="perfil" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mi Perfil</CardTitle>
-              <CardDescription>
-                Actualiza tu información personal y profesional
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm user={user} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                                    <div className="flex items-center justify-between pt-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setViewingProperty(property)}
+                                        className="gap-1"
+                                      >
+                                        <Eye className="h-3 w-3" />
+                                        Ver
+                                      </Button>
+                                      
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                            <MoreVertical className="h-4 w-4" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem onClick={() => setEditingProperty(property)}>
+                                            <Edit className="mr-2 h-4 w-4" />
+                                            Editar
+                                          </DropdownMenuItem>
+                                          {property.is_archived ? (
+                                            <DropdownMenuItem onClick={() => handleArchiveProperty(property.id, false)}>
+                                              <ArchiveRestore className="mr-2 h-4 w-4" />
+                                              Desarchivar
+                                            </DropdownMenuItem>
+                                          ) : (
+                                            <DropdownMenuItem onClick={() => setArchivingProperty(property)}>
+                                              <Archive className="mr-2 h-4 w-4" />
+                                              Archivar
+                                            </DropdownMenuItem>
+                                          )}
+                                          <DropdownMenuItem
+                                            onClick={() => setDeletingProperty(property)}
+                                            className="text-destructive focus:text-destructive"
+                                          >
+                                            <Trash className="mr-2 h-4 w-4" />
+                                            Eliminar
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="citas" className="space-y-6">
+                <Card className="shadow-lg border-primary/10">
+                  <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                    <CardTitle className="text-xl">Citas Programadas</CardTitle>
+                    <CardDescription>Gestiona las visitas a tus propiedades solicitadas por clientes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {propertyVisits.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                          <CheckCircle className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No hay citas programadas</h3>
+                        <p className="text-muted-foreground">Las citas solicitadas por clientes aparecerán aquí.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {propertyVisits.map((visit) => (
+                          <Card key={visit.id} className="border-l-4 border-l-primary/30 hover:border-l-primary transition-colors">
+                            <CardContent className="p-4">
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-semibold">{visit.properties?.title}</h4>
+                                    <Badge variant={
+                                      visit.status === 'pending' ? 'destructive' :
+                                      visit.status === 'confirmed' ? 'default' : 'secondary'
+                                    }>
+                                      {visit.status === 'pending' ? 'Pendiente' :
+                                       visit.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{visit.properties?.address}</p>
+                                  <div className="space-y-1 text-sm">
+                                    <p><strong>Cliente:</strong> {visit.client_name}</p>
+                                    <p><strong>Email:</strong> {visit.client_email}</p>
+                                    {visit.client_phone && <p><strong>Teléfono:</strong> {visit.client_phone}</p>}
+                                    <p><strong>Fecha:</strong> {new Date(visit.scheduled_at).toLocaleDateString('es-ES', {
+                                      weekday: 'long',
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}</p>
+                                    {visit.message && (
+                                      <p><strong>Mensaje:</strong> {visit.message}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                {visit.status === 'pending' && (
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}
+                                      className="gap-1"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                      Confirmar
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}
+                                      className="gap-1"
+                                    >
+                                      <X className="h-4 w-4" />
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="caracteristicas" className="space-y-6">
+                <Card className="shadow-lg border-primary/10">
+                  <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                    <CardTitle className="text-xl">Gestión de Características</CardTitle>
+                    <CardDescription>Administra las características disponibles para tus propiedades</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">Funcionalidad de características próximamente...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="notificaciones" className="space-y-6">
+                <Card className="shadow-lg border-primary/10">
+                  <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                    <CardTitle className="text-xl">Mis Notificaciones</CardTitle>
+                    <CardDescription>Mensajes y notificaciones importantes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                          <MessageCircle className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">No hay notificaciones</h3>
+                        <p className="text-muted-foreground">Las notificaciones aparecerán aquí cuando las recibas.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {notifications.map((notification) => (
+                          <Card key={notification.id} className={`transition-all duration-300 ${!notification.read ? 'border-primary/20 bg-primary/5' : 'border-muted'}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="space-y-2 flex-1">
+                                  {notification.title && (
+                                    <h4 className="font-semibold">{notification.title}</h4>
+                                  )}
+                                  <p className="text-sm text-muted-foreground">{notification.message}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(notification.created_at).toLocaleDateString('es-ES', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                                
+                                <div className="flex items-center gap-2">
+                                  {!notification.read && (
+                                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setRespondingNotification(notification)}
+                                    className="gap-1"
+                                  >
+                                    <Reply className="h-3 w-3" />
+                                    Responder
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="perfil" className="space-y-6">
+                <ProfileForm user={user} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+      </div>
 
       {/* Modals */}
       {viewingProperty && (
@@ -742,10 +848,10 @@ export default function AgentDashboard() {
 
       {deletingProperty && (
         <DeletePropertyModal
+          propertyTitle={deletingProperty.title}
           isOpen={!!deletingProperty}
           onClose={() => setDeletingProperty(null)}
           onConfirm={handleDeleteProperty}
-          propertyTitle={deletingProperty?.title || ""}
         />
       )}
 
@@ -754,21 +860,15 @@ export default function AgentDashboard() {
           property={archivingProperty}
           isOpen={!!archivingProperty}
           onClose={() => setArchivingProperty(null)}
-          onConfirm={(justification) => {
-            handleArchiveProperty(archivingProperty.id, !archivingProperty.is_archived, justification);
-          }}
+          onConfirm={(justification) => handleArchiveProperty(archivingProperty.id, true, justification)}
         />
       )}
 
       {respondingNotification && (
         <NotificationResponseModal
+          notification={respondingNotification}
           isOpen={!!respondingNotification}
           onClose={() => setRespondingNotification(null)}
-          notification={respondingNotification}
-          clientEmail={respondingNotification.client_email}
-          clientName={respondingNotification.client_name}
-          clientPhone={respondingNotification.client_phone}
-          agentProfile={profile}
         />
       )}
     </div>
