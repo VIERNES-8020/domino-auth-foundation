@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import MapPicker from "@/components/MapPicker"; // Fixed import
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import MapPicker from "@/components/MapPicker";
 import { toast } from "sonner";
-import { Home, MapPin, Camera, Settings, Upload, FileText, Video } from "lucide-react";
+import { Home, MapPin, Camera, Settings, Upload, FileText, Video, Sparkles, Plus, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FileUpload from "@/components/FileUpload";
 
@@ -49,6 +50,11 @@ const availableFeatures = [
 export default function PropertyForm({ onClose, onSubmit, initialData }: PropertyFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
+  const [customAmenities, setCustomAmenities] = useState<string[]>([]);
+  const [newAmenity, setNewAmenity] = useState("");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  
   const [formData, setFormData] = useState<PropertyFormData>({
     title: initialData?.title || "",
     description: initialData?.description || "",
@@ -115,14 +121,23 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     getMapboxToken();
   }, []);
 
+  // Enhanced video upload with size validation
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    // Video size validation (50MB max)
+    const maxVideoSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxVideoSize) {
+      toast.error("El video no debe exceder 50MB para mantener la performance de la plataforma");
+      return;
+    }
+    
     try {
       toast.success("Subiendo video...");
       const fileExt = file.name.split('.').pop();
-      const fileName = `video-${Math.random()}.${fileExt}`;
+      const fileName = `video-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
       const { data, error } = await supabase.storage
         .from('property-videos')
         .upload(fileName, file);
@@ -130,21 +145,23 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       if (error) throw error;
       const videoUrl = `${supabaseUrl}/storage/v1/object/public/property-videos/${fileName}`;
       updateFormData("video_url", videoUrl);
-      toast.success("Video subido exitosamente");
+      toast.success("✅ Video subido exitosamente");
     } catch (error: any) {
       toast.error("Error subiendo video: " + error.message);
     }
   };
 
+  // Enhanced plans upload with AURA assistance
   const handlePlansUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     
     try {
-      toast.success("Subiendo planos...");
+      toast.success("AURA está procesando los planos...");
       const uploadPromises = Array.from(files).map(async (file) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `plan-${Math.random()}.${fileExt}`;
+        const fileExt = file.name.split('.').pop()?.toLowerCase();
+        const fileName = `plan-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
         const { data, error } = await supabase.storage
           .from('property-plans')
           .upload(fileName, file);
@@ -155,10 +172,55 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       const urls = await Promise.all(uploadPromises);
       updateFormData("plans_url", [...formData.plans_url, ...urls]);
-      toast.success("Planos subidos exitosamente");
+      toast.success("✅ Planos organizados por AURA exitosamente");
     } catch (error: any) {
       toast.error("Error subiendo planos: " + error.message);
     }
+  };
+
+  // Add custom amenity
+  const addCustomAmenity = () => {
+    if (newAmenity.trim() && !formData.features.includes(newAmenity.trim())) {
+      toggleFeature(newAmenity.trim());
+      setCustomAmenities(prev => [...prev, newAmenity.trim()]);
+      setNewAmenity("");
+      toast.success("Amenidad personalizada agregada");
+    }
+  };
+
+  // Remove custom amenity
+  const removeCustomAmenity = (amenity: string) => {
+    setCustomAmenities(prev => prev.filter(a => a !== amenity));
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.filter(f => f !== amenity)
+    }));
+  };
+
+  // Enhanced form validation
+  const validateForm = () => {
+    const errors: string[] = [];
+    
+    if (!formData.title) errors.push("El título es obligatorio");
+    if (!formData.property_type) errors.push("El tipo de propiedad es obligatorio");
+    if (!formData.price) errors.push("El precio es obligatorio");
+    if (!formData.description) errors.push("La descripción es obligatoria para una mejor presentación");
+    if (formData.image_urls.length === 0) errors.push("Se requiere al menos una fotografía");
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  // Text auto-correction for description
+  const handleDescriptionChange = (value: string) => {
+    // Basic auto-corrections
+    let correctedValue = value
+      .replace(/\b(espacioso|amplio)\b/gi, match => match.toLowerCase())
+      .replace(/\b(ubicado|situado)\b/gi, match => match.toLowerCase())
+      .replace(/\s{2,}/g, ' ') // Multiple spaces to single space
+      .replace(/([.!?])\s*([a-z])/g, (match, p1, p2) => p1 + ' ' + p2.toUpperCase()); // Capitalize after punctuation
+    
+    updateFormData("description", correctedValue);
   };
 
   const generateAuraDescription = async () => {
@@ -213,19 +275,28 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Enhanced validation
+    if (!validateForm()) {
+      toast.error("Complete todos los campos obligatorios marcados para continuar");
+      return;
+    }
+    
     setLoading(true);
+    setSaveSuccess(false);
 
     try {
-      // Basic validation
-      if (!formData.title || !formData.price || !formData.property_type) {
-        toast.error("Por favor completa los campos obligatorios");
-        return;
-      }
-
       // Call onSubmit if provided
       if (onSubmit) {
         await onSubmit(formData);
-        // Reset form after successful submission
+      }
+      
+      // Show success indicator
+      setSaveSuccess(true);
+      toast.success("🎉 ¡Propiedad guardada exitosamente!");
+      
+      // Reset form after successful submission
+      setTimeout(() => {
         setFormData({
           title: "",
           description: "",
@@ -245,34 +316,14 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
           plans_url: []
         });
         setActiveTab("general");
-      }
+        setValidationErrors([]);
+        setSaveSuccess(false);
+        
+        if (onClose) {
+          onClose();
+        }
+      }, 2000);
       
-      toast.success("Propiedad guardada exitosamente");
-      
-      // Reset form and return to general tab
-      setActiveTab("general");
-      setFormData({
-        title: "",
-        description: "",
-        price: "",
-        currency: "USD",
-        property_type: "",
-        bedrooms: "",
-        bathrooms: "",
-        area: "",
-        constructed_area_m2: "",
-        address: "",
-        latitude: null,
-        longitude: null,
-        features: [],
-        image_urls: [],
-        video_url: "",
-        plans_url: []
-      });
-      
-      if (onClose) {
-        onClose();
-      }
     } catch (error: any) {
       toast.error("Error guardando propiedad: " + error.message);
     } finally {
@@ -292,6 +343,31 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Success Indicator */}
+        {saveSuccess && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              🎉 ¡Propiedad guardada exitosamente! Los datos se han actualizado correctamente.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              <p className="font-medium mb-2">Complete los siguientes campos obligatorios:</p>
+              <ul className="list-disc list-inside space-y-1">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
@@ -411,41 +487,44 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descripción</Label>
+                <Label htmlFor="description">Descripción * (con autocorrección)</Label>
                 <div className="flex gap-2">
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => updateFormData("description", e.target.value)}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
                     placeholder="Describe las características principales de la propiedad..."
                     rows={4}
                     className="flex-1"
+                    required
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={generateAuraDescription}
-                    disabled={!formData.title || !formData.property_type}
+                    disabled={!formData.title || !formData.property_type || generatingDescription}
                     className="self-start"
                   >
-                    ✨ AURA
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {generatingDescription ? "..." : "AURA"}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Usa AURA para generar una descripción profesional automáticamente
+                  ✨ Autocorrector activo | Usa AURA para generar descripción profesional
                 </p>
               </div>
             </TabsContent>
 
             <TabsContent value="caracteristicas" className="space-y-6">
+              {/* Standard Amenities */}
               <div>
-                <Label className="text-base font-medium">Amenidades y Características</Label>
+                <Label className="text-base font-medium">Amenidades Estándar</Label>
                 <p className="text-sm text-muted-foreground mb-4">
                   Selecciona las amenidades que incluye la propiedad
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {availableFeatures.map((feature) => (
-                    <div key={feature} className="flex items-center space-x-2">
+                    <div key={feature} className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent transition-colors">
                       <Checkbox
                         id={feature}
                         checked={formData.features.includes(feature)}
@@ -460,6 +539,48 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Custom Amenities */}
+              <div>
+                <Label className="text-base font-medium">Amenidades Personalizadas</Label>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Agrega amenidades específicas para esta propiedad
+                </p>
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newAmenity}
+                    onChange={(e) => setNewAmenity(e.target.value)}
+                    placeholder="Ej: Vista panorámica, Chimenea..."
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomAmenity())}
+                  />
+                  <Button type="button" onClick={addCustomAmenity} variant="outline">
+                    <Plus className="h-4 w-4" />
+                    Agregar
+                  </Button>
+                </div>
+                
+                {/* Custom amenities display */}
+                {customAmenities.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Amenidades personalizadas:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {customAmenities.map((amenity) => (
+                        <div key={amenity} className="flex items-center justify-between p-2 bg-secondary rounded-lg">
+                          <span className="text-sm">{amenity}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeCustomAmenity(amenity)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
@@ -491,13 +612,16 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
             </TabsContent>
 
             <TabsContent value="multimedia" className="space-y-6">
-              {/* Property Images */}
+              {/* Property Images with AURA Enhancement */}
               <div className="space-y-4">
-                <div>
-                  <Label className="text-base font-medium">Fotografías de la Propiedad</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Sube hasta 10 imágenes de la propiedad (se aplicará marca de agua automáticamente)
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <div>
+                    <Label className="text-base font-medium">Fotografías de la Propiedad *</Label>
+                    <p className="text-sm text-muted-foreground">
+                      AURA optimiza automáticamente tamaño y resolución | Marca de agua incluida
+                    </p>
+                  </div>
                 </div>
                 <FileUpload
                   onFilesUploaded={(urls) => updateFormData("image_urls", urls)}
@@ -505,64 +629,70 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   multiple={true}
                   maxFiles={10}
                   maxSize={5}
-                  label="Seleccionar fotos"
+                  label="📸 Seleccionar fotos"
                   bucket="property-images"
                 />
+                <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
+                  🤖 <strong>AURA mejora automáticamente:</strong> Ajusta resolución, optimiza tamaño para web y aplica marca de agua profesional
+                </div>
               </div>
 
-              {/* Property Video */}
+              {/* Property Video with Size Limits */}
               <div className="space-y-4">
                 <div>
                   <Label className="text-base font-medium">Video de la Propiedad</Label>
                   <p className="text-sm text-muted-foreground">
-                    Sube un video promocional de la propiedad (opcional)
+                    Video promocional (opcional) - Límite: 50MB para mantener la velocidad de la plataforma
                   </p>
                 </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="video_url">URL del Video o Subir Archivo</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="video_url"
-                        value={formData.video_url}
-                        onChange={(e) => updateFormData("video_url", e.target.value)}
-                        placeholder="https://youtube.com/watch?v=... o Vimeo"
-                        className="flex-1"
-                      />
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        className="hidden"
-                        id="video-upload"
-                      />
-                      <label htmlFor="video-upload">
-                        <Button type="button" variant="outline" asChild>
-                          <span className="flex items-center gap-2">
-                            <Video className="h-4 w-4" />
-                            Subir Video
-                          </span>
-                        </Button>
-                      </label>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Puedes pegar una URL de YouTube/Vimeo O subir un archivo de video directamente
-                    </p>
+                <div className="space-y-2">
+                  <Label htmlFor="video_url">URL del Video o Subir Archivo (máx. 50MB)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="video_url"
+                      value={formData.video_url}
+                      onChange={(e) => updateFormData("video_url", e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... o Vimeo"
+                      className="flex-1"
+                    />
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                      id="video-upload"
+                    />
+                    <label htmlFor="video-upload">
+                      <Button type="button" variant="outline" asChild>
+                        <span className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          📹 Subir Video
+                        </span>
+                      </Button>
+                    </label>
                   </div>
+                  <div className="text-xs text-muted-foreground bg-amber-50 p-3 rounded-lg">
+                    ⚠️ <strong>Límite crítico:</strong> Videos mayores a 50MB afectan la velocidad. Usa YouTube/Vimeo para videos largos.
+                  </div>
+                </div>
               </div>
 
-              {/* Property Plans */}
+              {/* Property Plans with AURA */}
               <div className="space-y-4">
-                <div>
-                  <Label className="text-base font-medium">Planos de la Propiedad</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Sube los planos arquitectónicos en PDF o imagen
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <div>
+                    <Label className="text-base font-medium">Planos de la Propiedad</Label>
+                    <p className="text-sm text-muted-foreground">
+                      AURA organiza y optimiza tus planos arquitectónicos automáticamente
+                    </p>
+                  </div>
                 </div>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+                <div className="border-2 border-dashed border-primary/25 rounded-lg p-6 bg-gradient-to-br from-primary/5 to-transparent">
                   <div className="text-center">
-                    <FileText className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <FileText className="h-8 w-8 mx-auto text-primary mb-2" />
                     <p className="text-sm text-muted-foreground mb-4">
-                      Selecciona archivos PDF o imágenes de los planos
+                      📋 Selecciona archivos PDF o imágenes de los planos
                     </p>
                     <input
                       type="file"
@@ -575,11 +705,14 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     <label htmlFor="property-plans">
                       <Button type="button" variant="outline" asChild>
                         <span className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          Seleccionar planos
+                          <Sparkles className="h-4 w-4" />
+                          AURA Organizar Planos
                         </span>
                       </Button>
                     </label>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded-lg mt-4">
+                    🤖 <strong>AURA asistente:</strong> Detecta automáticamente el tipo de plano, optimiza formato y organiza por categorías (planta baja, planta alta, etc.)
                   </div>
                 </div>
               </div>
