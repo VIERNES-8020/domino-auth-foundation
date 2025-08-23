@@ -6,8 +6,11 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Map from "@/components/Map";
-import { BedDouble, Bath, Ruler, Star, Heart, ZoomIn, MapPin, ExternalLink } from "lucide-react";
+import PropertyBookingCalendar from "@/components/PropertyBookingCalendar";
+import PropertyReviewForm from "@/components/PropertyReviewForm";
+import { BedDouble, Bath, Ruler, Star, Heart, ZoomIn, MapPin, ExternalLink, MessageSquare, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +85,10 @@ export default function PropertyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [selectedAgentCode, setSelectedAgentCode] = useState<string>("");
+  const [availableAgents, setAvailableAgents] = useState<any[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +133,29 @@ export default function PropertyDetailPage() {
           setAmenities((ams as Amenity[]) ?? []);
         } else {
           setAmenities([]);
+        }
+
+        // Load reviews
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("property_reviews")
+          .select("id, rating, comment, client_name, created_at")
+          .eq("property_id", id)
+          .eq("is_approved", true)
+          .order("created_at", { ascending: false });
+        
+        if (!reviewsError && reviewsData) {
+          setReviews(reviewsData);
+        }
+
+        // Load available agents
+        const { data: agentsData, error: agentsError } = await supabase
+          .from("profiles")
+          .select("id, full_name, agent_code")
+          .not("agent_code", "is", null)
+          .order("full_name", { ascending: true });
+        
+        if (!agentsError && agentsData) {
+          setAvailableAgents(agentsData);
         }
       } catch (e: any) {
         console.error(e);
@@ -374,10 +404,22 @@ export default function PropertyDetailPage() {
                 <Card className="p-6">
                   <h3 className="font-semibold mb-4">Contacto rápido</h3>
                   <div className="space-y-3">
-                    <Button className="w-full" size="lg">
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => {
+                        document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
                       Solicitar información
                     </Button>
-                    <Button variant="outline" className="w-full" size="lg">
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2" 
+                      size="lg"
+                      onClick={() => setShowBookingCalendar(true)}
+                    >
+                      <CalendarDays className="h-4 w-4" />
                       Agendar visita
                     </Button>
                   </div>
@@ -419,19 +461,21 @@ export default function PropertyDetailPage() {
             {property.video_url && (
               <section>
                 <h2 className="text-2xl font-semibold mb-4 text-primary">Video</h2>
-                <Card className="p-6">
+                <Card className="p-4">
                   {/(youtube\.com|youtu\.be|vimeo\.com)/i.test(property.video_url) ? (
-                    <AspectRatio ratio={16 / 9} className="rounded-lg overflow-hidden shadow-lg">
-                      <iframe
-                        src={formatVideoUrl(property.video_url)}
-                        title="Video de la propiedad"
-                        className="w-full h-full border-0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </AspectRatio>
+                    <div className="max-w-2xl mx-auto">
+                      <AspectRatio ratio={16 / 9} className="rounded-lg overflow-hidden shadow-lg">
+                        <iframe
+                          src={formatVideoUrl(property.video_url)}
+                          title="Video de la propiedad"
+                          className="w-full h-full border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </AspectRatio>
+                    </div>
                   ) : (
-                    <div className="flex items-center gap-3 p-4 border rounded-lg">
+                    <div className="flex items-center gap-3 p-4 border rounded-lg max-w-md mx-auto">
                       <ExternalLink className="h-5 w-5 text-primary" />
                       <div>
                         <p className="font-medium">Video de la propiedad</p>
@@ -524,7 +568,18 @@ export default function PropertyDetailPage() {
 
             {/* Reviews section */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-primary">Reseñas y puntuaciones</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold text-primary">Reseñas y puntuaciones</h2>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowReviewForm(true)}
+                  className="gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Escribir reseña
+                </Button>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Rating summary */}
                 <Card className="p-6 text-center">
@@ -554,10 +609,12 @@ export default function PropertyDetailPage() {
                 <div className="md:col-span-2 space-y-4">
                   {reviews.length > 0 ? (
                     reviews.slice(0, 3).map((review) => (
-                      <Card key={review.id} className="p-4">
+                      <Card key={review.id} className="p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback>{review.client_name.charAt(0).toUpperCase()}</AvatarFallback>
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {review.client_name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
@@ -573,16 +630,28 @@ export default function PropertyDetailPage() {
                                 ))}
                               </div>
                             </div>
-                            <p className="text-sm text-muted-foreground">{review.comment}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(review.created_at).toLocaleDateString('es-ES')}
+                            </p>
                           </div>
                         </div>
                       </Card>
                     ))
                   ) : (
-                    <Card className="p-8 text-center">
-                      <p className="text-muted-foreground">
+                    <Card className="p-8 text-center border-dashed">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
                         Sé el primero en dejar una reseña de esta propiedad
                       </p>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowReviewForm(true)}
+                        className="gap-2"
+                      >
+                        <Star className="h-4 w-4" />
+                        Escribir primera reseña
+                      </Button>
                     </Card>
                   )}
                 </div>
@@ -590,7 +659,7 @@ export default function PropertyDetailPage() {
             </section>
 
             {/* Contact form */}
-            <section>
+            <section id="contact-form">
               <h2 className="text-2xl font-semibold mb-4 text-primary">Contactar al agente</h2>
               <Card className="p-6">
                 <form
@@ -603,10 +672,15 @@ export default function PropertyDetailPage() {
                     const phone = formData.get("phone") as string;
                     const message = formData.get("message") as string;
                     
+                    // Use selected agent or default to property agent
+                    const targetAgentId = selectedAgentCode ? 
+                      availableAgents.find(a => a.agent_code === selectedAgentCode)?.id : 
+                      property.agent_id;
+                    
                     try {
                       const { error } = await supabase.functions.invoke("agent-contact", {
                         body: {
-                          agentId: property.agent_id,
+                          agentId: targetAgentId,
                           propertyId: property.id,
                           clientName: name,
                           clientEmail: email,
@@ -636,6 +710,23 @@ export default function PropertyDetailPage() {
                     <Label htmlFor="phone">Número de teléfono</Label>
                     <Input id="phone" name="phone" placeholder="+591 70000000" className="mt-1" />
                   </div>
+                  
+                  <div>
+                    <Label htmlFor="agent-select">Seleccionar agente (opcional)</Label>
+                    <Select value={selectedAgentCode} onValueChange={setSelectedAgentCode}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Seleccionar un agente específico" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAgents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.agent_code}>
+                            {agent.full_name} - {agent.agent_code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <div className="md:col-span-2">
                     <Label htmlFor="message">Mensaje</Label>
                     <Textarea 
@@ -655,6 +746,39 @@ export default function PropertyDetailPage() {
               </Card>
             </section>
           </div>
+        )}
+
+        {/* Booking Calendar Modal */}
+        {property && (
+          <PropertyBookingCalendar
+            propertyId={property.id}
+            agentId={property.agent_id}
+            isOpen={showBookingCalendar}
+            onClose={() => setShowBookingCalendar(false)}
+          />
+        )}
+
+        {/* Review Form Modal */}
+        {property && (
+          <PropertyReviewForm
+            propertyId={property.id}
+            isOpen={showReviewForm}
+            onClose={() => setShowReviewForm(false)}
+            onReviewAdded={() => {
+              // Reload reviews
+              if (property.id) {
+                supabase
+                  .from("property_reviews")
+                  .select("id, rating, comment, client_name, created_at")
+                  .eq("property_id", property.id)
+                  .eq("is_approved", true)
+                  .order("created_at", { ascending: false })
+                  .then(({ data }) => {
+                    if (data) setReviews(data);
+                  });
+              }
+            }}
+          />
         )}
       </main>
     </div>
