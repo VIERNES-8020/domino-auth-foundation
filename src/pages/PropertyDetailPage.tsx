@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AgentSearchSelector } from "@/components/AgentSearchSelector";
+import mensajeEnviadoImg from "@/assets/mensaje-enviado-confirmacion.png";
 import Map from "@/components/Map";
 import PropertyBookingCalendar from "@/components/PropertyBookingCalendar";
 import PropertyReviewForm from "@/components/PropertyReviewForm";
@@ -91,6 +92,7 @@ export default function PropertyDetailPage() {
   const [selectedAgentCode, setSelectedAgentCode] = useState<string>("");
   const [availableAgents, setAvailableAgents] = useState<any[]>([]);
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+  const [showContactConfirmation, setShowContactConfirmation] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -722,28 +724,15 @@ export default function PropertyDetailPage() {
                       
                       if (error) throw error;
                       
-                      // MOSTRAR CONFIRMACIÓN INMEDIATAMENTE Y MUY VISIBLE
-                      toast.success("🎉 ¡MENSAJE ENVIADO CON ÉXITO!", {
-                        description: `✅ CONFIRMADO: Tu consulta fue enviada\n✅ El agente te contactará pronto por email o teléfono`,
-                        duration: 12000,
-                        style: {
-                          background: 'linear-gradient(45deg, #10B981, #059669)',
-                          color: 'white',
-                          border: '3px solid #059669',
-                          fontSize: '18px',
-                          fontWeight: 'bold',
-                          padding: '20px',
-                          borderRadius: '12px',
-                          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)'
-                        },
-                        position: 'top-center',
-                      });
+                      // MOSTRAR CONFIRMACIÓN VISUAL CON IMAGEN
+                      setShowContactConfirmation(true);
                       
-                      // RESETEAR FORMULARIO DESPUÉS DE UN MOMENTO
+                      // RESETEAR FORMULARIO Y CERRAR CONFIRMACIÓN
                       setTimeout(() => {
                         (e.target as HTMLFormElement).reset();
                         setSelectedAgentCode("");
-                      }, 1000);
+                        setShowContactConfirmation(false);
+                      }, 3000);
                     } catch (error) {
                       console.error("Error sending message:", error);
                       toast.error("❌ ERROR AL ENVIAR MENSAJE", {
@@ -852,6 +841,19 @@ export default function PropertyDetailPage() {
             }}
           />
         )}
+
+        {/* Contact Confirmation Modal */}
+        <Dialog open={showContactConfirmation} onOpenChange={setShowContactConfirmation}>
+          <DialogContent className="max-w-md p-0 bg-transparent border-0 shadow-none">
+            <div className="flex items-center justify-center">
+              <img
+                src={mensajeEnviadoImg}
+                alt="Mensaje enviado con éxito"
+                className="w-full max-w-sm rounded-lg shadow-2xl"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
