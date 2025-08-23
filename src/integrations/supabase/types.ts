@@ -1377,6 +1377,16 @@ export type Database = {
         Args: { "": number }
         Returns: string
       }
+      get_property_reviews: {
+        Args: { property_id_param: string }
+        Returns: {
+          client_name: string
+          comment: string
+          created_at: string
+          id: string
+          rating: number
+        }[]
+      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown
