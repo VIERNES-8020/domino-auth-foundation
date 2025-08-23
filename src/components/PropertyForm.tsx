@@ -151,6 +151,9 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       updateFormData("video_url", publicUrl);
       toast.success("✅ Video subido exitosamente");
+      
+      // Clear the input after successful upload
+      e.target.value = "";
     } catch (error: any) {
       console.error("Error uploading video:", error);
       toast.error("Error subiendo video: " + error.message);
@@ -160,7 +163,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   // Enhanced plans upload with AURA assistance
   const handlePlansUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
     
     try {
       toast.success("AURA está procesando los planos...");
@@ -184,7 +187,10 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       const urls = await Promise.all(uploadPromises);
       updateFormData("plans_url", [...formData.plans_url, ...urls]);
-      toast.success("✅ Planos organizados por AURA exitosamente");
+      toast.success(`✅ ${files.length} plano(s) organizados por AURA exitosamente`);
+      
+      // Clear the input after successful upload
+      e.target.value = "";
     } catch (error: any) {
       console.error("Error uploading plans:", error);
       toast.error("Error subiendo planos: " + error.message);
@@ -687,6 +693,32 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                       </Button>
                     </label>
                   </div>
+                  
+                  {/* Show current video if exists */}
+                  {formData.video_url && (
+                    <div className="bg-green-50 p-3 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Video className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800">Video cargado:</span>
+                          <span className="text-sm text-green-700 truncate max-w-xs">
+                            {formData.video_url.includes('http') ? 'URL externa' : 'Archivo subido'}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateFormData("video_url", "")}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remover
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="text-xs text-muted-foreground bg-amber-50 p-3 rounded-lg">
                     ⚠️ <strong>Límite crítico:</strong> Videos mayores a 50MB afectan la velocidad. Usa YouTube/Vimeo para videos largos.
                   </div>
@@ -704,6 +736,39 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     </p>
                   </div>
                 </div>
+                
+                {/* Show uploaded plans */}
+                {formData.plans_url && formData.plans_url.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">
+                        {formData.plans_url.length} plano(s) subido(s)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {formData.plans_url.map((url, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <span className="text-sm text-gray-700">Plano {index + 1}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newPlans = formData.plans_url.filter((_, i) => i !== index);
+                              updateFormData("plans_url", newPlans);
+                              toast.success("Plano removido");
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="border-2 border-dashed border-primary/25 rounded-lg p-6 bg-gradient-to-br from-primary/5 to-transparent">
                   <div className="text-center">
                     <FileText className="h-8 w-8 mx-auto text-primary mb-2" />
