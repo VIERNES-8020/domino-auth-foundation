@@ -120,20 +120,37 @@ export default function AgentDashboard() {
 
   const fetchPropertyVisits = async (agentId: string) => {
     try {
-      const { data, error } = await supabase
+      // First get all property visits for the agent
+      const { data: visits, error: visitsError } = await supabase
         .from('property_visits')
-        .select(`
-          *,
-          properties (
-            title,
-            address
-          )
-        `)
+        .select('*')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setPropertyVisits(data || []);
+      if (visitsError) throw visitsError;
+
+      if (visits && visits.length > 0) {
+        // Get property IDs
+        const propertyIds = visits.map(visit => visit.property_id);
+        
+        // Get property details
+        const { data: properties, error: propertiesError } = await supabase
+          .from('properties')
+          .select('id, title, address')
+          .in('id', propertyIds);
+
+        if (propertiesError) throw propertiesError;
+
+        // Combine visits with property data
+        const visitsWithProperties = visits.map(visit => ({
+          ...visit,
+          properties: properties?.find(p => p.id === visit.property_id) || null
+        }));
+
+        setPropertyVisits(visitsWithProperties);
+      } else {
+        setPropertyVisits([]);
+      }
     } catch (error) {
       console.error('Error fetching property visits:', error);
     }
