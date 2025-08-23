@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
@@ -12,6 +12,7 @@ import ProfileForm from "@/components/ProfileForm";
 import PropertyViewModal from "@/components/PropertyViewModal";
 import DeletePropertyModal from "@/components/DeletePropertyModal";
 import ArchivePropertyModal from "@/components/ArchivePropertyModal";
+import NotificationResponseModal from "@/components/NotificationResponseModal";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
@@ -27,6 +28,7 @@ export default function AgentDashboard() {
   const [properties, setProperties] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [respondingNotification, setRespondingNotification] = useState<any>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -76,16 +78,20 @@ export default function AgentDashboard() {
       if (notificationsResult.error) throw notificationsResult.error;
       if (leadsResult.error) throw leadsResult.error;
 
-      // Combine notifications and leads
-      const combinedNotifications = [
-        ...(notificationsResult.data || []),
-        ...(leadsResult.data || []).map(lead => ({
-          id: lead.id,
-          message: `Nuevo contacto de ${lead.client_name} (${lead.client_email}): ${lead.message}`,
-          created_at: lead.created_at,
-          read: lead.status !== 'new'
-        }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        // Combine notifications and leads
+        const combinedNotifications = [
+          ...(notificationsResult.data || []),
+          ...(leadsResult.data || []).map(lead => ({
+            id: lead.id,
+            message: `Nuevo contacto de ${lead.client_name} (${lead.client_email}): ${lead.message}`,
+            created_at: lead.created_at,
+            read: lead.status !== 'new',
+            client_name: lead.client_name,
+            client_email: lead.client_email,
+            client_phone: lead.client_phone,
+            type: 'lead'
+          }))
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setNotifications(combinedNotifications);
     } catch (error) {
@@ -493,12 +499,44 @@ export default function AgentDashboard() {
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50' : ''}`}
+                      className={`p-4 border rounded-lg ${!notification.read ? 'bg-blue-50 border-blue-200' : 'hover:bg-muted/20'} transition-all duration-200`}
                     >
-                      <p className="text-sm">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(notification.created_at).toLocaleDateString()}
-                      </p>
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <p className="text-sm mb-2">{notification.message}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </p>
+                          {notification.type === 'lead' && (
+                            <div className="flex gap-1 mt-2">
+                              {notification.client_email && (
+                                <Badge variant="outline" className="text-xs">
+                                  📧 {notification.client_email}
+                                </Badge>
+                              )}
+                              {notification.client_phone && (
+                                <Badge variant="outline" className="text-xs">
+                                  📱 {notification.client_phone}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {notification.type === 'lead' && (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setRespondingNotification(notification)}
+                              className="flex items-center gap-1 text-xs"
+                            >
+                              <Reply className="h-3 w-3" />
+                              Responder
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -548,6 +586,17 @@ export default function AgentDashboard() {
           onConfirm={(justification) => {
             handleArchiveProperty(archivingProperty.id, !archivingProperty.is_archived, justification);
           }}
+        />
+      )}
+
+      {respondingNotification && (
+        <NotificationResponseModal
+          isOpen={!!respondingNotification}
+          onClose={() => setRespondingNotification(null)}
+          notification={respondingNotification}
+          clientEmail={respondingNotification.client_email}
+          clientName={respondingNotification.client_name}
+          clientPhone={respondingNotification.client_phone}
         />
       )}
     </div>

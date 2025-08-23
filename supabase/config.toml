@@ -5,3 +5,9 @@ verify_jwt = true
 
 [functions.get-agent-profile]
 verify_jwt = false
+
+[functions.send-response-email]
+verify_jwt = true
+
+[functions.aura-generate-response]
+verify_jwt = true
