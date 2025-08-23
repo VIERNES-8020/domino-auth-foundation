@@ -7,11 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Map from "@/components/Map";
-import { BedDouble, Bath, Ruler } from "lucide-react";
+import { BedDouble, Bath, Ruler, Star, Heart, ZoomIn, MapPin, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 
 interface PropertyRow {
@@ -61,15 +63,25 @@ function usePageSEO(options: { title: string; description: string; canonicalPath
   }, [title, description, canonicalPath]);
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  client_name: string;
+  created_at: string;
+}
+
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   
-
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [mapToken, setMapToken] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,136 +164,237 @@ export default function PropertyDetailPage() {
     return null;
   }, [property]);
 
+  const averageRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+
+  const formatVideoUrl = (url: string) => {
+    if (/(youtube\.com|youtu\.be)/i.test(url)) {
+      const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    }
+    return url;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
-      <main className="container mx-auto py-8">
-        {loading && <p className="text-muted-foreground">Cargando propiedad...</p>}
-        {error && <p className="text-destructive">{error}</p>}
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20">
+      <main className="container mx-auto py-4 px-4">
+        {loading && (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground">Cargando propiedad...</p>
+            </div>
+          </div>
+        )}
+        
+        {error && (
+          <Card className="p-8 text-center">
+            <p className="text-destructive text-lg">{error}</p>
+          </Card>
+        )}
+        
         {!loading && !property && !error && (
-          <p className="text-muted-foreground">No encontramos esta propiedad.</p>
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground text-lg">No encontramos esta propiedad.</p>
+          </Card>
         )}
 
         {property && (
-          <div className="space-y-8">
-            {/* Gallery - More compact and elegant */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Header with title and action buttons */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                {images.length > 0 ? (
-                  <Carousel className="w-full">
-                    <CarouselContent>
-                      {images.map((src, idx) => (
-                        <CarouselItem key={idx} className="basis-full">
-                          <AspectRatio ratio={4 / 3} className="rounded-xl overflow-hidden shadow-lg">
+                <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">{property.title}</h1>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>{property.address}</span>
+                </div>
+                {reviews.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < Math.floor(averageRating)
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm">({reviews.length} reseñas)</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className="gap-2"
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? "fill-current text-red-500" : ""}`} />
+                  {isFavorite ? "Guardado" : "Guardar"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Main content grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Image gallery - Left side */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Main image carousel */}
+                <div className="relative">
+                  {images.length > 0 ? (
+                    <Carousel className="w-full group">
+                      <CarouselContent>
+                        {images.map((src, idx) => (
+                          <CarouselItem key={idx}>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <div className="relative cursor-pointer group/image">
+                                  <AspectRatio ratio={16 / 10} className="rounded-xl overflow-hidden shadow-lg">
+                                    <img
+                                      src={src || "/default-placeholder.jpg"}
+                                      alt={`${property.title} - imagen ${idx + 1}`}
+                                      className="h-full w-full object-cover transition-transform duration-300 group-hover/image:scale-105"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/default-placeholder.jpg';
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 transition-colors flex items-center justify-center">
+                                      <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover/image:opacity-100 transition-opacity" />
+                                    </div>
+                                  </AspectRatio>
+                                </div>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl p-0">
+                                <img
+                                  src={src}
+                                  alt={`${property.title} - imagen ampliada ${idx + 1}`}
+                                  className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                                />
+                              </DialogContent>
+                            </Dialog>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      {images.length > 1 && (
+                        <>
+                          <CarouselPrevious className="left-4 bg-background/90 backdrop-blur-sm border-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <CarouselNext className="right-4 bg-background/90 backdrop-blur-sm border-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </>
+                      )}
+                    </Carousel>
+                  ) : (
+                    <AspectRatio ratio={16 / 10} className="rounded-xl overflow-hidden shadow-lg bg-muted">
+                      <div className="flex items-center justify-center h-full">
+                        <p className="text-muted-foreground">Sin imágenes disponibles</p>
+                      </div>
+                    </AspectRatio>
+                  )}
+                </div>
+
+                {/* Thumbnail grid */}
+                {images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {images.slice(1, 5).map((src, idx) => (
+                      <Dialog key={idx}>
+                        <DialogTrigger asChild>
+                          <div className="aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border-2 border-transparent hover:border-primary/50 transition-colors">
                             <img
-                              src={src || "/default-placeholder.jpg"}
-                              alt={`Imagen ${idx + 1} de ${property.title}`}
-                              className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
-                              loading="lazy"
+                              src={src}
+                              alt={`Vista ${idx + 2}`}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               onError={(e) => {
-                                const el = e.currentTarget as HTMLImageElement;
-                                if (el.src !== window.location.origin + "/default-placeholder.jpg") {
-                                  el.src = "/default-placeholder.jpg";
-                                }
+                                (e.target as HTMLImageElement).src = '/default-placeholder.jpg';
                               }}
                             />
-                          </AspectRatio>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="left-4 bg-background/80 backdrop-blur-sm border-2" />
-                    <CarouselNext className="right-4 bg-background/80 backdrop-blur-sm border-2" />
-                  </Carousel>
-                ) : (
-                  <AspectRatio ratio={4 / 3} className="rounded-xl overflow-hidden shadow-lg">
-                    <img
-                      src="/default-placeholder.jpg"
-                      alt="Sin imagen disponible"
-                      className="h-full w-full object-cover"
-                    />
-                  </AspectRatio>
-                )}
-
-                {/* Additional Images Grid */}
-                {images.length > 1 && (
-                  <div className="grid grid-cols-3 gap-2 mt-4">
-                    {images.slice(1, 4).map((src, idx) => (
-                      <div key={idx} className="aspect-square rounded-lg overflow-hidden shadow-sm">
-                        <img
-                          src={src}
-                          alt={`Vista ${idx + 2}`}
-                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-200"
-                          onError={(e) => {
-                            const el = e.currentTarget as HTMLImageElement;
-                            el.src = "/default-placeholder.jpg";
-                          }}
-                        />
-                      </div>
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl p-0">
+                          <img
+                            src={src}
+                            alt={`${property.title} - imagen ampliada ${idx + 2}`}
+                            className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                          />
+                        </DialogContent>
+                      </Dialog>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Main info - More elegant layout */}
+              {/* Property info sidebar - Right side */}
               <div className="space-y-6">
-                <Card className="p-6 border-2 border-primary/20 shadow-lg">
-                  <div className="space-y-4">
-                    <div>
-                      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">{property.title}</h1>
-                      <p className="mt-2 text-muted-foreground flex items-center gap-2">
-                        <span className="w-2 h-2 bg-primary rounded-full"></span>
-                        {property.address}
+                {/* Price and details card */}
+                <Card className="p-6 shadow-lg border-2 border-primary/20 bg-gradient-to-br from-background to-secondary/30">
+                  <div className="space-y-6">
+                    {/* Price */}
+                    <div className="text-center">
+                      <p className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                        {priceStr}
                       </p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-3xl font-bold text-primary bg-primary/10 px-4 py-2 rounded-lg">{priceStr}</p>
-                      <Badge variant="outline" className="text-sm px-3 py-1">Disponible</Badge>
+                      <Badge variant="outline" className="px-3 py-1 text-sm font-medium">
+                        Disponible
+                      </Badge>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 py-4 border-y">
+                    <Separator />
+
+                    {/* Property specs */}
+                    <div className="grid grid-cols-3 gap-4">
                       {typeof property.bedrooms === "number" && (
-                        <div className="text-center space-y-2">
-                          <BedDouble size={24} className="mx-auto text-primary" />
-                          <div>
-                            <p className="text-2xl font-bold">{property.bedrooms}</p>
-                            <p className="text-xs text-muted-foreground">Habitaciones</p>
-                          </div>
+                        <div className="text-center p-3 rounded-lg bg-background/50">
+                          <BedDouble size={28} className="mx-auto text-primary mb-2" />
+                          <p className="text-2xl font-bold">{property.bedrooms}</p>
+                          <p className="text-xs text-muted-foreground">Habitaciones</p>
                         </div>
                       )}
                       {typeof property.bathrooms === "number" && (
-                        <div className="text-center space-y-2">
-                          <Bath size={24} className="mx-auto text-primary" />
-                          <div>
-                            <p className="text-2xl font-bold">{property.bathrooms}</p>
-                            <p className="text-xs text-muted-foreground">Baños</p>
-                          </div>
+                        <div className="text-center p-3 rounded-lg bg-background/50">
+                          <Bath size={28} className="mx-auto text-primary mb-2" />
+                          <p className="text-2xl font-bold">{property.bathrooms}</p>
+                          <p className="text-xs text-muted-foreground">Baños</p>
                         </div>
                       )}
                       {typeof property.area_m2 === "number" && (
-                        <div className="text-center space-y-2">
-                          <Ruler size={24} className="mx-auto text-primary" />
-                          <div>
-                            <p className="text-2xl font-bold">{property.area_m2}</p>
-                            <p className="text-xs text-muted-foreground">m²</p>
-                          </div>
+                        <div className="text-center p-3 rounded-lg bg-background/50">
+                          <Ruler size={28} className="mx-auto text-primary mb-2" />
+                          <p className="text-2xl font-bold">{property.area_m2}</p>
+                          <p className="text-xs text-muted-foreground">m²</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </Card>
-              </div>
-            </section>
 
-            <Separator />
+                {/* Quick contact */}
+                <Card className="p-6">
+                  <h3 className="font-semibold mb-4">Contacto rápido</h3>
+                  <div className="space-y-3">
+                    <Button className="w-full" size="lg">
+                      Solicitar información
+                    </Button>
+                    <Button variant="outline" className="w-full" size="lg">
+                      Agendar visita
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <Separator className="my-8" />
 
             {/* Description */}
             {property.description && (
               <section>
-                <h2 className="text-xl font-semibold mb-2">Descripción</h2>
-                <Card>
-                  <CardContent className="p-4">
-                    <p className="whitespace-pre-line leading-relaxed">{property.description}</p>
-                  </CardContent>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Descripción</h2>
+                <Card className="p-6">
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {property.description}
+                  </p>
                 </Card>
               </section>
             )}
@@ -289,112 +402,257 @@ export default function PropertyDetailPage() {
             {/* Amenities */}
             {amenities.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-2">Amenidades</h2>
-                <div className="flex flex-wrap gap-2">
-                  {amenities.map((a) => (
-                    <Badge key={a.id} variant="secondary">{a.name}</Badge>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Amenidades</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {amenities.map((amenity) => (
+                    <Card key={amenity.id} className="p-4 text-center hover:shadow-md transition-shadow">
+                      <Badge variant="secondary" className="w-full justify-center py-2">
+                        {amenity.name}
+                      </Badge>
+                    </Card>
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Map */}
-            {coords && (
-              <section>
-                <h2 className="text-xl font-semibold mb-2">Ubicación</h2>
-                <Map token={undefined /* Configure token via secrets */} lng={coords.lng} lat={coords.lat} />
-                <p className="mt-2 text-xs text-muted-foreground">El mapa se mostrará cuando se configure el token público de Mapbox.</p>
-              </section>
-            )}
-
-            {/* Video */}
+            {/* Video section */}
             {property.video_url && (
               <section>
-                <h2 className="text-xl font-semibold mb-2">Video</h2>
-                {/(youtube\.com|youtu\.be)/i.test(property.video_url) ? (
-                  <div className="aspect-video rounded-lg overflow-hidden">
-                    <iframe
-                      className="w-full h-full"
-                      src={property.video_url.replace("watch?v=", "embed/")}
-                      title="Video de la propiedad"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : (
-                  <a className="underline" href={property.video_url} target="_blank" rel="noreferrer">
-                    Ver video
-                  </a>
-                )}
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Video</h2>
+                <Card className="p-6">
+                  {/(youtube\.com|youtu\.be|vimeo\.com)/i.test(property.video_url) ? (
+                    <AspectRatio ratio={16 / 9} className="rounded-lg overflow-hidden shadow-lg">
+                      <iframe
+                        src={formatVideoUrl(property.video_url)}
+                        title="Video de la propiedad"
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </AspectRatio>
+                  ) : (
+                    <div className="flex items-center gap-3 p-4 border rounded-lg">
+                      <ExternalLink className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-medium">Video de la propiedad</p>
+                        <a 
+                          href={property.video_url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-primary hover:underline text-sm"
+                        >
+                          Ver video externo
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </Card>
               </section>
             )}
 
-            {/* Plans */}
+            {/* Plans section */}
             {Array.isArray(property.plans_url) && property.plans_url.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-2">Planos</h2>
-                <ul className="list-disc pl-5 space-y-1">
-                  {property.plans_url.map((u, i) => (
-                    <li key={i}><a className="underline" href={u} target="_blank" rel="noreferrer">Plano {i + 1}</a></li>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Planos</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {property.plans_url.map((planUrl, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium">Plano {index + 1}</h3>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={planUrl} target="_blank" rel="noreferrer">
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Ver
+                            </a>
+                          </Button>
+                        </div>
+                        {/\.(jpg|jpeg|png|gif|webp)$/i.test(planUrl) ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <div className="cursor-pointer group">
+                                <AspectRatio ratio={4 / 3} className="rounded-lg overflow-hidden border">
+                                  <img
+                                    src={planUrl}
+                                    alt={`Plano ${index + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                </AspectRatio>
+                              </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl p-0">
+                              <img
+                                src={planUrl}
+                                alt={`Plano ${index + 1} ampliado`}
+                                className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <div className="p-8 text-center border rounded-lg bg-muted/30">
+                            <p className="text-muted-foreground">Vista previa no disponible</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
                   ))}
-                </ul>
+                </div>
               </section>
             )}
+
+            {/* Map section */}
+            {coords && (
+              <section>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Ubicación</h2>
+                <Card className="p-6">
+                  <div className="space-y-4">
+                    <div className="rounded-lg overflow-hidden shadow-lg">
+                      <Map token={mapToken} lng={coords.lng} lat={coords.lat} className="w-full h-80" />
+                    </div>
+                    {!mapToken && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        El mapa se mostrará cuando se configure el token de Mapbox
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              </section>
+            )}
+
+            {/* Reviews section */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-primary">Reseñas y puntuaciones</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Rating summary */}
+                <Card className="p-6 text-center">
+                  <div className="space-y-2">
+                    <div className="text-4xl font-bold text-primary">
+                      {reviews.length > 0 ? averageRating.toFixed(1) : "—"}
+                    </div>
+                    <div className="flex justify-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < Math.floor(averageRating)
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {reviews.length === 0 ? "Sin reseñas" : `${reviews.length} reseña${reviews.length !== 1 ? 's' : ''}`}
+                    </p>
+                  </div>
+                </Card>
+
+                {/* Sample reviews */}
+                <div className="md:col-span-2 space-y-4">
+                  {reviews.length > 0 ? (
+                    reviews.slice(0, 3).map((review) => (
+                      <Card key={review.id} className="p-4">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback>{review.client_name.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{review.client_name}</span>
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${
+                                      i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{review.comment}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  ) : (
+                    <Card className="p-8 text-center">
+                      <p className="text-muted-foreground">
+                        Sé el primero en dejar una reseña de esta propiedad
+                      </p>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </section>
 
             {/* Contact form */}
             <section>
-              <h2 className="text-xl font-semibold mb-2">Contactar al agente</h2>
-              <form
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const name = formData.get("name") as string;
-                  const email = formData.get("email") as string;
-                  const phone = formData.get("phone") as string;
-                  const message = formData.get("message") as string;
-                  
-                  try {
-                    const { error } = await supabase.functions.invoke("agent-contact", {
-                      body: {
-                        agentId: property.agent_id,
-                        propertyId: property.id,
-                        clientName: name,
-                        clientEmail: email,
-                        clientPhone: phone,
-                        message: message
-                      }
-                    });
+              <h2 className="text-2xl font-semibold mb-4 text-primary">Contactar al agente</h2>
+              <Card className="p-6">
+                <form
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const name = formData.get("name") as string;
+                    const email = formData.get("email") as string;
+                    const phone = formData.get("phone") as string;
+                    const message = formData.get("message") as string;
                     
-                    if (error) throw error;
-                    toast.success("¡Mensaje enviado exitosamente! El agente se pondrá en contacto contigo pronto.");
-                    (e.target as HTMLFormElement).reset();
-                  } catch (error) {
-                    console.error("Error sending message:", error);
-                    toast.error("Error al enviar el mensaje. Inténtalo de nuevo.");
-                  }
-                }}
-              >
-                <div>
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" name="name" required placeholder="Tu nombre" />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" required placeholder="tu@correo.com" />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Número de Celular</Label>
-                  <Input id="phone" name="phone" placeholder="+591 70000000" />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="message">Mensaje</Label>
-                  <Textarea id="message" name="message" required placeholder="Estoy interesado/a en esta propiedad..." />
-                </div>
-                <div className="md:col-span-2">
-                  <Button type="submit">Enviar mensaje</Button>
-                </div>
-              </form>
+                    try {
+                      const { error } = await supabase.functions.invoke("agent-contact", {
+                        body: {
+                          agentId: property.agent_id,
+                          propertyId: property.id,
+                          clientName: name,
+                          clientEmail: email,
+                          clientPhone: phone,
+                          message: message
+                        }
+                      });
+                      
+                      if (error) throw error;
+                      toast.success("¡Mensaje enviado exitosamente! El agente se pondrá en contacto contigo pronto.");
+                      (e.target as HTMLFormElement).reset();
+                    } catch (error) {
+                      console.error("Error sending message:", error);
+                      toast.error("Error al enviar el mensaje. Inténtalo de nuevo.");
+                    }
+                  }}
+                >
+                  <div>
+                    <Label htmlFor="name">Nombre completo</Label>
+                    <Input id="name" name="name" required placeholder="Tu nombre completo" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Correo electrónico</Label>
+                    <Input id="email" name="email" type="email" required placeholder="tu@correo.com" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Número de teléfono</Label>
+                    <Input id="phone" name="phone" placeholder="+591 70000000" className="mt-1" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="message">Mensaje</Label>
+                    <Textarea 
+                      id="message" 
+                      name="message" 
+                      required 
+                      placeholder="Hola, estoy interesado/a en esta propiedad. Me gustaría obtener más información..."
+                      className="mt-1 min-h-[100px]"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Button type="submit" size="lg" className="w-full md:w-auto px-8">
+                      Enviar mensaje
+                    </Button>
+                  </div>
+                </form>
+              </Card>
             </section>
           </div>
         )}
