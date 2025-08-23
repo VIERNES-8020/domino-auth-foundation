@@ -43,14 +43,22 @@ export default function PropertyReviewForm({
       // This avoids TypeScript issues until the types are updated
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast.success("¡Reseña enviada exitosamente! Será publicada después de la moderación.");
+      // Success confirmation with detailed message
+      toast.success("¡Reseña enviada exitosamente!", {
+        description: "Tu reseña será revisada y publicada en las próximas 24 horas. Gracias por compartir tu opinión.",
+        duration: 5000
+      });
+      
       onReviewAdded();
       onClose();
       setRating(0);
       setReviewData({ clientName: "", clientEmail: "", comment: "" });
     } catch (error) {
       console.error("Error submitting review:", error);
-      toast.error("Error al enviar la reseña. Inténtalo de nuevo.");
+      toast.error("Error al enviar la reseña", {
+        description: "No se pudo procesar tu reseña. Por favor, verifica tus datos e inténtalo de nuevo.",
+        duration: 4000
+      });
     } finally {
       setLoading(false);
     }

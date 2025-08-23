@@ -6,7 +6,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AgentSearchSelector } from "@/components/AgentSearchSelector";
 import Map from "@/components/Map";
 import PropertyBookingCalendar from "@/components/PropertyBookingCalendar";
 import PropertyReviewForm from "@/components/PropertyReviewForm";
@@ -89,6 +89,7 @@ export default function PropertyDetailPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [selectedAgentCode, setSelectedAgentCode] = useState<string>("");
   const [availableAgents, setAvailableAgents] = useState<any[]>([]);
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -673,6 +674,9 @@ export default function PropertyDetailPage() {
                   className="grid grid-cols-1 md:grid-cols-2 gap-4"
                   onSubmit={async (e) => {
                     e.preventDefault();
+                    if (isSubmittingContact) return;
+                    
+                    setIsSubmittingContact(true);
                     const formData = new FormData(e.currentTarget);
                     const name = formData.get("name") as string;
                     const email = formData.get("email") as string;
@@ -697,11 +701,23 @@ export default function PropertyDetailPage() {
                       });
                       
                       if (error) throw error;
-                      toast.success("¡Mensaje enviado exitosamente! El agente se pondrá en contacto contigo pronto.");
+                      
+                      // Success confirmation
+                      toast.success("¡Mensaje enviado exitosamente!", {
+                        description: "El agente se pondrá en contacto contigo pronto. Revisa tu correo electrónico para más detalles.",
+                        duration: 5000
+                      });
+                      
                       (e.target as HTMLFormElement).reset();
+                      setSelectedAgentCode("");
                     } catch (error) {
                       console.error("Error sending message:", error);
-                      toast.error("Error al enviar el mensaje. Inténtalo de nuevo.");
+                      toast.error("Error al enviar el mensaje", {
+                        description: "No se pudo procesar tu solicitud. Por favor, inténtalo de nuevo.",
+                        duration: 4000
+                      });
+                    } finally {
+                      setIsSubmittingContact(false);
                     }
                   }}
                 >
@@ -718,22 +734,20 @@ export default function PropertyDetailPage() {
                     <Input id="phone" name="phone" placeholder="+591 70000000" className="mt-1" />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="agent-select">Seleccionar agente (opcional)</Label>
-                    <Select value={selectedAgentCode} onValueChange={setSelectedAgentCode}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Seleccionar un agente específico" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Agente asignado a la propiedad</SelectItem>
-                        {availableAgents.filter(agent => agent.agent_code && agent.agent_code.trim() !== '').map((agent) => (
-                          <SelectItem key={agent.id} value={agent.agent_code}>
-                            {agent.full_name} - {agent.agent_code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                   <div>
+                     <Label htmlFor="agent-select">Seleccionar agente (opcional)</Label>
+                     <div className="mt-1">
+                       <AgentSearchSelector
+                         agents={availableAgents.filter(agent => agent.agent_code && agent.agent_code.trim() !== '')}
+                         value={selectedAgentCode}
+                         onValueChange={setSelectedAgentCode}
+                         placeholder="Buscar agente por nombre o código..."
+                       />
+                     </div>
+                     <p className="text-xs text-muted-foreground mt-1">
+                       Busca por nombre completo o código de agente (ej: MCAL4139)
+                     </p>
+                   </div>
                   
                   <div className="md:col-span-2">
                     <Label htmlFor="message">Mensaje</Label>
@@ -745,11 +759,16 @@ export default function PropertyDetailPage() {
                       className="mt-1 min-h-[100px]"
                     />
                   </div>
-                  <div className="md:col-span-2">
-                    <Button type="submit" size="lg" className="w-full md:w-auto px-8">
-                      Enviar mensaje
-                    </Button>
-                  </div>
+                   <div className="md:col-span-2">
+                     <Button 
+                       type="submit" 
+                       size="lg" 
+                       className="w-full md:w-auto px-8"
+                       disabled={isSubmittingContact}
+                     >
+                       {isSubmittingContact ? "Enviando..." : "Enviar mensaje"}
+                     </Button>
+                   </div>
                 </form>
               </Card>
             </section>

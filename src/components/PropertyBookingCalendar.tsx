@@ -63,14 +63,22 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      toast.success("¡Visita agendada exitosamente! Recibirás confirmación por correo y WhatsApp.");
+      // Success confirmation with detailed message
+      toast.success("¡Visita agendada exitosamente!", {
+        description: `Tu visita está programada para el ${selectedDate.toLocaleDateString('es-ES')} a las ${selectedTime}. Recibirás confirmación por correo y WhatsApp.`,
+        duration: 6000
+      });
+      
       onClose();
       setSelectedDate(undefined);
       setSelectedTime("");
       setClientData({ name: "", email: "", phone: "", message: "" });
     } catch (error) {
       console.error("Error scheduling visit:", error);
-      toast.error("Error al agendar la visita. Inténtalo de nuevo.");
+      toast.error("Error al agendar la visita", {
+        description: "No se pudo procesar tu solicitud. Por favor, inténtalo de nuevo o contacta al agente directamente.",
+        duration: 4000
+      });
     } finally {
       setLoading(false);
     }
