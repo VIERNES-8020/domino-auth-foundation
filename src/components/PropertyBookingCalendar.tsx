@@ -63,28 +63,34 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      // Show success confirmation FIRST, then wait before closing
-      toast.success("✅ ¡VISITA AGENDADA EXITOSAMENTE!", {
-        description: `✓ Tu visita está confirmada para el ${selectedDate.toLocaleDateString('es-ES', { 
+      // MOSTRAR CONFIRMACIÓN INMEDIATAMENTE Y SIN CERRAR MODAL AÚN
+      toast.success("🎉 ¡VISITA AGENDADA CON ÉXITO!", {
+        description: `✅ CONFIRMADO: ${selectedDate.toLocaleDateString('es-ES', { 
           weekday: 'long', 
           day: 'numeric', 
           month: 'long' 
-        })} a las ${selectedTime}. ✓ Recibirás confirmación por correo y WhatsApp.`,
-        duration: 8000,
+        })} a las ${selectedTime}\n✅ Recibirás confirmación por email y WhatsApp`,
+        duration: 15000,
         style: {
-          background: '#10B981',
+          background: 'linear-gradient(45deg, #10B981, #059669)',
           color: 'white',
-          border: '2px solid #059669',
-        }
+          border: '3px solid #059669',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          padding: '20px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)'
+        },
+        position: 'top-center',
       });
       
-      // Wait a moment before closing to ensure toast is visible
+      // ESPERAR 2 SEGUNDOS ANTES DE CERRAR PARA QUE VEA LA CONFIRMACIÓN
       setTimeout(() => {
         onClose();
         setSelectedDate(undefined);
         setSelectedTime("");
         setClientData({ name: "", email: "", phone: "", message: "" });
-      }, 500);
+      }, 2000);
     } catch (error) {
       console.error("Error scheduling visit:", error);
       toast.error("❌ ERROR AL AGENDAR LA VISITA", {
@@ -247,13 +253,20 @@ export default function PropertyBookingCalendar({
             )}
 
             <div className="flex gap-2 pt-4">
-              <Button
-                type="submit"
-                disabled={!selectedDate || !selectedTime || !clientData.name || !clientData.email || loading}
-                className="flex-1"
-              >
-                {loading ? "Agendando..." : "Confirmar visita"}
-              </Button>
+            <Button
+              type="submit"
+              disabled={!selectedDate || !selectedTime || !clientData.name || !clientData.email || loading}
+              className="flex-1 relative"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Procesando...
+                </>
+              ) : (
+                "🗓️ Confirmar visita"
+              )}
+            </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>

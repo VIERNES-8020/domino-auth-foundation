@@ -722,24 +722,28 @@ export default function PropertyDetailPage() {
                       
                       if (error) throw error;
                       
-                      // Show success confirmation immediately and make it very visible
-                      toast.success("✅ ¡MENSAJE ENVIADO EXITOSAMENTE!", {
-                        description: "✓ Tu consulta ha sido enviada al agente. ✓ Recibirás respuesta por correo o teléfono pronto.",
-                        duration: 6000,
+                      // MOSTRAR CONFIRMACIÓN INMEDIATAMENTE Y MUY VISIBLE
+                      toast.success("🎉 ¡MENSAJE ENVIADO CON ÉXITO!", {
+                        description: `✅ CONFIRMADO: Tu consulta fue enviada\n✅ El agente te contactará pronto por email o teléfono`,
+                        duration: 12000,
                         style: {
-                          background: '#10B981',
+                          background: 'linear-gradient(45deg, #10B981, #059669)',
                           color: 'white',
-                          border: '2px solid #059669',
-                          fontSize: '16px',
-                          fontWeight: 'bold'
-                        }
+                          border: '3px solid #059669',
+                          fontSize: '18px',
+                          fontWeight: 'bold',
+                          padding: '20px',
+                          borderRadius: '12px',
+                          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)'
+                        },
+                        position: 'top-center',
                       });
                       
-                      // Reset form after showing confirmation
+                      // RESETEAR FORMULARIO DESPUÉS DE UN MOMENTO
                       setTimeout(() => {
                         (e.target as HTMLFormElement).reset();
                         setSelectedAgentCode("");
-                      }, 200);
+                      }, 1000);
                     } catch (error) {
                       console.error("Error sending message:", error);
                       toast.error("❌ ERROR AL ENVIAR MENSAJE", {
@@ -800,10 +804,17 @@ export default function PropertyDetailPage() {
                      <Button 
                        type="submit" 
                        size="lg" 
-                       className="w-full md:w-auto px-8"
+                       className="w-full md:w-auto px-8 relative"
                        disabled={isSubmittingContact}
                      >
-                       {isSubmittingContact ? "Enviando..." : "Enviar mensaje"}
+                       {isSubmittingContact ? (
+                         <>
+                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                           Enviando mensaje...
+                         </>
+                       ) : (
+                         "📤 Enviar consulta"
+                       )}
                      </Button>
                    </div>
                 </form>
