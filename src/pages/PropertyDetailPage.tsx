@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AgentSearchSelector } from "@/components/AgentSearchSelector";
-import mensajeEnviadoImg from "@/assets/mensaje-enviado-confirmacion.png";
+import { SuccessConfirmationModal } from "@/components/SuccessConfirmationModal";
 import Map from "@/components/Map";
 import PropertyBookingCalendar from "@/components/PropertyBookingCalendar";
 import PropertyReviewForm from "@/components/PropertyReviewForm";
@@ -733,23 +733,15 @@ export default function PropertyDetailPage() {
                         setSelectedAgentCode("");
                         setShowContactConfirmation(false);
                       }, 3000);
-                    } catch (error) {
-                      console.error("Error sending message:", error);
-                      toast.error("❌ ERROR AL ENVIAR MENSAJE", {
-                        description: "❌ No se pudo enviar. Verifica tu conexión e inténtalo de nuevo.",
-                        duration: 6000,
-                        style: {
-                          background: '#EF4444',
-                          color: 'white',
-                          border: '2px solid #DC2626',
-                          fontSize: '16px',
-                          fontWeight: 'bold'
-                        }
-                      });
-                    } finally {
-                      setIsSubmittingContact(false);
-                    }
-                  }}
+                     } catch (error) {
+                       console.error("Error sending message:", error);
+                       toast.error("❌ Error al enviar mensaje", {
+                         description: "No se pudo enviar. Verifica tu conexión e inténtalo de nuevo.",
+                       });
+                     } finally {
+                       setIsSubmittingContact(false);
+                     }
+                   }}
                 >
                   <div>
                     <Label htmlFor="name">Nombre completo</Label>
@@ -843,17 +835,11 @@ export default function PropertyDetailPage() {
         )}
 
         {/* Contact Confirmation Modal */}
-        <Dialog open={showContactConfirmation} onOpenChange={setShowContactConfirmation}>
-          <DialogContent className="max-w-md p-0 bg-transparent border-0 shadow-none">
-            <div className="flex items-center justify-center">
-              <img
-                src={mensajeEnviadoImg}
-                alt="Mensaje enviado con éxito"
-                className="w-full max-w-sm rounded-lg shadow-2xl"
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <SuccessConfirmationModal
+          isOpen={showContactConfirmation}
+          onClose={() => setShowContactConfirmation(false)}
+          type="message"
+        />
       </main>
     </div>
   );

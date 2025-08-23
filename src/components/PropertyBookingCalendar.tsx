@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CalendarDays, Clock, User } from "lucide-react";
+import { SuccessConfirmationModal } from "@/components/SuccessConfirmationModal";
 
 interface PropertyBookingCalendarProps {
   propertyId: string;
@@ -33,6 +34,7 @@ export default function PropertyBookingCalendar({
     message: ""
   });
   const [loading, setLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const timeSlots = [
     "09:00", "10:00", "11:00", "12:00",
@@ -63,46 +65,13 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      // MOSTRAR CONFIRMACIÓN INMEDIATAMENTE Y SIN CERRAR MODAL AÚN
-      toast.success("🎉 ¡VISITA AGENDADA CON ÉXITO!", {
-        description: `✅ CONFIRMADO: ${selectedDate.toLocaleDateString('es-ES', { 
-          weekday: 'long', 
-          day: 'numeric', 
-          month: 'long' 
-        })} a las ${selectedTime}\n✅ Recibirás confirmación por email y WhatsApp`,
-        duration: 15000,
-        style: {
-          background: 'linear-gradient(45deg, #10B981, #059669)',
-          color: 'white',
-          border: '3px solid #059669',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          padding: '20px',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)'
-        },
-        position: 'top-center',
-      });
-      
-      // ESPERAR 2 SEGUNDOS ANTES DE CERRAR PARA QUE VEA LA CONFIRMACIÓN
-      setTimeout(() => {
-        onClose();
-        setSelectedDate(undefined);
-        setSelectedTime("");
-        setClientData({ name: "", email: "", phone: "", message: "" });
-      }, 2000);
+      // MOSTRAR CONFIRMACIÓN ELEGANTE
+      setShowConfirmation(true);
+
     } catch (error) {
       console.error("Error scheduling visit:", error);
-      toast.error("❌ ERROR AL AGENDAR LA VISITA", {
-        description: "❌ No se pudo procesar tu solicitud. Verifica tu conexión e inténtalo de nuevo.",
-        duration: 6000,
-        style: {
-          background: '#EF4444',
-          color: 'white',
-          border: '2px solid #DC2626',
-          fontSize: '16px',
-          fontWeight: 'bold'
-        }
+      toast.error("❌ Error al agendar cita", {
+        description: "No se pudo agendar la cita. Verifica tu conexión e inténtalo de nuevo.",
       });
     } finally {
       setLoading(false);
@@ -274,6 +243,25 @@ export default function PropertyBookingCalendar({
           </div>
         </form>
       </DialogContent>
+
+      {/* Confirmation Modal */}
+      <SuccessConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => {
+          setShowConfirmation(false);
+          setTimeout(() => {
+            onClose();
+            setSelectedDate(undefined);
+            setSelectedTime("");
+            setClientData({ name: "", email: "", phone: "", message: "" });
+          }, 300);
+        }}
+        type="appointment"
+        title={selectedDate && selectedTime ? `¡Cita Agendada para el ${selectedDate.toLocaleDateString('es-ES', { 
+          day: 'numeric', 
+          month: 'long' 
+        })} a las ${selectedTime}!` : undefined}
+      />
     </Dialog>
   );
 }
