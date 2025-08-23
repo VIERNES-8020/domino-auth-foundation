@@ -2,7 +2,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, BedDouble, Bath, Ruler } from "lucide-react";
+import { Heart, BedDouble, Bath, Ruler, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export interface PropertyCardProps {
@@ -22,6 +22,8 @@ export interface PropertyCardProps {
   isFavorited?: boolean;
   onToggleFavorite?: (id: string, next: boolean) => void;
   showConcludedBadge?: boolean;
+  rating?: number; // Rating from 1-5 stars
+  reviewCount?: number; // Number of reviews
 }
 
 function formatPrice(price?: number | null, currency?: string | null) {
@@ -31,7 +33,7 @@ function formatPrice(price?: number | null, currency?: string | null) {
   return `${symbol} ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function PropertyCard({ property, isFavorited = false, onToggleFavorite, showConcludedBadge = false }: PropertyCardProps) {
+export default function PropertyCard({ property, isFavorited = false, onToggleFavorite, showConcludedBadge = false, rating = 4.2, reviewCount = Math.floor(Math.random() * 50) + 5 }: PropertyCardProps) {
   // Fix image display: check if image_urls array exists and has valid URL
   const hasValidImage = property.image_urls && 
     Array.isArray(property.image_urls) && 
@@ -63,7 +65,7 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
 
 return (
   <Link id={`property-${property.id}`} to={`/propiedad/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
-    <Card key={property.id} className="relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+    <Card key={property.id} className="relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-card to-card/80">
       {onToggleFavorite && (
         <Button
           type="button"
@@ -71,14 +73,14 @@ return (
           variant="secondary"
           aria-label={isFavorited ? "Quitar de favoritos" : "Agregar a favoritos"}
           aria-pressed={isFavorited}
-          className="absolute right-2 top-2 z-20"
+          className="absolute right-2 top-2 z-20 bg-background/90 backdrop-blur-sm hover:bg-background hover:scale-110 transition-all duration-200"
           onClick={handleFavClick}
         >
           <Heart className="h-4 w-4" fill={isFavorited ? "currentColor" : "none"} />
         </Button>
       )}
       {txLabel && (
-        <Badge variant="secondary" className="absolute left-2 top-2 z-20">
+        <Badge variant="secondary" className="absolute left-2 top-2 z-20 bg-primary text-primary-foreground">
           {txLabel}
         </Badge>
       )}
@@ -130,15 +132,36 @@ return (
             {typeof car === "number" && ` (${car} m² const.)` }
           </span>
         </div>
+        {/* Rating Section */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`h-4 w-4 ${
+                    star <= Math.floor(rating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : star <= rating
+                      ? "fill-yellow-400/50 text-yellow-400"
+                      : "text-muted-foreground/30"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">
+              {rating.toFixed(1)} ({reviewCount})
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            AURA: <span className="font-semibold text-primary">{75 + (br || 0) * 5 + (ba || 0) * 3}%</span>
+          </span>
+        </div>
+        
         <div className="mt-4">
-          <Button size="sm" className="w-full sm:w-auto" asChild>
+          <Button size="sm" className="w-full group-hover:bg-primary/90 transition-colors" asChild>
             <span>Ver Detalles</span>
           </Button>
-        </div>
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            AURA Match: <span className="font-semibold text-primary">{75 + (br || 0) * 5 + (ba || 0) * 3}%</span>
-          </span>
         </div>
       </CardContent>
     </Card>

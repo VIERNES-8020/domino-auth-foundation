@@ -163,60 +163,112 @@ export default function PropertyDetailPage() {
 
         {property && (
           <div className="space-y-8">
-            {/* Gallery */}
-            <section>
-              {images.length > 0 ? (
-                <Carousel>
-                  <CarouselContent>
-                    {images.map((src, idx) => (
-                      <CarouselItem key={idx} className="basis-full">
-                        <AspectRatio ratio={16 / 9}>
-                          <img
-                            src={src || "/default-placeholder.jpg"}
-                            alt={`Imagen ${idx + 1} de ${property.title}`}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              const el = e.currentTarget as HTMLImageElement;
-                              if (el.src !== window.location.origin + "/default-placeholder.jpg") {
-                                el.src = "/default-placeholder.jpg";
-                              }
-                            }}
-                          />
-                        </AspectRatio>
-                      </CarouselItem>
+            {/* Gallery - More compact and elegant */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                {images.length > 0 ? (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {images.map((src, idx) => (
+                        <CarouselItem key={idx} className="basis-full">
+                          <AspectRatio ratio={4 / 3} className="rounded-xl overflow-hidden shadow-lg">
+                            <img
+                              src={src || "/default-placeholder.jpg"}
+                              alt={`Imagen ${idx + 1} de ${property.title}`}
+                              className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                              onError={(e) => {
+                                const el = e.currentTarget as HTMLImageElement;
+                                if (el.src !== window.location.origin + "/default-placeholder.jpg") {
+                                  el.src = "/default-placeholder.jpg";
+                                }
+                              }}
+                            />
+                          </AspectRatio>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-4 bg-background/80 backdrop-blur-sm border-2" />
+                    <CarouselNext className="right-4 bg-background/80 backdrop-blur-sm border-2" />
+                  </Carousel>
+                ) : (
+                  <AspectRatio ratio={4 / 3} className="rounded-xl overflow-hidden shadow-lg">
+                    <img
+                      src="/default-placeholder.jpg"
+                      alt="Sin imagen disponible"
+                      className="h-full w-full object-cover"
+                    />
+                  </AspectRatio>
+                )}
+
+                {/* Additional Images Grid */}
+                {images.length > 1 && (
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    {images.slice(1, 4).map((src, idx) => (
+                      <div key={idx} className="aspect-square rounded-lg overflow-hidden shadow-sm">
+                        <img
+                          src={src}
+                          alt={`Vista ${idx + 2}`}
+                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-200"
+                          onError={(e) => {
+                            const el = e.currentTarget as HTMLImageElement;
+                            el.src = "/default-placeholder.jpg";
+                          }}
+                        />
+                      </div>
                     ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-              ) : (
-                <AspectRatio ratio={16 / 9}>
-                  <img
-                    src="/default-placeholder.jpg"
-                    alt="Sin imagen disponible"
-                    className="h-full w-full object-cover"
-                  />
-                </AspectRatio>
-              )}
-            </section>
+                  </div>
+                )}
+              </div>
 
-            {/* Main info */}
-            <section>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{property.title}</h1>
-              <p className="mt-1 text-muted-foreground">{property.address}</p>
-              <p className="mt-2 text-xl font-semibold">{priceStr}</p>
+              {/* Main info - More elegant layout */}
+              <div className="space-y-6">
+                <Card className="p-6 border-2 border-primary/20 shadow-lg">
+                  <div className="space-y-4">
+                    <div>
+                      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-primary">{property.title}</h1>
+                      <p className="mt-2 text-muted-foreground flex items-center gap-2">
+                        <span className="w-2 h-2 bg-primary rounded-full"></span>
+                        {property.address}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <p className="text-3xl font-bold text-primary bg-primary/10 px-4 py-2 rounded-lg">{priceStr}</p>
+                      <Badge variant="outline" className="text-sm px-3 py-1">Disponible</Badge>
+                    </div>
 
-              <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                {typeof property.bedrooms === "number" && (
-                  <span className="inline-flex items-center gap-2"><BedDouble size={18} /> {property.bedrooms} hab.</span>
-                )}
-                {typeof property.bathrooms === "number" && (
-                  <span className="inline-flex items-center gap-2"><Bath size={18} /> {property.bathrooms} baños</span>
-                )}
-                {typeof property.area_m2 === "number" && (
-                  <span className="inline-flex items-center gap-2"><Ruler size={18} /> {property.area_m2} m²</span>
-                )}
+                    <div className="grid grid-cols-3 gap-4 py-4 border-y">
+                      {typeof property.bedrooms === "number" && (
+                        <div className="text-center space-y-2">
+                          <BedDouble size={24} className="mx-auto text-primary" />
+                          <div>
+                            <p className="text-2xl font-bold">{property.bedrooms}</p>
+                            <p className="text-xs text-muted-foreground">Habitaciones</p>
+                          </div>
+                        </div>
+                      )}
+                      {typeof property.bathrooms === "number" && (
+                        <div className="text-center space-y-2">
+                          <Bath size={24} className="mx-auto text-primary" />
+                          <div>
+                            <p className="text-2xl font-bold">{property.bathrooms}</p>
+                            <p className="text-xs text-muted-foreground">Baños</p>
+                          </div>
+                        </div>
+                      )}
+                      {typeof property.area_m2 === "number" && (
+                        <div className="text-center space-y-2">
+                          <Ruler size={24} className="mx-auto text-primary" />
+                          <div>
+                            <p className="text-2xl font-bold">{property.area_m2}</p>
+                            <p className="text-xs text-muted-foreground">m²</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
               </div>
             </section>
 

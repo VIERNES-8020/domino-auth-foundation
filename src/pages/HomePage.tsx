@@ -190,12 +190,22 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-lg shadow-md mb-4">
-          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
-          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
-          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
-          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
-          <TabsTrigger value="commercial" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Local comercial</TabsTrigger>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
+          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Casas</span>
+          </TabsTrigger>
+          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Departamentos</span>
+          </TabsTrigger>
+          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Terrenos</span>
+          </TabsTrigger>
+          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Oficinas</span>
+          </TabsTrigger>
+          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Local comercial</span>
+          </TabsTrigger>
         </TabsList>
 
           <TabsContent value="house">
@@ -274,12 +284,22 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="concluded-heading">
         <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">Éxitos Recientes</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-lg shadow-md mb-4">
-          <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
-          <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
-          <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
-          <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
-          <TabsTrigger value="commercial" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Local comercial</TabsTrigger>
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
+          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Casas</span>
+          </TabsTrigger>
+          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Departamentos</span>
+          </TabsTrigger>
+          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Terrenos</span>
+          </TabsTrigger>
+          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Oficinas</span>
+          </TabsTrigger>
+          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+            <span className="relative z-10">Local comercial</span>
+          </TabsTrigger>
         </TabsList>
 
           <TabsContent value="house">
