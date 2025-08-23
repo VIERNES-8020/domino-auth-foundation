@@ -17,6 +17,7 @@ interface NotificationResponseModalProps {
   clientEmail?: string;
   clientName?: string;
   clientPhone?: string;
+  agentProfile?: any;
 }
 
 export default function NotificationResponseModal({ 
@@ -25,7 +26,8 @@ export default function NotificationResponseModal({
   notification,
   clientEmail,
   clientName,
-  clientPhone
+  clientPhone,
+  agentProfile
 }: NotificationResponseModalProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -40,13 +42,21 @@ export default function NotificationResponseModal({
 
     setIsLoading(true);
     try {
+      const messageWithSignature = `${message}
+
+Saludos cordiales,
+${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
+Asistente Inmobiliario`;
+
       const { error } = await supabase.functions.invoke('send-response-email', {
         body: {
           to: clientEmail,
           clientName: clientName || 'Cliente',
           subject,
-          message,
-          notificationId: notification.id
+          message: messageWithSignature,
+          notificationId: notification.id,
+          agentName: agentProfile?.full_name,
+          agentEmail: agentProfile?.email
         }
       });
 
@@ -93,14 +103,20 @@ export default function NotificationResponseModal({
       return;
     }
     
+    const messageWithSignature = `${message || 'Me comunico contigo para darte más información.'}
+
+Saludos cordiales,
+${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
+Asistente Inmobiliario`;
+    
     const whatsappMessage = encodeURIComponent(
-      `Hola ${clientName || 'Cliente'}, gracias por tu interés en nuestras propiedades. ${message || 'Me comunico contigo para darte más información.'}`
+      `Hola ${clientName || 'Cliente'}, gracias por tu interés en nuestras propiedades. ${messageWithSignature}`
     );
     
-    const whatsappUrl = `https://wa.me/${clientPhone.replace(/\D/g, '')}?text=${whatsappMessage}`;
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${clientPhone.replace(/\D/g, '')}&text=${whatsappMessage}`;
     window.open(whatsappUrl, '_blank');
     
-    toast.success("📱 Redirigiendo a WhatsApp");
+    toast.success("📱 Abriendo WhatsApp Web");
   };
 
   const extractClientInfo = (notificationMessage: string) => {
@@ -184,13 +200,16 @@ export default function NotificationResponseModal({
             
             <div className="space-y-2">
               <Label htmlFor="email-message">Mensaje</Label>
-              <Textarea
-                id="email-message"
-                placeholder="Escribe tu respuesta personalizada..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={6}
-              />
+            <Textarea
+              id="email-message"
+              placeholder="Escribe tu respuesta personalizada..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={6}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Nota: Se añadirá automáticamente tu firma al final del mensaje
+            </p>
             </div>
             
             <Button 
@@ -210,13 +229,16 @@ export default function NotificationResponseModal({
           <TabsContent value="whatsapp" className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="whatsapp-message">Mensaje para WhatsApp</Label>
-              <Textarea
-                id="whatsapp-message"
-                placeholder="Hola! Gracias por tu interés en nuestras propiedades..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-              />
+            <Textarea
+              id="whatsapp-message"
+              placeholder="Hola! Gracias por tu interés en nuestras propiedades..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Nota: Se añadirá automáticamente tu firma al final del mensaje
+            </p>
             </div>
             
             <Button 

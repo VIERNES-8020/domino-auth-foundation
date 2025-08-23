@@ -24,6 +24,7 @@ export default function AgentDashboard() {
   const [deletingProperty, setDeletingProperty] = useState<any>(null);
   const [archivingProperty, setArchivingProperty] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -35,6 +36,7 @@ export default function AgentDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       if (user) {
+        await fetchProfile(user.id);
         await fetchProperties(user.id);
         await fetchNotifications(user.id);
       }
@@ -42,6 +44,21 @@ export default function AgentDashboard() {
     };
     getCurrentUser();
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const fetchProperties = async (agentId: string) => {
     try {
@@ -597,6 +614,7 @@ export default function AgentDashboard() {
           clientEmail={respondingNotification.client_email}
           clientName={respondingNotification.client_name}
           clientPhone={respondingNotification.client_phone}
+          agentProfile={profile}
         />
       )}
     </div>

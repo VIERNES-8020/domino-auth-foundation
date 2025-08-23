@@ -14,6 +14,8 @@ interface EmailRequest {
   subject: string;
   message: string;
   notificationId: string;
+  agentName?: string;
+  agentEmail?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -23,13 +25,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, clientName, subject, message, notificationId }: EmailRequest = await req.json();
+    const { to, clientName, subject, message, notificationId, agentName, agentEmail }: EmailRequest = await req.json();
 
     console.log("Sending response email to:", to);
 
     // Send email using Resend
+    const fromEmail = agentEmail ? `${agentName || 'Dominio Inmobiliario'} <${agentEmail}>` : "Dominio Inmobiliario <onboarding@resend.dev>";
+    
     const emailResponse = await resend.emails.send({
-      from: "Dominio Inmobiliario <onboarding@resend.dev>",
+      from: fromEmail,
       to: [to],
       subject: subject,
       html: `
