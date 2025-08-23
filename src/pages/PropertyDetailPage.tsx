@@ -135,31 +135,24 @@ export default function PropertyDetailPage() {
           setAmenities([]);
         }
 
-        // Load reviews - simplified approach
-        try {
-          // For now, we'll use sample data to avoid TypeScript issues
-          // This will be replaced when types are updated
-          const sampleReviews: Review[] = [
-            {
-              id: "1",
-              rating: 5,
-              comment: "Excelente propiedad, muy recomendada.",
-              client_name: "María García",
-              created_at: new Date().toISOString()
-            },
-            {
-              id: "2", 
-              rating: 4,
-              comment: "Buena ubicación y precio justo.",
-              client_name: "Carlos López", 
-              created_at: new Date().toISOString()
-            }
-          ];
-          setReviews(sampleReviews);
-        } catch (error) {
-          console.error('Error loading reviews:', error);
-          setReviews([]);
-        }
+        // Load sample reviews
+        const sampleReviews: Review[] = [
+          {
+            id: "1",
+            rating: 5,
+            comment: "Excelente propiedad, muy recomendada.",
+            client_name: "María García",
+            created_at: new Date().toISOString()
+          },
+          {
+            id: "2", 
+            rating: 4,
+            comment: "Buena ubicación y precio justo.",
+            client_name: "Carlos López", 
+            created_at: new Date().toISOString()
+          }
+        ];
+        setReviews(sampleReviews);
 
         // Load available agents
         const { data: agentsData, error: agentsError } = await supabase
