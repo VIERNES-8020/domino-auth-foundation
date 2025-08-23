@@ -53,12 +53,14 @@ export default function HomePage() {
   const [featApt, setFeatApt] = useState<any[]>([]);
   const [featLand, setFeatLand] = useState<any[]>([]);
   const [featOffice, setFeatOffice] = useState<any[]>([]);
+  const [featCommercial, setFeatCommercial] = useState<any[]>([]);
   
   // Concluded properties for new carousel
   const [concludedHouse, setConcludedHouse] = useState<any[]>([]);
   const [concludedApt, setConcludedApt] = useState<any[]>([]);
   const [concludedLand, setConcludedLand] = useState<any[]>([]);
   const [concludedOffice, setConcludedOffice] = useState<any[]>([]);
+  const [concludedCommercial, setConcludedCommercial] = useState<any[]>([]);
   
   const [realMetrics, setRealMetrics] = useState({
     totalProperties: 1200,
@@ -116,22 +118,24 @@ export default function HomePage() {
         return (data ?? []) as any[];
       };
 
-      const [houses, apts, lands, offices, concludedHouses, concludedApts, concludedLands, concludedOffices] = await Promise.all([
+      const [houses, apts, lands, offices, commercials, concludedHouses, concludedApts, concludedLands, concludedOffices, concludedCommercials] = await Promise.all([
         fetchType("casa"),
         fetchType("departamento"),
         fetchType("terreno"),
         fetchType("oficina"),
+        fetchType("local_comercial"),
         fetchConcludedType("casa"),
         fetchConcludedType("departamento"),
         fetchConcludedType("terreno"),
         fetchConcludedType("oficina"),
+        fetchConcludedType("local_comercial"),
       ]);
       
       await fetchMetrics();
       
       if (!active) return;
-      setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices);
-      setConcludedHouse(concludedHouses); setConcludedApt(concludedApts); setConcludedLand(concludedLands); setConcludedOffice(concludedOffices);
+      setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices); setFeatCommercial(commercials);
+      setConcludedHouse(concludedHouses); setConcludedApt(concludedApts); setConcludedLand(concludedLands); setConcludedOffice(concludedOffices); setConcludedCommercial(concludedCommercials);
     })();
     return () => { active = false; };
   }, []);
@@ -186,11 +190,12 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-lg shadow-md mb-4">
           <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
           <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
           <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
           <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
+          <TabsTrigger value="commercial" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Local comercial</TabsTrigger>
         </TabsList>
 
           <TabsContent value="house">
@@ -248,6 +253,20 @@ export default function HomePage() {
               <CarouselNext />
             </Carousel>
           </TabsContent>
+
+          <TabsContent value="commercial">
+            <Carousel>
+              <CarouselContent>
+                {featCommercial.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
         </Tabs>
       </section>
 
@@ -255,11 +274,12 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="concluded-heading">
         <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">Éxitos Recientes</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-lg shadow-md mb-4">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-lg shadow-md mb-4">
           <TabsTrigger value="house" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Casas</TabsTrigger>
           <TabsTrigger value="apartment" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Departamentos</TabsTrigger>
           <TabsTrigger value="land" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Terrenos</TabsTrigger>
           <TabsTrigger value="office" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Oficinas</TabsTrigger>
+          <TabsTrigger value="commercial" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">Local comercial</TabsTrigger>
         </TabsList>
 
           <TabsContent value="house">
@@ -308,6 +328,20 @@ export default function HomePage() {
             <Carousel>
               <CarouselContent>
                 {concludedOffice.map((p) => (
+                  <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <PropertyCard property={p} showConcludedBadge />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </TabsContent>
+
+          <TabsContent value="commercial">
+            <Carousel>
+              <CarouselContent>
+                {concludedCommercial.map((p) => (
                   <CarouselItem key={p.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
                     <PropertyCard property={p} showConcludedBadge />
                   </CarouselItem>
