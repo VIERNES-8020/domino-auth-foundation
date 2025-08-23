@@ -63,10 +63,14 @@ export default function PropertyBookingCalendar({
 
       if (error) throw error;
 
-      // Success confirmation with detailed message
-      toast.success("¡Visita agendada exitosamente!", {
-        description: `Tu visita está programada para el ${selectedDate.toLocaleDateString('es-ES')} a las ${selectedTime}. Recibirás confirmación por correo y WhatsApp.`,
-        duration: 6000
+      // Success confirmation with detailed and persistent message
+      toast.success("✅ ¡Visita agendada exitosamente!", {
+        description: `Tu visita está confirmada para el ${selectedDate.toLocaleDateString('es-ES', { 
+          weekday: 'long', 
+          day: 'numeric', 
+          month: 'long' 
+        })} a las ${selectedTime}. Recibirás confirmación por correo electrónico y WhatsApp en los próximos minutos.`,
+        duration: 10000
       });
       
       onClose();

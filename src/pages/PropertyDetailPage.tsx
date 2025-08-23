@@ -80,6 +80,7 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [mapToken, setMapToken] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -613,10 +614,11 @@ export default function PropertyDetailPage() {
                   </div>
                 </Card>
 
-                {/* Sample reviews */}
+                {/* Reviews list */}
                 <div className="md:col-span-2 space-y-4">
                   {reviews.length > 0 ? (
-                    reviews.slice(0, 3).map((review) => (
+                    <>
+                      {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
                       <Card key={review.id} className="p-4 hover:shadow-md transition-shadow">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-8 w-8">
@@ -645,7 +647,25 @@ export default function PropertyDetailPage() {
                           </div>
                         </div>
                       </Card>
-                    ))
+                      ))}
+                      
+                      {/* Show more/less button */}
+                      {reviews.length > 3 && (
+                        <div className="text-center pt-4">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowAllReviews(!showAllReviews)}
+                            className="gap-2"
+                          >
+                            {showAllReviews ? (
+                              <>Mostrar menos reseñas</>
+                            ) : (
+                              <>Ver todas las reseñas ({reviews.length})</>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <Card className="p-8 text-center border-dashed">
                       <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -702,19 +722,19 @@ export default function PropertyDetailPage() {
                       
                       if (error) throw error;
                       
-                      // Success confirmation
-                      toast.success("¡Mensaje enviado exitosamente!", {
-                        description: "El agente se pondrá en contacto contigo pronto. Revisa tu correo electrónico para más detalles.",
-                        duration: 5000
+                      // Success confirmation with detailed message
+                      toast.success("✅ ¡Mensaje enviado exitosamente!", {
+                        description: "Tu consulta ha sido enviada al agente seleccionado. Recibirás una respuesta por correo electrónico o teléfono en las próximas horas.",
+                        duration: 8000
                       });
                       
                       (e.target as HTMLFormElement).reset();
                       setSelectedAgentCode("");
                     } catch (error) {
                       console.error("Error sending message:", error);
-                      toast.error("Error al enviar el mensaje", {
-                        description: "No se pudo procesar tu solicitud. Por favor, inténtalo de nuevo.",
-                        duration: 4000
+                      toast.error("❌ Error al enviar el mensaje", {
+                        description: "No se pudo procesar tu solicitud. Por favor, verifica tu conexión a internet e inténtalo de nuevo en unos momentos.",
+                        duration: 6000
                       });
                     } finally {
                       setIsSubmittingContact(false);
