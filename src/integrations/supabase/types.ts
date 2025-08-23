@@ -652,6 +652,84 @@ export type Database = {
           },
         ]
       }
+      property_reviews: {
+        Row: {
+          client_email: string
+          client_name: string
+          comment: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          property_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          client_email: string
+          client_name: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          property_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          property_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      property_visits: {
+        Row: {
+          agent_id: string
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          id: string
+          message: string | null
+          property_id: string
+          scheduled_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          property_id: string
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          property_id?: string
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null

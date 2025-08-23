@@ -135,16 +135,18 @@ export default function PropertyDetailPage() {
           setAmenities([]);
         }
 
-        // Load reviews
-        const { data: reviewsData, error: reviewsError } = await supabase
-          .from("property_reviews")
-          .select("id, rating, comment, client_name, created_at")
-          .eq("property_id", id)
-          .eq("is_approved", true)
-          .order("created_at", { ascending: false });
-        
-        if (!reviewsError && reviewsData) {
-          setReviews(reviewsData);
+        // Load reviews from property_reviews table with raw query
+        try {
+          const { data: reviewsData, error: reviewsError } = await supabase
+            .rpc('get_property_reviews', { property_id_param: id });
+          
+          if (!reviewsError && reviewsData) {
+            setReviews(reviewsData);
+          }
+        } catch (error) {
+          console.error('Error loading reviews:', error);
+          // Fallback - set empty array
+          setReviews([]);
         }
 
         // Load available agents
@@ -673,7 +675,7 @@ export default function PropertyDetailPage() {
                     const message = formData.get("message") as string;
                     
                     // Use selected agent or default to property agent
-                    const targetAgentId = selectedAgentCode ? 
+                    const targetAgentId = selectedAgentCode && selectedAgentCode !== "default" ? 
                       availableAgents.find(a => a.agent_code === selectedAgentCode)?.id : 
                       property.agent_id;
                     
@@ -718,7 +720,8 @@ export default function PropertyDetailPage() {
                         <SelectValue placeholder="Seleccionar un agente específico" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableAgents.map((agent) => (
+                        <SelectItem value="default">Agente asignado a la propiedad</SelectItem>
+                        {availableAgents.filter(agent => agent.agent_code && agent.agent_code.trim() !== '').map((agent) => (
                           <SelectItem key={agent.id} value={agent.agent_code}>
                             {agent.full_name} - {agent.agent_code}
                           </SelectItem>
@@ -765,16 +768,15 @@ export default function PropertyDetailPage() {
             isOpen={showReviewForm}
             onClose={() => setShowReviewForm(false)}
             onReviewAdded={() => {
-              // Reload reviews
+              // Reload reviews using the RPC function
               if (property.id) {
                 supabase
-                  .from("property_reviews")
-                  .select("id, rating, comment, client_name, created_at")
-                  .eq("property_id", property.id)
-                  .eq("is_approved", true)
-                  .order("created_at", { ascending: false })
+                  .rpc('get_property_reviews', { property_id_param: property.id })
                   .then(({ data }) => {
                     if (data) setReviews(data);
+                  })
+                  .catch(() => {
+                    setReviews([]);
                   });
               }
             }}
