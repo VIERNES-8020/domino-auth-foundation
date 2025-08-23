@@ -28,6 +28,7 @@ export default function AgentDashboard() {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
 
@@ -39,6 +40,7 @@ export default function AgentDashboard() {
         await fetchProfile(user.id);
         await fetchProperties(user.id);
         await fetchNotifications(user.id);
+        await fetchPropertyVisits(user.id);
       }
       setLoading(false);
     };
@@ -113,6 +115,27 @@ export default function AgentDashboard() {
       setNotifications(combinedNotifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const fetchPropertyVisits = async (agentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('property_visits')
+        .select(`
+          *,
+          properties (
+            title,
+            address
+          )
+        `)
+        .eq('agent_id', agentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPropertyVisits(data || []);
+    } catch (error) {
+      console.error('Error fetching property visits:', error);
     }
   };
 
@@ -272,6 +295,31 @@ export default function AgentDashboard() {
     }
   };
 
+  const handleVisitStatusChange = async (visitId: string, newStatus: 'confirmed' | 'cancelled') => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('property_visits')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', visitId)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success(`Cita ${newStatus === 'confirmed' ? 'confirmada' : 'cancelada'} exitosamente`);
+      
+      // Refresh property visits list
+      await fetchPropertyVisits(user.id);
+    } catch (error: any) {
+      console.error('Error updating visit status:', error);
+      toast.error('Error al actualizar el estado de la cita');
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -304,9 +352,17 @@ export default function AgentDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="propiedades">
             Mis Propiedades
+          </TabsTrigger>
+          <TabsTrigger value="citas">
+            Citas Programadas
+            {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {propertyVisits.filter(v => v.status === 'pending').length}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="caracteristicas">
             Características
@@ -463,6 +519,104 @@ export default function AgentDashboard() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="citas" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Citas Programadas</CardTitle>
+              <CardDescription>
+                Gestiona las visitas a tus propiedades solicitadas por clientes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {propertyVisits.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tienes citas programadas
+                  </div>
+                ) : (
+                  propertyVisits.map((visit) => (
+                    <div
+                      key={visit.id}
+                      className={`p-4 border rounded-lg ${visit.status === 'pending' ? 'bg-yellow-50 border-yellow-200' : visit.status === 'confirmed' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} transition-all duration-200`}
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{visit.properties?.title}</h3>
+                            <Badge variant={
+                              visit.status === 'pending' ? 'secondary' : 
+                              visit.status === 'confirmed' ? 'default' : 
+                              'destructive'
+                            }>
+                              {visit.status === 'pending' ? 'Pendiente' : 
+                               visit.status === 'confirmed' ? 'Confirmada' : 
+                               'Cancelada'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            📍 {visit.properties?.address}
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <p><strong>Cliente:</strong> {visit.client_name}</p>
+                            <p><strong>Email:</strong> {visit.client_email}</p>
+                            <p><strong>Teléfono:</strong> {visit.client_phone || 'No proporcionado'}</p>
+                            <p><strong>Fecha programada:</strong> {new Date(visit.scheduled_at).toLocaleDateString()} {new Date(visit.scheduled_at).toLocaleTimeString()}</p>
+                          </div>
+                          {visit.message && (
+                            <div className="mt-3 p-2 bg-muted rounded">
+                              <p className="text-sm"><strong>Mensaje:</strong> {visit.message}</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Solicitada el {new Date(visit.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        
+                        {visit.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              ✓ Confirmar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}
+                            >
+                              ✗ Cancelar
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {visit.status !== 'pending' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRespondingNotification({
+                              id: visit.id,
+                              client_name: visit.client_name,
+                              client_email: visit.client_email,
+                              client_phone: visit.client_phone,
+                              type: 'visit',
+                              property_title: visit.properties?.title
+                            })}
+                          >
+                            <Reply className="h-4 w-4 mr-1" />
+                            Contactar Cliente
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="caracteristicas" className="space-y-6">
