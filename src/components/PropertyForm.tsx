@@ -143,10 +143,16 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
         .upload(fileName, file);
       
       if (error) throw error;
-      const videoUrl = `${supabaseUrl}/storage/v1/object/public/property-videos/${fileName}`;
-      updateFormData("video_url", videoUrl);
+      
+      // Get public URL correctly
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-videos')
+        .getPublicUrl(fileName);
+      
+      updateFormData("video_url", publicUrl);
       toast.success("✅ Video subido exitosamente");
     } catch (error: any) {
+      console.error("Error uploading video:", error);
       toast.error("Error subiendo video: " + error.message);
     }
   };
@@ -167,13 +173,20 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
           .upload(fileName, file);
         
         if (error) throw error;
-        return `${supabaseUrl}/storage/v1/object/public/property-plans/${fileName}`;
+        
+        // Get public URL correctly
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-plans')
+          .getPublicUrl(fileName);
+          
+        return publicUrl;
       });
       
       const urls = await Promise.all(uploadPromises);
       updateFormData("plans_url", [...formData.plans_url, ...urls]);
       toast.success("✅ Planos organizados por AURA exitosamente");
     } catch (error: any) {
+      console.error("Error uploading plans:", error);
       toast.error("Error subiendo planos: " + error.message);
     }
   };
@@ -624,7 +637,10 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 </div>
                 <FileUpload
-                  onFilesUploaded={(urls) => updateFormData("image_urls", urls)}
+                  onFilesUploaded={(urls) => {
+                    console.log("Files uploaded:", urls);
+                    updateFormData("image_urls", urls);
+                  }}
                   accept="image/*"
                   multiple={true}
                   maxFiles={10}
