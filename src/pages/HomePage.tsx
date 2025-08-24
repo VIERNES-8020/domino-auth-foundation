@@ -159,6 +159,7 @@ export default function HomePage() {
             alt="Pareja pintando su nuevo hogar con luz cálida - inspiración DOMINIO"
             className="h-[72vh] w-full object-cover"
             loading="eager"
+            style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/30 to-background" />
         </div>

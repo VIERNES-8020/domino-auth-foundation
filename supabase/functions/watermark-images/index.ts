@@ -39,8 +39,8 @@ async function addWatermark(imageUrl: string): Promise<Uint8Array> {
     ctx.shadowOffsetY = 2;
     
     // Draw the watermark text with outline
-    ctx.strokeText('DOMIN10', centerX, centerY);
-    ctx.fillText('DOMIN10', centerX, centerY);
+    ctx.strokeText('DOMIN10.COM', centerX, centerY);
+    ctx.fillText('DOMIN10.COM', centerX, centerY);
     
     // Reset shadow
     ctx.shadowColor = 'transparent';
@@ -58,14 +58,14 @@ async function addWatermark(imageUrl: string): Promise<Uint8Array> {
     // Top-left corner
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.strokeText('DOMIN10', 20, 20);
-    ctx.fillText('DOMIN10', 20, 20);
+    ctx.strokeText('DOMIN10.COM', 20, 20);
+    ctx.fillText('DOMIN10.COM', 20, 20);
     
     // Bottom-right corner
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
-    ctx.strokeText('DOMIN10', image.width() - 20, image.height() - 20);
-    ctx.fillText('DOMIN10', image.width() - 20, image.height() - 20);
+    ctx.strokeText('DOMIN10.COM', image.width() - 20, image.height() - 20);
+    ctx.fillText('DOMIN10.COM', image.width() - 20, image.height() - 20);
     
     // Convert canvas to PNG buffer
     return canvas.toBuffer('image/png');

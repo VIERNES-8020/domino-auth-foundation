@@ -145,11 +145,29 @@ All colors MUST be HSL.
     @apply object-cover transition-transform duration-300;
     border: none !important;
     outline: none !important;
+    box-shadow: none !important;
   }
   
-  .property-image:focus {
+  .property-image:focus,
+  .property-image:hover,
+  .property-image:active {
     outline: none !important;
     border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove any image borders globally */
+  img {
+    border: none !important;
+    outline: none !important;
+  }
+
+  img:focus,
+  img:hover,
+  img:active {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* Watermark indicator styling */

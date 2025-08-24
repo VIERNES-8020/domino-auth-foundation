@@ -93,10 +93,10 @@ export default function WatermarkedImage({
           </div>
         </div>
       )}
-      {/* Subtle DOMIN10 indicator for already watermarked images */}
+      {/* Subtle DOMIN10.COM indicator for already watermarked images */}
       {hasWatermark && !isProcessing && (
         <div className="watermark-indicator">
-          DOMIN10
+          DOMIN10.COM
         </div>
       )}
     </div>
