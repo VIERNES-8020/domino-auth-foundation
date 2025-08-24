@@ -49,7 +49,9 @@ const availableFeatures = [
 
 export default function PropertyForm({ onClose, onSubmit, initialData }: PropertyFormProps) {
   const [activeTab, setActiveTab] = useState("general");
-  const [loading, setLoading] = useState(false);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [planUploading, setPlanUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [customAmenities, setCustomAmenities] = useState<string[]>([]);
   const [newAmenity, setNewAmenity] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -121,7 +123,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     getMapboxToken();
   }, []);
 
-  // Enhanced video upload with size validation
+  // Enhanced video upload with size validation and independent loading state
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -133,7 +135,16 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       return;
     }
     
+    setVideoUploading(true);
+    
+    // Create timeout to prevent hanging
+    const uploadTimeout = setTimeout(() => {
+      setVideoUploading(false);
+      toast.error("Timeout en subida de video. Intenta con un archivo más pequeño.");
+    }, 60000); // 60 seconds timeout
+    
     try {
+      console.log("=== VIDEO UPLOAD STARTED ===");
       toast.success("Subiendo video...");
       const fileExt = file.name.split('.').pop();
       const fileName = `video-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -151,23 +162,40 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       updateFormData("video_url", publicUrl);
       toast.success("✅ Video subido exitosamente");
+      console.log("=== VIDEO UPLOAD SUCCESS ===");
       
       // Clear the input after successful upload
       e.target.value = "";
     } catch (error: any) {
-      console.error("Error uploading video:", error);
+      console.error("=== VIDEO UPLOAD ERROR ===", error);
       toast.error("Error subiendo video: " + error.message);
+    } finally {
+      clearTimeout(uploadTimeout);
+      setVideoUploading(false);
+      console.log("=== VIDEO UPLOAD FINISHED ===");
     }
   };
 
-  // Enhanced plans upload with AURA assistance
+  // Enhanced plans upload with AURA assistance and independent loading state  
   const handlePlansUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
+    setPlanUploading(true);
+    
+    // Create timeout to prevent hanging - this is critical for AURA processing
+    const uploadTimeout = setTimeout(() => {
+      setPlanUploading(false);
+      toast.error("Timeout en procesamiento AURA. Los archivos pueden ser demasiado grandes.");
+    }, 90000); // 90 seconds timeout for AURA processing
+    
     try {
+      console.log("=== AURA PLANS UPLOAD STARTED ===");
       toast.success("AURA está procesando los planos...");
-      const uploadPromises = Array.from(files).map(async (file) => {
+      
+      const uploadPromises = Array.from(files).map(async (file, index) => {
+        console.log(`Processing file ${index + 1}/${files.length}:`, file.name);
+        
         const fileExt = file.name.split('.').pop()?.toLowerCase();
         const fileName = `plan-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         
@@ -175,25 +203,34 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
           .from('property-plans')
           .upload(fileName, file);
         
-        if (error) throw error;
+        if (error) {
+          console.error(`Error uploading file ${file.name}:`, error);
+          throw error;
+        }
         
         // Get public URL correctly
         const { data: { publicUrl } } = supabase.storage
           .from('property-plans')
           .getPublicUrl(fileName);
           
+        console.log(`File ${index + 1} uploaded successfully:`, publicUrl);
         return publicUrl;
       });
       
       const urls = await Promise.all(uploadPromises);
       updateFormData("plans_url", [...formData.plans_url, ...urls]);
       toast.success(`✅ ${files.length} plano(s) organizados por AURA exitosamente`);
+      console.log("=== AURA PLANS UPLOAD SUCCESS ===");
       
       // Clear the input after successful upload
       e.target.value = "";
     } catch (error: any) {
-      console.error("Error uploading plans:", error);
+      console.error("=== AURA PLANS UPLOAD ERROR ===", error);
       toast.error("Error subiendo planos: " + error.message);
+    } finally {
+      clearTimeout(uploadTimeout);
+      setPlanUploading(false);
+      console.log("=== AURA PLANS UPLOAD FINISHED ===");
     }
   };
 
@@ -308,7 +345,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     }
     
     console.log("VALIDACION PASADA - Iniciando guardado...");
-    setLoading(true);
+    setFormSubmitting(true);
     setSaveSuccess(false);
 
     try {
@@ -368,7 +405,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     
     // CRITICAL: Always set loading to false regardless of success or error
     console.log("FINALIZANDO SUBMIT - Poniendo loading a false");
-    setLoading(false);
+    setFormSubmitting(false);
   };
 
   return (
@@ -752,12 +789,12 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                       id="video-upload"
                     />
                     <label htmlFor="video-upload">
-                      <Button type="button" variant="outline" asChild>
-                        <span className="flex items-center gap-2">
-                          <Video className="h-4 w-4" />
-                          📹 Subir Video
-                        </span>
-                      </Button>
+                     <Button type="button" variant="outline" asChild>
+                       <span className="flex items-center gap-2">
+                         <Video className="h-4 w-4" />
+                         {videoUploading ? "Subiendo..." : "📹 Subir Video"}
+                       </span>
+                     </Button>
                     </label>
                   </div>
                   
@@ -866,8 +903,17 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar Propiedad"}
+            <Button type="submit" disabled={formSubmitting || planUploading || videoUploading || generatingDescription}>
+              {formSubmitting 
+                ? "Guardando..." 
+                : planUploading 
+                ? "AURA procesando planos..." 
+                : videoUploading
+                ? "Subiendo video..."
+                : generatingDescription
+                ? "AURA generando descripción..."
+                : "Guardar Propiedad"
+              }
             </Button>
           </div>
         </form>
