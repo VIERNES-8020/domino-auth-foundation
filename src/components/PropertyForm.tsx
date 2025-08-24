@@ -460,7 +460,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     }));
   };
 
-  // Enhanced form validation
+  // Enhanced form validation - ARCHIVOS OPCIONALES
   const validateForm = () => {
     const errors: string[] = [];
     
@@ -468,9 +468,9 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     if (!formData.property_type) errors.push("El tipo de propiedad es obligatorio");
     if (!formData.price) errors.push("El precio es obligatorio");
     if (!formData.description) errors.push("La descripción es obligatoria para una mejor presentación");
-    if (!formData.image_urls || formData.image_urls.length === 0) {
-      errors.push("Se requiere al menos una fotografía");
-    }
+    
+    // CAMBIO: Las imágenes y planos son ahora OPCIONALES
+    // No se requieren archivos para guardar la propiedad
     
     setValidationErrors(errors);
     return errors.length === 0;
@@ -1273,29 +1273,27 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
               
               <Button 
                 type="submit" 
-                disabled={formSubmitting || videoUploading || generatingDescription || imageUploading || Object.values(plansUploading).some(Boolean)}
+                disabled={formSubmitting}
                 onClick={(e) => {
-                  // Force reset if hanging
-                  if (formSubmitting && !videoUploading && !generatingDescription && !imageUploading && !Object.values(plansUploading).some(Boolean)) {
-                    e.preventDefault();
-                    setFormSubmitting(false);
-                    toast.error("Reseteando estado. Intenta de nuevo.");
-                    return;
-                  }
+                  // CAMBIO: Solo bloquear por formSubmitting, permitir guardar mientras se suben archivos
+                  // Los archivos son opcionales y pueden subir en segundo plano
+                  console.log("=== INTENTO DE GUARDADO ===");
+                  console.log("formSubmitting:", formSubmitting);
+                  console.log("Permitiendo guardado con archivos en segundo plano");
                 }}
               >
                 {formSubmitting 
                   ? "Guardando..." 
-                  : videoUploading
-                  ? `Subiendo video... (${videoTimer}s)`
-                  : generatingDescription
-                  ? "AURA generando descripción..."
-                  : imageUploading
-                  ? "Subiendo imágenes..."
-                  : Object.values(plansUploading).some(Boolean)
-                  ? "Subiendo archivos..."
                   : "Guardar Propiedad"
                 }
+                {/* Indicador de archivos subiendo en paralelo */}
+                {(videoUploading || imageUploading || Object.values(plansUploading).some(Boolean)) && !formSubmitting && (
+                  <span className="ml-2 text-xs opacity-70">
+                    {videoUploading && "📹"} 
+                    {imageUploading && "🖼️"} 
+                    {Object.values(plansUploading).some(Boolean) && "📋"}
+                  </span>
+                )}
               </Button>
             </div>
           </div>
