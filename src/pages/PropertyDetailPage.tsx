@@ -36,6 +36,8 @@ interface PropertyRow {
   plans_url: string[] | null;
   geolocation: any;
   agent_id: string;
+  concluded_status: string | null;
+  concluded_at: string | null;
 }
 
 interface Amenity { id: string; name: string; icon_svg?: string | null }
@@ -372,9 +374,17 @@ export default function PropertyDetailPage() {
                       <p className="text-3xl md:text-4xl font-bold text-primary mb-2">
                         {priceStr}
                       </p>
-                      <Badge variant="outline" className="px-3 py-1 text-sm font-medium">
-                        Disponible
-                      </Badge>
+                      {property.concluded_status ? (
+                        <Badge variant="secondary" className="px-3 py-1 text-sm font-medium bg-orange-500 text-white">
+                          {property.concluded_status === 'vendido' && 'VENDIDO ✓'}
+                          {property.concluded_status === 'alquilado' && 'ALQUILADO ✓'}
+                          {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO ✓'}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="px-3 py-1 text-sm font-medium">
+                          Disponible
+                        </Badge>
+                      )}
                     </div>
 
                     <Separator />
@@ -408,27 +418,64 @@ export default function PropertyDetailPage() {
 
                 {/* Quick contact */}
                 <Card className="p-6">
-                  <h3 className="font-semibold mb-4">Contacto rápido</h3>
-                  <div className="space-y-3">
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => {
-                        document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                    >
-                      Solicitar información
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2" 
-                      size="lg"
-                      onClick={() => setShowBookingCalendar(true)}
-                    >
-                      <CalendarDays className="h-4 w-4" />
-                      Agendar visita
-                    </Button>
-                  </div>
+                  {property.concluded_status ? (
+                    <div className="text-center space-y-4">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-orange-800 mb-2">
+                          Propiedad Comercializada
+                        </h3>
+                        <p className="text-sm text-orange-700 leading-relaxed">
+                          Esta propiedad ya fue comercializada. Te invitamos a poder solicitar un agente o ver las distintas propiedades disponibles.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          size="lg"
+                          onClick={() => {
+                            window.location.href = "/agentes";
+                          }}
+                        >
+                          Solicitar un agente
+                        </Button>
+                        <Button 
+                          variant="secondary" 
+                          className="w-full" 
+                          size="lg"
+                          onClick={() => {
+                            window.location.href = "/propiedades";
+                          }}
+                        >
+                          Ver propiedades disponibles
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-semibold mb-4">Contacto rápido</h3>
+                      <div className="space-y-3">
+                        <Button 
+                          className="w-full" 
+                          size="lg"
+                          onClick={() => {
+                            document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                        >
+                          Solicitar información
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2" 
+                          size="lg"
+                          onClick={() => setShowBookingCalendar(true)}
+                        >
+                          <CalendarDays className="h-4 w-4" />
+                          Agendar visita
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </Card>
               </div>
             </div>
@@ -576,14 +623,21 @@ export default function PropertyDetailPage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-semibold text-primary">Reseñas y puntuaciones</h2>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowReviewForm(true)}
-                  className="gap-2"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Escribir reseña
-                </Button>
+                {!property.concluded_status && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowReviewForm(true)}
+                    className="gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Escribir reseña
+                  </Button>
+                )}
+                {property.concluded_status && (
+                  <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
+                    Solo clientes relacionados pueden reseñar
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -684,8 +738,9 @@ export default function PropertyDetailPage() {
             </section>
 
             {/* Contact form */}
-            <section id="contact-form">
-              <h2 className="text-2xl font-semibold mb-4 text-primary">Contactar al agente</h2>
+            {!property.concluded_status && (
+              <section id="contact-form">
+                <h2 className="text-2xl font-semibold mb-4 text-primary">Contactar al agente</h2>
               <Card className="p-6">
                 <form
                   className="grid grid-cols-1 md:grid-cols-2 gap-4"
@@ -795,7 +850,8 @@ export default function PropertyDetailPage() {
                    </div>
                 </form>
               </Card>
-            </section>
+              </section>
+            )}
           </div>
         )}
 
