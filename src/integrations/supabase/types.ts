@@ -534,6 +534,7 @@ export type Database = {
           created_at: string | null
           custom_data: Json | null
           description: string | null
+          edit_count: number | null
           franchise_id: string | null
           fts_column: unknown | null
           geolocation: unknown | null
@@ -567,6 +568,7 @@ export type Database = {
           created_at?: string | null
           custom_data?: Json | null
           description?: string | null
+          edit_count?: number | null
           franchise_id?: string | null
           fts_column?: unknown | null
           geolocation?: unknown | null
@@ -600,6 +602,7 @@ export type Database = {
           created_at?: string | null
           custom_data?: Json | null
           description?: string | null
+          edit_count?: number | null
           franchise_id?: string | null
           fts_column?: unknown | null
           geolocation?: unknown | null
@@ -1326,6 +1329,7 @@ export type Database = {
           created_at: string | null
           custom_data: Json | null
           description: string | null
+          edit_count: number | null
           franchise_id: string | null
           fts_column: unknown | null
           geolocation: unknown | null
@@ -1623,6 +1627,7 @@ export type Database = {
           created_at: string | null
           custom_data: Json | null
           description: string | null
+          edit_count: number | null
           franchise_id: string | null
           fts_column: unknown | null
           geolocation: unknown | null

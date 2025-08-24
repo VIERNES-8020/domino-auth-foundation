@@ -169,7 +169,16 @@ export default function AgentDashboard() {
     
     try {
       if (editingProperty) {
-        // Update existing property
+        // Get current edit count and increment it
+        const { data: currentProperty, error: fetchError } = await supabase
+          .from('properties')
+          .select('edit_count')
+          .eq('id', editingProperty.id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Update existing property with incremented edit count
         const { error } = await supabase
           .from('properties')
           .update({
@@ -189,7 +198,8 @@ export default function AgentDashboard() {
             tags: propertyData.features,
             image_urls: propertyData.image_urls,
             video_url: propertyData.video_url,
-            plans_url: propertyData.plans_url
+            plans_url: propertyData.plans_url,
+            edit_count: (currentProperty?.edit_count || 0) + 1
           })
           .eq('id', editingProperty.id)
           .eq('agent_id', user.id);
@@ -636,15 +646,22 @@ export default function AgentDashboard() {
                                     </div>
 
                                     <div className="flex items-center justify-between pt-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setViewingProperty(property)}
-                                        className="gap-1"
-                                      >
-                                        <Eye className="h-3 w-3" />
-                                        Ver
-                                      </Button>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => setViewingProperty(property)}
+                                          className="gap-1"
+                                        >
+                                          <Eye className="h-3 w-3" />
+                                          Ver
+                                        </Button>
+                                        {property.edit_count > 0 && (
+                                          <Badge variant="secondary" className="text-xs px-2 py-1">
+                                            Editado {property.edit_count} {property.edit_count === 1 ? 'vez' : 'veces'}
+                                          </Badge>
+                                        )}
+                                      </div>
                                       
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
