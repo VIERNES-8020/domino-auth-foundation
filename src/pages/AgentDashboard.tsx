@@ -273,7 +273,7 @@ export default function AgentDashboard() {
     }
   };
 
-  const handleDeleteProperty = async () => {
+  const handleDeleteProperty = async (reason: string) => {
     if (!user || !deletingProperty) return;
     
     try {
@@ -284,6 +284,9 @@ export default function AgentDashboard() {
         .eq('agent_id', user.id);
 
       if (error) throw error;
+      
+      // Log the deletion reason (you could save this to a deletion_log table if needed)
+      console.log(`Property deleted: ${deletingProperty.title}, Reason: ${reason}`);
       
       toast.success('Propiedad eliminada exitosamente');
       
@@ -670,10 +673,13 @@ export default function AgentDashboard() {
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => setEditingProperty(property)}>
-                                            <Edit className="mr-2 h-4 w-4" />
-                                            Editar
-                                          </DropdownMenuItem>
+                                           <DropdownMenuItem onClick={() => {
+                                             setEditingProperty(property);
+                                             setShowPropertyForm(true);
+                                           }}>
+                                             <Edit className="mr-2 h-4 w-4" />
+                                             Editar
+                                           </DropdownMenuItem>
                                           {property.is_archived ? (
                                             <DropdownMenuItem onClick={() => handleArchiveProperty(property.id, false)}>
                                               <ArchiveRestore className="mr-2 h-4 w-4" />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 interface DeletePropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (reason: string) => void;
   propertyTitle: string;
 }
 
@@ -20,6 +21,7 @@ export default function DeletePropertyModal({
   propertyTitle 
 }: DeletePropertyModalProps) {
   const [password, setPassword] = useState("");
+  const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +29,11 @@ export default function DeletePropertyModal({
     
     if (!password.trim()) {
       toast.error("Ingresa la contraseña de eliminación");
+      return;
+    }
+
+    if (!reason.trim()) {
+      toast.error("Debes proporcionar una razón para la eliminación");
       return;
     }
 
@@ -39,8 +46,9 @@ export default function DeletePropertyModal({
 
     setLoading(true);
     try {
-      await onConfirm();
+      await onConfirm(reason.trim());
       setPassword("");
+      setReason("");
       onClose();
     } catch (error) {
       toast.error("Error al eliminar la propiedad");
@@ -51,6 +59,7 @@ export default function DeletePropertyModal({
 
   const handleClose = () => {
     setPassword("");
+    setReason("");
     onClose();
   };
 
@@ -71,6 +80,19 @@ export default function DeletePropertyModal({
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="reason">
+              Razón de la eliminación *
+            </Label>
+            <Textarea
+              id="reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Explica por qué estás eliminando esta propiedad..."
+              rows={3}
+            />
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="deletePassword">
               Contraseña de eliminación
             </Label>
@@ -80,7 +102,6 @@ export default function DeletePropertyModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Ingresa la contraseña"
-              autoFocus
             />
             <p className="text-xs text-muted-foreground">
               Solicita la contraseña al Super Administrador
