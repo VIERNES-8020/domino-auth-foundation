@@ -81,25 +81,8 @@ export default function FileUpload({
       
       toast.success(`✅ ${files.length} archivo(s) subido(s) exitosamente`);
       
-      // Try to apply watermark in background for images (optional enhancement)
-      if (accept.includes('image') && uploadedUrls.length > 0) {
-        try {
-          // This is just for enhancement - not required for basic functionality
-          console.log('Intentando aplicar marca de agua...');
-          uploadedUrls.forEach(async (url) => {
-            try {
-              await supabase.functions.invoke('watermark-images', {
-                body: { imageUrl: url }
-              });
-              console.log('Marca de agua aplicada');
-            } catch (error) {
-              console.log('Marca de agua opcional falló, usando imagen original');
-            }
-          });
-        } catch (error) {
-          console.log('Marca de agua no disponible');
-        }
-      }
+      // Watermark function disabled due to technical issues - using original images
+      console.log('Using original images without watermark');
       
     } catch (error: any) {
       console.error('Error uploading files:', error);
@@ -113,12 +96,12 @@ export default function FileUpload({
   };
 
   const removeFile = (urlToRemove: string) => {
-    setUploadedFiles(prev => prev.filter(file => file.url !== urlToRemove));
-    // Update parent component
-    const remainingUrls = uploadedFiles
-      .filter(file => file.url !== urlToRemove)
-      .map(file => file.url);
+    const updatedFiles = uploadedFiles.filter(file => file.url !== urlToRemove);
+    setUploadedFiles(updatedFiles);
+    // Update parent component with remaining URLs
+    const remainingUrls = updatedFiles.map(file => file.url);
     onFilesUploaded(remainingUrls);
+    toast.success("Archivo removido");
   };
 
   return (
