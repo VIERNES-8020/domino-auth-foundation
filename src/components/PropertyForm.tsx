@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MapPicker } from "@/components/MapPicker";
+import MapPicker from "@/components/MapPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Upload, X, Check, AlertTriangle } from "lucide-react";
-import { boliviaLocations } from "@/data/bolivia-locations";
+import { boliviaDepartments } from "@/data/bolivia-locations";
 import { Progress } from "@/components/ui/progress";
 
 interface Property {
@@ -53,9 +53,12 @@ interface FileUploadState {
 interface PropertyFormProps {
   property?: any;
   onPropertySaved?: (property: any) => void;
+  onClose?: () => void;
+  onSubmit?: (propertyData: any) => Promise<void>;
+  initialData?: any;
 }
 
-export default function PropertyForm({ property, onPropertySaved }: PropertyFormProps) {
+export default function PropertyForm({ property, onPropertySaved, onClose, onSubmit, initialData }: PropertyFormProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Property>({
@@ -362,13 +365,13 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       const propertyData = {
         title: formData.title,
         address: formData.address,
-        price: formData.price ? parseFloat(formData.price) : null,
-        price_currency: formData.priceCurrency,
+        price: formData.price ? (typeof formData.price === 'string' ? parseFloat(formData.price) : formData.price) : null,
+        price_currency: formData.price_currency,
         description: formData.description || null,
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        area_m2: formData.area ? parseFloat(formData.area) : null,
-        video_url: formData.videoUrl || null,
+        bedrooms: formData.bedrooms ? (typeof formData.bedrooms === 'string' ? parseInt(formData.bedrooms) : formData.bedrooms) : null,
+        bathrooms: formData.bathrooms ? (typeof formData.bathrooms === 'string' ? parseInt(formData.bathrooms) : formData.bathrooms) : null,
+        area_m2: formData.area_m2 ? (typeof formData.area_m2 === 'string' ? parseFloat(formData.area_m2) : formData.area_m2) : null,
+        video_url: formData.video_url || null,
         image_urls: successfulImageUrls.length > 0 ? successfulImageUrls : null,
         plans_url: successfulPlanUrls.length > 0 ? successfulPlanUrls : null,
         geolocation: selectedLocation ? `POINT(${selectedLocation.lng} ${selectedLocation.lat})` : null,
@@ -558,7 +561,7 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
                 <Input
                   type="number"
                   id="area"
-                  name="area"
+                  name="area_m2"
                   value={formData.area_m2 || ""}
                   onChange={handleInputChange}
                   placeholder="Ej: 120"
@@ -571,7 +574,7 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
                 <Input
                   type="url"
                   id="videoUrl"
-                  name="videoUrl"
+                  name="video_url"
                   value={formData.video_url || ""}
                   onChange={handleInputChange}
                   placeholder="Ej: https://youtube.com/watch?v=..."
@@ -785,11 +788,12 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
             {/* Location Picker */}
             <div className="space-y-2">
               <Label className="text-base font-semibold">Ubicación</Label>
-              <MapPicker
-                onLocationSelected={(location) => {
-                  setSelectedLocation(location);
+               <MapPicker
+                lat={selectedLocation?.lat}
+                lng={selectedLocation?.lng}
+                onChange={(coords) => {
+                  setSelectedLocation(coords);
                 }}
-                initialLocation={selectedLocation}
               />
               {selectedLocation && (
                 <Badge variant="outline">
