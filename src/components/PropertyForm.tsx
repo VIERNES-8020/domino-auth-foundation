@@ -12,7 +12,6 @@ import MapPicker from "@/components/MapPicker";
 import { toast } from "sonner";
 import { Home, MapPin, Camera, Settings, Upload, FileText, Video, Sparkles, Plus, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import FileUpload from "@/components/FileUpload";
 
 const supabaseUrl = "https://rzsailqcijraplggryyy.supabase.co";
 
@@ -703,23 +702,86 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 )}
                 
-                 <FileUpload
-                   onFilesUploaded={(urls) => {
-                     console.log("Files uploaded:", urls);
-                     if (urls && urls.length > 0) {
-                       // Combine with existing images instead of replacing them
-                       const existingImages = formData.image_urls || [];
-                       updateFormData("image_urls", [...existingImages, ...urls]);
-                       toast.success(`✅ ${urls.length} imagen(es) subidas exitosamente`);
-                     }
-                   }}
-                   accept="image/*"
-                   multiple={true}
-                   maxFiles={10}
-                   maxSize={5}
-                   label="📸 Agregar más fotos"
-                   bucket="property-images"
-                 />
+                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                  <input
+                    id="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+
+                      // Validar cantidad total de imágenes (máx 10)
+                      const existingImages = formData.image_urls || [];
+                      if (existingImages.length + files.length > 10) {
+                        toast.error(`❌ Máximo 10 imágenes. Ya tienes ${existingImages.length}, intentas subir ${files.length}`);
+                        e.target.value = "";
+                        return;
+                      }
+
+                      // Validar tamaño de cada archivo (máx 5MB)
+                      for (const file of files) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error(`❌ Imagen muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo: 5MB`);
+                          e.target.value = "";
+                          return;
+                        }
+                      }
+
+                      try {
+                        toast.info(`📤 Subiendo ${files.length} imagen(es)...`);
+                        const uploadPromises = files.map(async (file, index) => {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `image-${Date.now()}-${index}.${fileExt}`;
+                          
+                          const { data, error } = await supabase.storage
+                            .from('property-images')
+                            .upload(fileName, file);
+                          
+                          if (error) {
+                            if (error.message.includes('exceeded')) {
+                              throw new Error("Cuota de almacenamiento excedida");
+                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
+                            } else if (error.message.includes('size')) {
+                              throw new Error("Imagen demasiado grande para el servidor");
+                            } else {
+                              throw new Error(`Error del servidor: ${error.message}`);
+                            }
+                          }
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('property-images')
+                            .getPublicUrl(fileName);
+                          
+                          return publicUrl;
+                        });
+
+                        const uploadedUrls = await Promise.all(uploadPromises);
+                        const newImages = [...existingImages, ...uploadedUrls];
+                        updateFormData("image_urls", newImages);
+                        toast.success(`✅ ${files.length} imagen(es) subidas exitosamente`);
+                        e.target.value = ""; // Limpiar input
+                      } catch (error: any) {
+                        console.error("Error uploading images:", error);
+                        toast.error(`❌ Error subiendo imágenes: ${error.message}`);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label htmlFor="images" className="cursor-pointer">
+                    <div className="text-4xl mb-2">📸</div>
+                    <div className="text-lg font-medium mb-1">Agregar Fotografías</div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Selecciona múltiples imágenes (máx 10 fotos, 5MB cada una)
+                    </div>
+                    <Button type="button" variant="outline" asChild>
+                      <span>📸 Seleccionar Imágenes</span>
+                    </Button>
+                  </label>
+                </div>
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
                   🤖 <strong>AURA mejora automáticamente:</strong> Ajusta resolución, optimiza tamaño para web y aplica marca de agua profesional
                 </div>
