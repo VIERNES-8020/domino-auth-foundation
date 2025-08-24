@@ -834,22 +834,62 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 )}
                 
-                <FileUpload
-                  onFilesUploaded={(urls) => {
-                    console.log("Plans uploaded:", urls);
-                    if (urls && urls.length > 0) {
-                      const existingPlans = formData.plans_url || [];
-                      updateFormData("plans_url", [...existingPlans, ...urls]);
-                      toast.success(`✅ ${urls.length} plano(s) subidos exitosamente`);
-                    }
-                  }}
-                  accept=".pdf,image/*"
-                  multiple={true}
-                  maxFiles={5}
-                  maxSize={10}
-                  label="📋 Subir Planos"
-                  bucket="property-plans"
-                />
+                {/* Simple Direct Upload for Plans */}
+                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    accept=".pdf,image/*"
+                    multiple
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
+                      
+                      if (files.length > 5) {
+                        toast.error("Máximo 5 archivos permitidos");
+                        return;
+                      }
+                      
+                      for (const file of files) {
+                        if (file.size > 10 * 1024 * 1024) { // 10MB
+                          toast.error(`Archivo ${file.name} es muy grande (máximo 10MB)`);
+                          return;
+                        }
+                      }
+                      
+                      try {
+                        const uploadPromises = files.map(async (file) => {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `plan-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+                          
+                          const { data, error } = await supabase.storage
+                            .from('property-plans')
+                            .upload(fileName, file);
+                          
+                          if (error) throw error;
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('property-plans')
+                            .getPublicUrl(fileName);
+                          
+                          return publicUrl;
+                        });
+                        
+                        const urls = await Promise.all(uploadPromises);
+                        const existingPlans = formData.plans_url || [];
+                        updateFormData("plans_url", [...existingPlans, ...urls]);
+                        toast.success(`✅ ${urls.length} plano(s) subidos exitosamente`);
+                        e.target.value = ""; // Clear input
+                      } catch (error: any) {
+                        console.error("Error uploading plans:", error);
+                        toast.error("Error subiendo planos: " + error.message);
+                      }
+                    }}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    📋 Subir Planos - Máximo 5 archivos de 10MB cada uno
+                  </p>
+                </div>
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg mt-4">
                   📄 <strong>Formatos soportados:</strong> PDF, JPG, PNG | Subida rápida sin procesamiento adicional para máxima estabilidad
                 </div>
@@ -863,7 +903,19 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={formSubmitting || videoUploading || generatingDescription}>
+            <Button 
+              type="submit" 
+              disabled={formSubmitting || videoUploading || generatingDescription}
+              onClick={(e) => {
+                // Force reset states before submit to prevent hanging
+                if (formSubmitting && !videoUploading && !generatingDescription) {
+                  e.preventDefault();
+                  setFormSubmitting(false);
+                  toast.error("Resetendo estado. Intenta guardar de nuevo.");
+                  return;
+                }
+              }}
+            >
               {formSubmitting 
                 ? "Guardando..." 
                 : videoUploading
