@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MapPicker } from "@/components/MapPicker";
+import MapPicker from "@/components/MapPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Upload, X, Check, AlertTriangle } from "lucide-react";
-import { boliviaLocations } from "@/data/bolivia-locations";
+import { boliviaDepartments } from "@/data/bolivia-locations";
 import { Progress } from "@/components/ui/progress";
 
 interface Property {
@@ -53,25 +53,28 @@ interface FileUploadState {
 interface PropertyFormProps {
   property?: any;
   onPropertySaved?: (property: any) => void;
+  onClose?: () => void;
+  onSubmit?: (propertyData: any) => Promise<void>;
+  initialData?: any;
 }
 
-export default function PropertyForm({ property, onPropertySaved }: PropertyFormProps) {
+export default function PropertyForm({ property, onPropertySaved, onClose, onSubmit, initialData }: PropertyFormProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Property>({
-    title: property?.title || "",
-    address: property?.address || "",
-    price: property?.price || null,
-    price_currency: property?.price_currency || "USD",
-    description: property?.description || null,
-    bedrooms: property?.bedrooms || null,
-    bathrooms: property?.bathrooms || null,
-    area_m2: property?.area_m2 || null,
-    video_url: property?.video_url || null,
-    image_urls: property?.image_urls || [],
-    plans_url: property?.plans_url || [],
-    geolocation: property?.geolocation || null,
-    agent_id: property?.agent_id || null,
+    title: property?.title || initialData?.title || "",
+    address: property?.address || initialData?.address || "",
+    price: property?.price || initialData?.price || null,
+    price_currency: property?.price_currency || initialData?.price_currency || "USD",
+    description: property?.description || initialData?.description || null,
+    bedrooms: property?.bedrooms || initialData?.bedrooms || null,
+    bathrooms: property?.bathrooms || initialData?.bathrooms || null,
+    area_m2: property?.area_m2 || initialData?.area_m2 || null,
+    video_url: property?.video_url || initialData?.video_url || null,
+    image_urls: property?.image_urls || initialData?.image_urls || [],
+    plans_url: property?.plans_url || initialData?.plans_url || [],
+    geolocation: property?.geolocation || initialData?.geolocation || null,
+    agent_id: property?.agent_id || initialData?.agent_id || null,
   });
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
@@ -98,26 +101,27 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
   }, []);
 
   useEffect(() => {
-    if (property) {
+    const currentProperty = property || initialData;
+    if (currentProperty) {
       setFormData({
-        title: property.title || "",
-        address: property.address || "",
-        price: property.price || null,
-        price_currency: property.price_currency || "USD",
-        description: property.description || null,
-        bedrooms: property.bedrooms || null,
-        bathrooms: property.bathrooms || null,
-        area_m2: property.area_m2 || null,
-        video_url: property.video_url || null,
-        image_urls: property.image_urls || [],
-        plans_url: property.plans_url || [],
-        geolocation: property.geolocation || null,
-        agent_id: property.agent_id || null,
+        title: currentProperty.title || "",
+        address: currentProperty.address || "",
+        price: currentProperty.price || null,
+        price_currency: currentProperty.price_currency || "USD",
+        description: currentProperty.description || null,
+        bedrooms: currentProperty.bedrooms || null,
+        bathrooms: currentProperty.bathrooms || null,
+        area_m2: currentProperty.area_m2 || null,
+        video_url: currentProperty.video_url || null,
+        image_urls: currentProperty.image_urls || [],
+        plans_url: currentProperty.plans_url || [],
+        geolocation: currentProperty.geolocation || null,
+        agent_id: currentProperty.agent_id || null,
       });
 
       // Parse geolocation string to Location object
-      if (property.geolocation) {
-        const coordinates = property.geolocation.replace(/[POINT()]/g, '').split(' ');
+      if (currentProperty.geolocation) {
+        const coordinates = currentProperty.geolocation.replace(/[POINT()]/g, '').split(' ');
         setSelectedLocation({
           lng: parseFloat(coordinates[0]),
           lat: parseFloat(coordinates[1])
@@ -129,7 +133,7 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
         const { data, error } = await supabase
           .from("property_amenities")
           .select("amenity_id")
-          .eq("property_id", property.id);
+          .eq("property_id", currentProperty.id);
 
         if (error) {
           console.error("Error fetching selected amenities:", error);
@@ -139,9 +143,11 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
         }
       };
 
-      loadSelectedAmenities();
+      if (currentProperty.id) {
+        loadSelectedAmenities();
+      }
     }
-  }, [property]);
+  }, [property, initialData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -362,13 +368,13 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       const propertyData = {
         title: formData.title,
         address: formData.address,
-        price: formData.price ? parseFloat(formData.price) : null,
-        price_currency: formData.priceCurrency,
+        price: formData.price ? parseFloat(formData.price.toString()) : null,
+        price_currency: formData.price_currency,
         description: formData.description || null,
-        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
-        area_m2: formData.area ? parseFloat(formData.area) : null,
-        video_url: formData.videoUrl || null,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms.toString()) : null,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms.toString()) : null,
+        area_m2: formData.area_m2 ? parseFloat(formData.area_m2.toString()) : null,
+        video_url: formData.video_url || null,
         image_urls: successfulImageUrls.length > 0 ? successfulImageUrls : null,
         plans_url: successfulPlanUrls.length > 0 ? successfulPlanUrls : null,
         geolocation: selectedLocation ? `POINT(${selectedLocation.lng} ${selectedLocation.lat})` : null,
@@ -378,12 +384,12 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       console.log("💾 DATOS A GUARDAR:", propertyData);
 
       let result;
-      if (property) {
+      if (property?.id || initialData?.id) {
         // Update existing property
         result = await supabase
           .from("properties")
           .update(propertyData)
-          .eq("id", property.id)
+          .eq("id", property?.id || initialData?.id)
           .select()
           .single();
       } else {
@@ -405,12 +411,12 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       if (selectedAmenities.length > 0) {
         console.log("🏷️ GUARDANDO AMENIDADES...");
         
-        if (property) {
+        if (property?.id || initialData?.id) {
           // Delete existing amenities
           await supabase
             .from("property_amenities")
             .delete()
-            .eq("property_id", property.id);
+            .eq("property_id", property?.id || initialData?.id);
         }
 
         // Insert new amenities
@@ -435,7 +441,7 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       const failedImages = imageUploads.filter(u => u.status === 'error').length;
       const failedPlans = planUploads.filter(u => u.status === 'error').length;
 
-      let successMessage = `✅ Propiedad ${property ? 'actualizada' : 'creada'} exitosamente`;
+      let successMessage = `✅ Propiedad ${property?.id || initialData?.id ? 'actualizada' : 'creada'} exitosamente`;
       
       if (failedImages > 0 || failedPlans > 0) {
         successMessage += ` (${failedImages} imágenes y ${failedPlans} planos fallaron)`;
@@ -444,7 +450,9 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
       toast.success(successMessage);
 
       // Callback and navigation
-      if (onPropertySaved) {
+      if (onSubmit) {
+        await onSubmit(result.data);
+      } else if (onPropertySaved) {
         onPropertySaved(result.data);
       } else {
         navigate("/dashboard/agent");
@@ -464,7 +472,7 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <span className="text-2xl">🏠</span>
-            {property ? "Editar Propiedad" : "Nueva Propiedad"}
+            {property?.id || initialData?.id ? "Editar Propiedad" : "Nueva Propiedad"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -552,31 +560,31 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
                 />
               </div>
 
-              {/* Area */}
-              <div>
-                <Label htmlFor="area">Área (m²)</Label>
-                <Input
-                  type="number"
-                  id="area"
-                  name="area"
-                  value={formData.area_m2 || ""}
-                  onChange={handleInputChange}
-                  placeholder="Ej: 120"
-                />
-              </div>
+               {/* Area */}
+               <div>
+                 <Label htmlFor="area_m2">Área (m²)</Label>
+                 <Input
+                   type="number"
+                   id="area_m2"
+                   name="area_m2"
+                   value={formData.area_m2 || ""}
+                   onChange={handleInputChange}
+                   placeholder="Ej: 120"
+                 />
+               </div>
 
-              {/* Video URL */}
-              <div>
-                <Label htmlFor="videoUrl">Video URL</Label>
-                <Input
-                  type="url"
-                  id="videoUrl"
-                  name="videoUrl"
-                  value={formData.video_url || ""}
-                  onChange={handleInputChange}
-                  placeholder="Ej: https://youtube.com/watch?v=..."
-                />
-              </div>
+               {/* Video URL */}
+               <div>
+                 <Label htmlFor="video_url">Video URL</Label>
+                 <Input
+                   type="url"
+                   id="video_url"
+                   name="video_url"
+                   value={formData.video_url || ""}
+                   onChange={handleInputChange}
+                   placeholder="Ej: https://youtube.com/watch?v=..."
+                 />
+               </div>
             </div>
 
             {/* Description */}
@@ -786,10 +794,11 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
             <div className="space-y-2">
               <Label className="text-base font-semibold">Ubicación</Label>
               <MapPicker
-                onLocationSelected={(location) => {
-                  setSelectedLocation(location);
+                lat={selectedLocation?.lat}
+                lng={selectedLocation?.lng}
+                onChange={(coords) => {
+                  setSelectedLocation(coords);
                 }}
-                initialLocation={selectedLocation}
               />
               {selectedLocation && (
                 <Badge variant="outline">
@@ -800,18 +809,24 @@ export default function PropertyForm({ property, onPropertySaved }: PropertyForm
 
             {/* Submit Button */}
             <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/dashboard/agent")}>
-                Cancelar
-              </Button>
+              {onClose ? (
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+              ) : (
+                <Button type="button" variant="outline" onClick={() => navigate("/dashboard/agent")}>
+                  Cancelar
+                </Button>
+              )}
               <Button type="submit" disabled={loading} className="min-w-[200px]">
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {property ? "Actualizando..." : "Guardando..."}
+                    {property?.id || initialData?.id ? "Actualizando..." : "Guardando..."}
                   </>
                 ) : (
                   <>
-                    ✅ {property ? "Actualizar" : "Guardar"} Propiedad
+                    ✅ {property?.id || initialData?.id ? "Actualizar" : "Guardar"} Propiedad
                   </>
                 )}
               </Button>
