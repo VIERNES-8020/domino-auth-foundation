@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -80,6 +80,7 @@ interface Review {
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
@@ -433,9 +434,7 @@ export default function PropertyDetailPage() {
                           variant="outline" 
                           className="w-full" 
                           size="lg"
-                          onClick={() => {
-                            window.location.href = "/agentes";
-                          }}
+                          onClick={() => navigate("/nuestros-agentes")}
                         >
                           Solicitar un agente
                         </Button>
@@ -443,9 +442,7 @@ export default function PropertyDetailPage() {
                           variant="secondary" 
                           className="w-full" 
                           size="lg"
-                          onClick={() => {
-                            window.location.href = "/propiedades";
-                          }}
+                          onClick={() => navigate("/propiedades")}
                         >
                           Ver propiedades disponibles
                         </Button>
