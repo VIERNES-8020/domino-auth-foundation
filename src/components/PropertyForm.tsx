@@ -224,7 +224,9 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     if (!formData.property_type) errors.push("El tipo de propiedad es obligatorio");
     if (!formData.price) errors.push("El precio es obligatorio");
     if (!formData.description) errors.push("La descripción es obligatoria para una mejor presentación");
-    if (formData.image_urls.length === 0) errors.push("Se requiere al menos una fotografía");
+    if (!formData.image_urls || formData.image_urls.length === 0) {
+      errors.push("Se requiere al menos una fotografía");
+    }
     
     setValidationErrors(errors);
     return errors.length === 0;
@@ -683,20 +685,23 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 )}
                 
-                <FileUpload
-                  onFilesUploaded={(urls) => {
-                    console.log("Files uploaded:", urls);
-                    // Combine with existing images instead of replacing them
-                    updateFormData("image_urls", [...formData.image_urls, ...urls]);
-                    toast.success(`${urls.length} imagen(es) subidas exitosamente`);
-                  }}
-                  accept="image/*"
-                  multiple={true}
-                  maxFiles={10}
-                  maxSize={5}
-                  label="📸 Agregar más fotos"
-                  bucket="property-images"
-                />
+                 <FileUpload
+                   onFilesUploaded={(urls) => {
+                     console.log("Files uploaded:", urls);
+                     if (urls && urls.length > 0) {
+                       // Combine with existing images instead of replacing them
+                       const existingImages = formData.image_urls || [];
+                       updateFormData("image_urls", [...existingImages, ...urls]);
+                       toast.success(`✅ ${urls.length} imagen(es) subidas exitosamente`);
+                     }
+                   }}
+                   accept="image/*"
+                   multiple={true}
+                   maxFiles={10}
+                   maxSize={5}
+                   label="📸 Agregar más fotos"
+                   bucket="property-images"
+                 />
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
                   🤖 <strong>AURA mejora automáticamente:</strong> Ajusta resolución, optimiza tamaño para web y aplica marca de agua profesional
                 </div>
@@ -812,32 +817,25 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 )}
                 
-                <div className="border-2 border-dashed border-primary/25 rounded-lg p-6 bg-gradient-to-br from-primary/5 to-transparent">
-                  <div className="text-center">
-                    <FileText className="h-8 w-8 mx-auto text-primary mb-2" />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      📋 Selecciona archivos PDF o imágenes de los planos
-                    </p>
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf,image/*"
-                      onChange={handlePlansUpload}
-                      className="hidden"
-                      id="property-plans"
-                    />
-                    <label htmlFor="property-plans">
-                      <Button type="button" variant="outline" asChild>
-                        <span className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4" />
-                          AURA Organizar Planos
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
-                  <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded-lg mt-4">
-                    🤖 <strong>AURA asistente:</strong> Detecta automáticamente el tipo de plano, optimiza formato y organiza por categorías (planta baja, planta alta, etc.)
-                  </div>
+                <FileUpload
+                  onFilesUploaded={(urls) => {
+                    console.log("Plans uploaded:", urls);
+                    if (urls && urls.length > 0) {
+                      // Combine with existing plans instead of replacing them
+                      const existingPlans = formData.plans_url || [];
+                      updateFormData("plans_url", [...existingPlans, ...urls]);
+                      toast.success(`✅ ${urls.length} plano(s) organizados por AURA exitosamente`);
+                    }
+                  }}
+                  accept=".pdf,image/*"
+                  multiple={true}
+                  maxFiles={5}
+                  maxSize={10}
+                  label="📋 AURA Organizar Planos"
+                  bucket="property-plans"
+                />
+                <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded-lg mt-4">
+                  🤖 <strong>AURA asistente:</strong> Detecta automáticamente el tipo de plano, optimiza formato y organiza por categorías (planta baja, planta alta, etc.)
                 </div>
               </div>
             </TabsContent>

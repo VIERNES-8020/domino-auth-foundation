@@ -48,6 +48,7 @@ export default function FileUpload({
 
     setUploading(true);
     const uploadedUrls: string[] = [];
+    const newUploadedFiles: { name: string; url: string }[] = [];
 
     try {
       for (const file of files) {
@@ -56,7 +57,7 @@ export default function FileUpload({
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        // Upload file
+        // Upload file to Supabase Storage
         const { data, error } = await supabase.storage
           .from(bucket)
           .upload(filePath, file);
@@ -69,39 +70,37 @@ export default function FileUpload({
           .getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
-        setUploadedFiles(prev => [...prev, { name: file.name, url: publicUrl }]);
+        newUploadedFiles.push({ name: file.name, url: publicUrl });
       }
 
-      // Always call onFilesUploaded with the uploaded URLs
+      // Update local state
+      setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+      
+      // Immediately notify parent component with uploaded URLs
       onFilesUploaded(uploadedUrls);
       
-      // Try to apply watermark to images in the background (optional enhancement)
-      if (accept.includes('image')) {
+      toast.success(`✅ ${files.length} archivo(s) subido(s) exitosamente`);
+      
+      // Try to apply watermark in background for images (optional enhancement)
+      if (accept.includes('image') && uploadedUrls.length > 0) {
         try {
-          console.log('Attempting to apply watermarks to images...');
-          // Process watermarks in background without blocking the upload
-          uploadedUrls.forEach(async (url, index) => {
+          // This is just for enhancement - not required for basic functionality
+          console.log('Intentando aplicar marca de agua...');
+          uploadedUrls.forEach(async (url) => {
             try {
-              const { data, error } = await supabase.functions.invoke('watermark-images', {
+              await supabase.functions.invoke('watermark-images', {
                 body: { imageUrl: url }
               });
-              
-              if (!error && data?.watermarkedUrl) {
-                console.log(`Watermark applied successfully to image ${index + 1}`);
-                // Optionally update the display with watermarked version
-              } else {
-                console.log(`Watermark processing skipped for image ${index + 1}`);
-              }
+              console.log('Marca de agua aplicada');
             } catch (error) {
-              console.log(`Watermark failed for image ${index + 1}, original image preserved`);
+              console.log('Marca de agua opcional falló, usando imagen original');
             }
           });
         } catch (error) {
-          console.log('Watermark service unavailable, using original images');
+          console.log('Marca de agua no disponible');
         }
       }
-
-      toast.success(`${files.length} archivo(s) subido(s) exitosamente`);
+      
     } catch (error: any) {
       console.error('Error uploading files:', error);
       toast.error('Error al subir archivos: ' + error.message);
@@ -131,6 +130,8 @@ export default function FileUpload({
           <p className="text-sm text-muted-foreground mb-4">
             {accept.includes('image') 
               ? "Arrastra imágenes aquí o haz clic para seleccionar"
+              : accept.includes('pdf')
+              ? "Arrastra archivos PDF aquí o haz clic para seleccionar"
               : "Arrastra archivos aquí o haz clic para seleccionar"
             }
           </p>
@@ -169,7 +170,7 @@ export default function FileUpload({
               <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-card shadow-sm">
                 {accept.includes('image') && (
                   <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
-                    <WatermarkedImage
+                    <img
                       src={file.url}
                       alt={file.name}
                       className="w-full h-full object-cover"
