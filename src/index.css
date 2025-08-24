@@ -170,12 +170,30 @@ All colors MUST be HSL.
     box-shadow: none !important;
   }
 
-  /* Watermark indicator styling */
-  .watermark-indicator {
-    @apply absolute bottom-1 right-1 bg-black/20 text-white text-xs px-2 py-1 rounded backdrop-blur-sm;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    letter-spacing: 0.5px;
+  /* Watermark styling - Enhanced visibility */
+  .watermark-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .watermark-corner {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    z-index: 10;
   }
 
   /* Smooth image loading */

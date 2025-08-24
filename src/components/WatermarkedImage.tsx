@@ -23,35 +23,42 @@ export default function WatermarkedImage({
   const [hasWatermark, setHasWatermark] = useState(false);
 
   useEffect(() => {
-    // Check if image already has watermark or is external
-    if (src.includes('watermarked-') || 
-        src.includes('default-placeholder') ||
-        !src.includes(window.location.origin)) {
+    // Always show watermark indicator for all images
+    setHasWatermark(true);
+    
+    // Check if image already has watermark
+    if (src.includes('watermarked-') || src.includes('default-placeholder')) {
       setImageSrc(src);
-      setHasWatermark(true);
       return;
     }
 
-    // Apply watermark to new images
+    // Apply watermark to ALL images (internal and external)
     const applyWatermark = async () => {
       if (isProcessing) return;
       
       setIsProcessing(true);
       try {
+        console.log('Applying watermark to:', src);
         const { data, error } = await supabase.functions.invoke('watermark-images', {
           body: { imageUrl: src }
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Watermark error:', error);
+          throw error;
+        }
+        
+        console.log('Watermark response:', data);
         
         if (data?.watermarkedUrl && data.watermarkedUrl !== src) {
           setImageSrc(data.watermarkedUrl);
-          setHasWatermark(true);
+          console.log('Watermark applied successfully:', data.watermarkedUrl);
         } else {
           setImageSrc(src);
+          console.log('Using original image');
         }
       } catch (error) {
-        console.log('Watermark failed, using original:', error);
+        console.error('Watermark failed:', error);
         setImageSrc(src);
       } finally {
         setIsProcessing(false);
@@ -59,7 +66,7 @@ export default function WatermarkedImage({
     };
 
     applyWatermark();
-  }, [src, isProcessing]);
+  }, [src]);
 
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     // If watermarked image fails, fallback to original
@@ -87,18 +94,25 @@ export default function WatermarkedImage({
         {...props}
       />
       {isProcessing && (
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
           <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-medium text-gray-800">
-            Procesando...
+            Procesando marca de agua...
           </div>
         </div>
       )}
-      {/* Subtle DOMIN10.COM indicator for already watermarked images */}
-      {hasWatermark && !isProcessing && (
-        <div className="watermark-indicator">
+      {/* DOMIN10.COM watermark overlay - ALWAYS visible */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+        <div className="text-white/60 text-2xl font-bold tracking-wider transform rotate-0 drop-shadow-lg">
           DOMIN10.COM
         </div>
-      )}
+      </div>
+      {/* Corner watermark indicators */}
+      <div className="absolute top-2 left-2 text-white/40 text-xs font-medium tracking-wide drop-shadow-md pointer-events-none z-20">
+        DOMIN10.COM
+      </div>
+      <div className="absolute bottom-2 right-2 text-white/40 text-xs font-medium tracking-wide drop-shadow-md pointer-events-none z-20">
+        DOMIN10.COM
+      </div>
     </div>
   );
 }
