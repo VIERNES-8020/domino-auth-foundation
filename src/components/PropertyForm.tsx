@@ -654,129 +654,147 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
             </TabsContent>
 
             <TabsContent value="multimedia" className="space-y-6">
-              {/* Property Images with AURA Enhancement */}
+              {/* Property Images - MÚLTIPLES como antes */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   <div>
                     <Label className="text-base font-medium">Fotografías de la Propiedad *</Label>
                     <p className="text-sm text-muted-foreground">
-                      AURA optimiza automáticamente tamaño y resolución | Marca de agua incluida
+                      Selecciona múltiples imágenes - Máximo 10 fotos, 5MB cada una
                     </p>
                   </div>
                 </div>
                 
-                {/* SINGLE IMAGE UPLOAD */}
-                {formData.image_urls && formData.image_urls.length > 0 && formData.image_urls[0] && (
-                  <div className="bg-green-50 p-4 rounded-lg border">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Camera className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium text-green-800">
-                          ✅ Imagen principal subida
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          updateFormData("image_urls", []);
-                          const input = document.getElementById("single-image") as HTMLInputElement;
-                          if (input) input.value = "";
-                          toast.success("🗑️ Imagen eliminada");
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
+                {/* Show existing images */}
+                {formData.image_urls && formData.image_urls.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Camera className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">
+                        {formData.image_urls.length} imagen(es) subida(s)
+                      </span>
                     </div>
-                    <div className="w-full max-w-xs mx-auto">
-                      <img 
-                        src={formData.image_urls[0]} 
-                        alt="Imagen principal" 
-                        className="w-full h-32 object-cover rounded border"
-                      />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {formData.image_urls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={url} 
+                            alt={`Foto ${index + 1}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const newImages = formData.image_urls.filter((_, i) => i !== index);
+                              updateFormData("image_urls", newImages);
+                              toast.success("🗑️ Imagen eliminada");
+                            }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 p-0"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
                 
                 <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center hover:border-primary hover:bg-accent/5 transition-all">
                   <input
-                    id="single-image"
+                    id="multiple-images"
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/webp"
+                    multiple
                     onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
+                      const files = Array.from(e.target.files || []);
+                      if (files.length === 0) return;
 
-                      // Validación de tamaño (5MB máximo)
-                      if (file.size > 5 * 1024 * 1024) {
-                        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-                        toast.error(`❌ IMAGEN MUY GRANDE: ${sizeMB}MB. Máximo permitido: 5MB. Comprime la imagen.`);
+                      // Validar cantidad total de imágenes (máx 10)
+                      const existingImages = formData.image_urls || [];
+                      if (existingImages.length + files.length > 10) {
+                        toast.error(`❌ MÁXIMO 10 IMÁGENES: Ya tienes ${existingImages.length}, intentas subir ${files.length}. Total sería ${existingImages.length + files.length}.`);
                         e.target.value = "";
                         return;
                       }
 
-                      try {
-                        const fileExt = file.name.split('.').pop()?.toLowerCase();
-                        const fileName = `image-${Date.now()}.${fileExt}`;
-                        
-                        toast.info("📤 Subiendo imagen...");
-                        
-                        const { data, error } = await supabase.storage
-                          .from('property-images')
-                          .upload(fileName, file);
-                        
-                        if (error) {
-                          console.error("Upload error:", error);
-                          if (error.message.includes('exceeded') || error.message.includes('quota')) {
-                            toast.error("❌ CUOTA EXCEDIDA: El almacenamiento está lleno. Contacta al administrador.");
-                          } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
-                            toast.error("❌ SIN INTERNET: Revisa tu conexión a internet y vuelve a intentar.");
-                          } else if (error.message.includes('size') || error.message.includes('too large')) {
-                            toast.error("❌ IMAGEN GRANDE: La imagen es demasiado pesada para el servidor. Comprímela.");
-                          } else if (error.message.includes('timeout')) {
-                            toast.error("❌ TIEMPO AGOTADO: Conexión lenta. Intenta con una imagen más pequeña.");
-                          } else {
-                            toast.error(`❌ ERROR DE SERVIDOR: ${error.message}`);
-                          }
+                      // Validar tamaño de cada archivo (máx 5MB)
+                      for (const file of files) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                          toast.error(`❌ IMAGEN MUY GRANDE: "${file.name}" es ${sizeMB}MB. Máximo: 5MB. Comprime la imagen.`);
                           e.target.value = "";
                           return;
                         }
-                        
-                        const { data: { publicUrl } } = supabase.storage
-                          .from('property-images')
-                          .getPublicUrl(fileName);
-                        
-                        updateFormData("image_urls", [publicUrl]);
-                        toast.success("✅ IMAGEN SUBIDA: La imagen está disponible correctamente");
+                      }
+
+                      try {
+                        toast.info(`📤 Subiendo ${files.length} imagen(es)...`);
+                        const uploadPromises = files.map(async (file, index) => {
+                          const fileExt = file.name.split('.').pop()?.toLowerCase();
+                          const fileName = `image-${Date.now()}-${index}.${fileExt}`;
+                          
+                          const { data, error } = await supabase.storage
+                            .from('property-images')
+                            .upload(fileName, file);
+                          
+                          if (error) {
+                            console.error(`Error subiendo imagen ${index + 1}:`, error);
+                            if (error.message.includes('exceeded') || error.message.includes('quota')) {
+                              throw new Error(`❌ CUOTA EXCEDIDA: El almacenamiento está lleno. Contacta al administrador.`);
+                            } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+                              throw new Error(`❌ SIN INTERNET: Revisa tu conexión a internet y vuelve a intentar.`);
+                            } else if (error.message.includes('size') || error.message.includes('too large')) {
+                              throw new Error(`❌ IMAGEN GRANDE: "${file.name}" es demasiado pesada para el servidor.`);
+                            } else if (error.message.includes('timeout')) {
+                              throw new Error(`❌ TIEMPO AGOTADO: Conexión lenta. Intenta con imágenes más pequeñas.`);
+                            } else {
+                              throw new Error(`❌ ERROR DE SERVIDOR: ${error.message}`);
+                            }
+                          }
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('property-images')
+                            .getPublicUrl(fileName);
+                          
+                          return publicUrl;
+                        });
+
+                        const uploadedUrls = await Promise.all(uploadPromises);
+                        const newImages = [...existingImages, ...uploadedUrls];
+                        updateFormData("image_urls", newImages);
+                        toast.success(`✅ ${files.length} IMAGEN(ES) SUBIDAS: Todas las imágenes están disponibles`);
+                        e.target.value = "";
                         
                       } catch (error: any) {
-                        console.error("Error uploading image:", error);
-                        toast.error(`❌ ERROR INESPERADO: ${error.message || "Error desconocido al subir imagen"}`);
+                        console.error("Error uploading images:", error);
+                        toast.error(error.message || `❌ Error subiendo imágenes`);
                         e.target.value = "";
                       }
                     }}
                     className="hidden"
                   />
-                  <label htmlFor="single-image" className="cursor-pointer">
+                  <label htmlFor="multiple-images" className="cursor-pointer">
                     <div className="text-4xl mb-2">📸</div>
-                    <div className="text-lg font-medium mb-1">Imagen Principal</div>
+                    <div className="text-lg font-medium mb-1">Agregar Fotografías</div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      JPG, PNG o WEBP - Máximo 5MB
+                      Selecciona múltiples imágenes (máx 10 fotos, 5MB cada una)
                     </div>
                     <Button type="button" variant="outline" asChild>
                       <span>
-                        {formData.image_urls && formData.image_urls.length > 0 && formData.image_urls[0]
-                          ? "🔄 Cambiar Imagen"
-                          : "📸 Seleccionar Imagen"
+                        {formData.image_urls && formData.image_urls.length > 0
+                          ? `📸 Agregar Más (${formData.image_urls.length}/10)`
+                          : "📸 Seleccionar Imágenes"
                         }
                       </span>
                     </Button>
                   </label>
                 </div>
+                
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
-                  🤖 <strong>AURA mejora automáticamente:</strong> Ajusta resolución, optimiza tamaño para web y aplica marca de agua profesional
+                  📸 <strong>Imágenes múltiples:</strong> Sube hasta 10 fotos para mostrar todos los aspectos de la propiedad. Cada imagen máximo 5MB.
                 </div>
               </div>
 
