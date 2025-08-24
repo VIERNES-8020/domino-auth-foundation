@@ -165,9 +165,18 @@ export default function AgentDashboard() {
   };
 
   const handlePropertySubmit = async (propertyData: any) => {
-    if (!user) return;
+    console.log("=== HANDLEPROPERTYSUBMIT INICIADO ===");
+    console.log("User:", user ? "Existe" : "No existe");
+    console.log("PropertyData recibida:", propertyData);
+    
+    if (!user) {
+      console.error("No hay usuario autenticado");
+      throw new Error("Usuario no autenticado");
+    }
     
     try {
+      console.log("EditingProperty:", editingProperty ? "Editando" : "Creando nueva");
+      
       if (editingProperty) {
         // Get current edit count and increment it
         const { data: currentProperty, error: fetchError } = await supabase
@@ -204,10 +213,19 @@ export default function AgentDashboard() {
           .eq('id', editingProperty.id)
           .eq('agent_id', user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error actualizando propiedad:", error);
+          throw error;
+        }
+        console.log("Propiedad actualizada exitosamente");
         toast.success('Propiedad actualizada exitosamente');
       } else {
         // Create new property
+        console.log("Creando nueva propiedad con datos:", {
+          title: propertyData.title,
+          price: parseFloat(propertyData.price),
+          agent_id: user.id
+        });
         const { data, error } = await supabase
           .from('properties')
           .insert({
@@ -233,17 +251,29 @@ export default function AgentDashboard() {
           })
           .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error creando propiedad:", error);
+          console.error("Detalles del error:", error.details, error.hint, error.code);
+          throw error;
+        }
+        
+        console.log("Propiedad creada exitosamente:", data);
         toast.success('Propiedad creada exitosamente');
       }
       
+      console.log("Refrescando lista de propiedades...");
       // Refresh properties list
       await fetchProperties(user.id);
       setShowPropertyForm(false);
       setEditingProperty(null);
+      console.log("=== HANDLEPROPERTYSUBMIT COMPLETADO EXITOSAMENTE ===");
     } catch (error: any) {
+      console.error('=== ERROR EN HANDLEPROPERTYSUBMIT ===');
       console.error('Error saving property:', error);
-      toast.error('Error al guardar la propiedad: ' + error.message);
+      console.error('Error completo:', error);
+      toast.error('Error al guardar la propiedad: ' + (error.message || 'Error desconocido'));
+      // Re-throw the error so PropertyForm can catch it
+      throw error;
     }
   };
 
