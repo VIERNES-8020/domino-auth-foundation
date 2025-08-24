@@ -55,6 +55,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   const [videoUploadTimeout, setVideoUploadTimeout] = useState<NodeJS.Timeout | null>(null);
   const [videoTimer, setVideoTimer] = useState(0);
   const [videoTimerInterval, setVideoTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [updateButtonLoading, setUpdateButtonLoading] = useState(false);
   const [customAmenities, setCustomAmenities] = useState<string[]>([]);
   const [newAmenity, setNewAmenity] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -845,33 +846,59 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                         const file = e.target.files?.[0];
                         if (!file) return;
                         
-                        if (file.size > 5 * 1024 * 1024) { // 5MB max per file
-                          toast.error("Archivo muy grande (máximo 5MB)");
+                        // Validar tamaño del archivo
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error(`❌ Archivo muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo permitido: 5MB`);
                           e.target.value = "";
                           return;
+                        }
+                        
+                        // Validar tamaño total (ambos archivos no deben superar 10MB)
+                        const existingPlans = formData.plans_url || [];
+                        if (existingPlans.length > 0) {
+                          // Si ya hay un archivo, verificar que el total no supere 10MB
+                          const totalSize = file.size + (5 * 1024 * 1024); // Asumimos 5MB para el existente
+                          if (totalSize > 10 * 1024 * 1024) {
+                            toast.error("❌ Los dos archivos juntos superarían 10MB. Usa archivos más pequeños.");
+                            e.target.value = "";
+                            return;
+                          }
                         }
                         
                         try {
                           const fileExt = file.name.split('.').pop();
                           const fileName = `plan1-${Date.now()}.${fileExt}`;
                           
+                          toast.info("📤 Subiendo Plano 1...");
+                          
                           const { data, error } = await supabase.storage
                             .from('property-plans')
                             .upload(fileName, file);
                           
-                          if (error) throw error;
+                          if (error) {
+                            // Manejar diferentes tipos de errores
+                            if (error.message.includes('exceeded')) {
+                              throw new Error("Cuota de almacenamiento excedida");
+                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
+                            } else if (error.message.includes('size')) {
+                              throw new Error("Archivo demasiado grande para el servidor");
+                            } else {
+                              throw new Error(`Error del servidor: ${error.message}`);
+                            }
+                          }
                           
                           const { data: { publicUrl } } = supabase.storage
                             .from('property-plans')
                             .getPublicUrl(fileName);
                           
-                          const existingPlans = formData.plans_url || [];
                           const newPlans = [...existingPlans];
                           newPlans[0] = publicUrl;
                           updateFormData("plans_url", newPlans);
-                          toast.success("✅ Plano 1 subido");
+                          toast.success("✅ Plano 1 subido exitosamente");
                         } catch (error: any) {
-                          toast.error("Error: " + error.message);
+                          console.error("Error uploading plan 1:", error);
+                          toast.error(`❌ Error subiendo Plano 1: ${error.message}`);
                           e.target.value = "";
                         }
                       }}
@@ -893,7 +920,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                           newPlans[0] = "";
                           updateFormData("plans_url", newPlans.filter(Boolean));
                           (document.getElementById("plan1") as HTMLInputElement).value = "";
-                          toast.success("Plano 1 eliminado");
+                          toast.success("🗑️ Plano 1 eliminado");
                         }}
                       >
                         🗑️ Eliminar
@@ -910,33 +937,59 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                         const file = e.target.files?.[0];
                         if (!file) return;
                         
-                        if (file.size > 5 * 1024 * 1024) { // 5MB max per file
-                          toast.error("Archivo muy grande (máximo 5MB)");
+                        // Validar tamaño del archivo
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error(`❌ Archivo muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo permitido: 5MB`);
                           e.target.value = "";
                           return;
+                        }
+                        
+                        // Validar tamaño total (ambos archivos no deben superar 10MB)
+                        const existingPlans = formData.plans_url || [];
+                        if (existingPlans.length > 0) {
+                          // Si ya hay un archivo, verificar que el total no supere 10MB
+                          const totalSize = file.size + (5 * 1024 * 1024); // Asumimos 5MB para el existente
+                          if (totalSize > 10 * 1024 * 1024) {
+                            toast.error("❌ Los dos archivos juntos superarían 10MB. Usa archivos más pequeños.");
+                            e.target.value = "";
+                            return;
+                          }
                         }
                         
                         try {
                           const fileExt = file.name.split('.').pop();
                           const fileName = `plan2-${Date.now()}.${fileExt}`;
                           
+                          toast.info("📤 Subiendo Plano 2...");
+                          
                           const { data, error } = await supabase.storage
                             .from('property-plans')
                             .upload(fileName, file);
                           
-                          if (error) throw error;
+                          if (error) {
+                            // Manejar diferentes tipos de errores
+                            if (error.message.includes('exceeded')) {
+                              throw new Error("Cuota de almacenamiento excedida");
+                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
+                            } else if (error.message.includes('size')) {
+                              throw new Error("Archivo demasiado grande para el servidor");
+                            } else {
+                              throw new Error(`Error del servidor: ${error.message}`);
+                            }
+                          }
                           
                           const { data: { publicUrl } } = supabase.storage
                             .from('property-plans')
                             .getPublicUrl(fileName);
                           
-                          const existingPlans = formData.plans_url || [];
                           const newPlans = [...existingPlans];
                           newPlans[1] = publicUrl;
                           updateFormData("plans_url", newPlans);
-                          toast.success("✅ Plano 2 subido");
+                          toast.success("✅ Plano 2 subido exitosamente");
                         } catch (error: any) {
-                          toast.error("Error: " + error.message);
+                          console.error("Error uploading plan 2:", error);
+                          toast.error(`❌ Error subiendo Plano 2: ${error.message}`);
                           e.target.value = "";
                         }
                       }}
@@ -958,7 +1011,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                           newPlans[1] = "";
                           updateFormData("plans_url", newPlans.filter(Boolean));
                           (document.getElementById("plan2") as HTMLInputElement).value = "";
-                          toast.success("Plano 2 eliminado");
+                          toast.success("🗑️ Plano 2 eliminado");
                         }}
                       >
                         🗑️ Eliminar
@@ -984,15 +1037,22 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
               <Button 
                 type="button" 
                 variant="secondary"
-                onClick={() => {
+                disabled={updateButtonLoading}
+                onClick={async () => {
+                  setUpdateButtonLoading(true);
                   // Reset all loading states
                   setFormSubmitting(false);
                   setVideoUploading(false);
                   setGeneratingDescription(false);
-                  toast.success("Estados reseteados. Puedes continuar.");
+                  
+                  // Simular un pequeño delay para mostrar feedback
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  
+                  setUpdateButtonLoading(false);
+                  toast.success("✅ Estados actualizados. Puedes continuar.");
                 }}
               >
-                🔄 Actualizar
+                {updateButtonLoading ? "🔄 Actualizando..." : "🔄 Actualizar"}
               </Button>
               
               <Button 
