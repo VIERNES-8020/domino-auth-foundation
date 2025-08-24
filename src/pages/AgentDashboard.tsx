@@ -13,6 +13,7 @@ import PropertyViewModal from "@/components/PropertyViewModal";
 import DeletePropertyModal from "@/components/DeletePropertyModal";
 import ArchivePropertyModal from "@/components/ArchivePropertyModal";
 import NotificationResponseModal from "@/components/NotificationResponseModal";
+import PropertyTypeStats from "@/components/PropertyTypeStats";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
@@ -31,6 +32,7 @@ export default function AgentDashboard() {
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -384,6 +386,35 @@ export default function AgentDashboard() {
     await supabase.auth.signOut();
   };
 
+  const handlePropertyTypeFilter = (type: string, status: 'all' | 'active' | 'concluded') => {
+    setPropertyTypeFilter({ type, status });
+  };
+
+  const getFilteredProperties = () => {
+    let filtered = properties;
+    
+    // Apply archived/active filter first
+    filtered = filtered.filter(property => showArchived ? property.is_archived : !property.is_archived);
+    
+    // Apply property type filter if active
+    if (propertyTypeFilter) {
+      // Filter by property type
+      filtered = filtered.filter(p => 
+        p.property_type?.toLowerCase() === propertyTypeFilter.type.toLowerCase()
+      );
+      
+      // Filter by status (active vs concluded)
+      if (propertyTypeFilter.status === 'active') {
+        filtered = filtered.filter(p => !p.concluded_status);
+      } else if (propertyTypeFilter.status === 'concluded') {
+        filtered = filtered.filter(p => p.concluded_status);
+      }
+      // 'all' doesn't need additional filtering
+    }
+    
+    return filtered;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
@@ -513,6 +544,12 @@ export default function AgentDashboard() {
             </Card>
           </div>
 
+          {/* Property Type Statistics */}
+          <PropertyTypeStats 
+            properties={properties}
+            onFilterChange={handlePropertyTypeFilter}
+          />
+
           {/* Enhanced Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-background to-background/90 border-2 border-primary/10 shadow-lg rounded-xl p-1 backdrop-blur-sm">
@@ -641,9 +678,7 @@ export default function AgentDashboard() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {properties
-                            .filter(property => showArchived ? property.is_archived : !property.is_archived)
-                            .map((property) => (
+                          {getFilteredProperties().map((property) => (
                               <Card key={property.id} className="group hover:shadow-xl transition-all duration-300 border-primary/10 hover:border-primary/30">
                                 <div className="aspect-video relative overflow-hidden rounded-t-lg">
                                   <img
