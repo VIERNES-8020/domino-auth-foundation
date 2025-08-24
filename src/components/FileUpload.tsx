@@ -31,6 +31,10 @@ export default function FileUpload({
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
+    console.log("=== UPLOAD INICIADO ===");
+    console.log("Archivos seleccionados:", files.length);
+    console.log("Bucket:", bucket);
+    
     if (files.length === 0) return;
 
     // Validate file count
@@ -51,33 +55,54 @@ export default function FileUpload({
     const newUploadedFiles: { name: string; url: string }[] = [];
 
     try {
+      console.log("Iniciando subida de", files.length, "archivos...");
+      
       for (const file of files) {
+        console.log("Subiendo archivo:", file.name);
+        
         // Create unique filename
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${fileName}`;
+
+        console.log("Subiendo a path:", filePath, "en bucket:", bucket);
 
         // Upload file to Supabase Storage
         const { data, error } = await supabase.storage
           .from(bucket)
           .upload(filePath, file);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error al subir archivo:", error);
+          throw error;
+        }
+
+        console.log("Archivo subido exitosamente:", data);
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from(bucket)
           .getPublicUrl(filePath);
 
+        console.log("URL pública obtenida:", publicUrl);
+
         uploadedUrls.push(publicUrl);
         newUploadedFiles.push({ name: file.name, url: publicUrl });
       }
 
+      console.log("=== TODOS LOS ARCHIVOS SUBIDOS ===");
+      console.log("URLs subidas:", uploadedUrls);
+
       // Update local state
-      setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+      const allFiles = [...uploadedFiles, ...newUploadedFiles];
+      setUploadedFiles(allFiles);
       
-      // Immediately notify parent component with uploaded URLs
-      onFilesUploaded(uploadedUrls);
+      // Get ALL uploaded URLs to send to parent
+      const allUrls = allFiles.map(file => file.url);
+      console.log("Notificando parent con todas las URLs:", allUrls);
+      
+      // Notify parent component with ALL uploaded URLs
+      onFilesUploaded(allUrls);
       
       toast.success(`✅ ${files.length} archivo(s) subido(s) exitosamente`);
       
@@ -85,9 +110,10 @@ export default function FileUpload({
       console.log('Using original images without watermark');
       
     } catch (error: any) {
-      console.error('Error uploading files:', error);
+      console.error('=== ERROR EN UPLOAD ===', error);
       toast.error('Error al subir archivos: ' + error.message);
     } finally {
+      console.log("FINALIZANDO UPLOAD");
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';

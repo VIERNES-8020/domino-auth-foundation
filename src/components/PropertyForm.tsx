@@ -297,23 +297,35 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("=== SUBMIT INICIADO ===");
+    console.log("Form data:", formData);
+    
     // Enhanced validation
     if (!validateForm()) {
+      console.log("VALIDACION FALLIDA");
       toast.error("Complete todos los campos obligatorios marcados para continuar");
+      setLoading(false);
       return;
     }
     
+    console.log("VALIDACION PASADA - Iniciando guardado...");
     setLoading(true);
     setSaveSuccess(false);
 
     try {
+      console.log("Llamando onSubmit con datos:", formData);
+      
       // Call onSubmit if provided
       if (onSubmit) {
         await onSubmit(formData);
+        console.log("onSubmit completado exitosamente");
       } else {
+        console.log("No onSubmit - simulando guardado");
         // If no onSubmit provided, simulate a successful save
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
+      
+      console.log("=== GUARDADO EXITOSO ===");
       
       // Show success indicator
       setSaveSuccess(true);
@@ -321,6 +333,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       // Reset form after successful submission
       setTimeout(() => {
+        console.log("Reseteando formulario");
         setFormData({
           title: "",
           description: "",
@@ -349,9 +362,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       }, 2000);
       
     } catch (error: any) {
-      console.error("Error saving property:", error);
+      console.error("=== ERROR EN SUBMIT ===", error);
+      console.error("Error completo:", error);
       toast.error("Error guardando propiedad: " + (error.message || "Error desconocido"));
     } finally {
+      console.log("FINALIZANDO SUBMIT - Poniendo loading a false");
       // Ensure loading is always set to false
       setLoading(false);
     }
