@@ -666,119 +666,112 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 </div>
                 
-                {/* Show existing images */}
-                {formData.image_urls && formData.image_urls.length > 0 && (
-                  <div className="bg-green-50 p-4 rounded-lg border mb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Camera className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">
-                        {formData.image_urls.length} imagen(es) actual(es)
-                      </span>
+                {/* SINGLE IMAGE UPLOAD */}
+                {formData.image_urls && formData.image_urls.length > 0 && formData.image_urls[0] && (
+                  <div className="bg-green-50 p-4 rounded-lg border">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          ✅ Imagen principal subida
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          updateFormData("image_urls", []);
+                          const input = document.getElementById("single-image") as HTMLInputElement;
+                          if (input) input.value = "";
+                          toast.success("🗑️ Imagen eliminada");
+                        }}
+                      >
+                        🗑️ Eliminar
+                      </Button>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {formData.image_urls.map((url, index) => (
-                        <div key={index} className="relative group">
-                          <img 
-                            src={url} 
-                            alt={`Foto ${index + 1}`} 
-                            className="w-full h-20 object-cover rounded border"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              const newImages = formData.image_urls.filter((_, i) => i !== index);
-                              updateFormData("image_urls", newImages);
-                              toast.success("Imagen removida");
-                            }}
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
+                    <div className="w-full max-w-xs mx-auto">
+                      <img 
+                        src={formData.image_urls[0]} 
+                        alt="Imagen principal" 
+                        className="w-full h-32 object-cover rounded border"
+                      />
                     </div>
                   </div>
                 )}
                 
-                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center hover:border-primary hover:bg-accent/5 transition-all">
                   <input
-                    id="images"
+                    id="single-image"
                     type="file"
-                    accept="image/*"
-                    multiple
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
                     onChange={async (e) => {
-                      const files = Array.from(e.target.files || []);
-                      if (files.length === 0) return;
+                      const file = e.target.files?.[0];
+                      if (!file) return;
 
-                      // Validar cantidad total de imágenes (máx 10)
-                      const existingImages = formData.image_urls || [];
-                      if (existingImages.length + files.length > 10) {
-                        toast.error(`❌ Máximo 10 imágenes. Ya tienes ${existingImages.length}, intentas subir ${files.length}`);
+                      // Validación de tamaño (5MB máximo)
+                      if (file.size > 5 * 1024 * 1024) {
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                        toast.error(`❌ IMAGEN MUY GRANDE: ${sizeMB}MB. Máximo permitido: 5MB. Comprime la imagen.`);
                         e.target.value = "";
                         return;
                       }
 
-                      // Validar tamaño de cada archivo (máx 5MB)
-                      for (const file of files) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast.error(`❌ Imagen muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo: 5MB`);
+                      try {
+                        const fileExt = file.name.split('.').pop()?.toLowerCase();
+                        const fileName = `image-${Date.now()}.${fileExt}`;
+                        
+                        toast.info("📤 Subiendo imagen...");
+                        
+                        const { data, error } = await supabase.storage
+                          .from('property-images')
+                          .upload(fileName, file);
+                        
+                        if (error) {
+                          console.error("Upload error:", error);
+                          if (error.message.includes('exceeded') || error.message.includes('quota')) {
+                            toast.error("❌ CUOTA EXCEDIDA: El almacenamiento está lleno. Contacta al administrador.");
+                          } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+                            toast.error("❌ SIN INTERNET: Revisa tu conexión a internet y vuelve a intentar.");
+                          } else if (error.message.includes('size') || error.message.includes('too large')) {
+                            toast.error("❌ IMAGEN GRANDE: La imagen es demasiado pesada para el servidor. Comprímela.");
+                          } else if (error.message.includes('timeout')) {
+                            toast.error("❌ TIEMPO AGOTADO: Conexión lenta. Intenta con una imagen más pequeña.");
+                          } else {
+                            toast.error(`❌ ERROR DE SERVIDOR: ${error.message}`);
+                          }
                           e.target.value = "";
                           return;
                         }
-                      }
-
-                      try {
-                        toast.info(`📤 Subiendo ${files.length} imagen(es)...`);
-                        const uploadPromises = files.map(async (file, index) => {
-                          const fileExt = file.name.split('.').pop();
-                          const fileName = `image-${Date.now()}-${index}.${fileExt}`;
-                          
-                          const { data, error } = await supabase.storage
-                            .from('property-images')
-                            .upload(fileName, file);
-                          
-                          if (error) {
-                            if (error.message.includes('exceeded')) {
-                              throw new Error("Cuota de almacenamiento excedida");
-                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
-                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
-                            } else if (error.message.includes('size')) {
-                              throw new Error("Imagen demasiado grande para el servidor");
-                            } else {
-                              throw new Error(`Error del servidor: ${error.message}`);
-                            }
-                          }
-                          
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('property-images')
-                            .getPublicUrl(fileName);
-                          
-                          return publicUrl;
-                        });
-
-                        const uploadedUrls = await Promise.all(uploadPromises);
-                        const newImages = [...existingImages, ...uploadedUrls];
-                        updateFormData("image_urls", newImages);
-                        toast.success(`✅ ${files.length} imagen(es) subidas exitosamente`);
-                        e.target.value = ""; // Limpiar input
+                        
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('property-images')
+                          .getPublicUrl(fileName);
+                        
+                        updateFormData("image_urls", [publicUrl]);
+                        toast.success("✅ IMAGEN SUBIDA: La imagen está disponible correctamente");
+                        
                       } catch (error: any) {
-                        console.error("Error uploading images:", error);
-                        toast.error(`❌ Error subiendo imágenes: ${error.message}`);
+                        console.error("Error uploading image:", error);
+                        toast.error(`❌ ERROR INESPERADO: ${error.message || "Error desconocido al subir imagen"}`);
                         e.target.value = "";
                       }
                     }}
                     className="hidden"
                   />
-                  <label htmlFor="images" className="cursor-pointer">
+                  <label htmlFor="single-image" className="cursor-pointer">
                     <div className="text-4xl mb-2">📸</div>
-                    <div className="text-lg font-medium mb-1">Agregar Fotografías</div>
+                    <div className="text-lg font-medium mb-1">Imagen Principal</div>
                     <div className="text-sm text-muted-foreground mb-2">
-                      Selecciona múltiples imágenes (máx 10 fotos, 5MB cada una)
+                      JPG, PNG o WEBP - Máximo 5MB
                     </div>
                     <Button type="button" variant="outline" asChild>
-                      <span>📸 Seleccionar Imágenes</span>
+                      <span>
+                        {formData.image_urls && formData.image_urls.length > 0 && formData.image_urls[0]
+                          ? "🔄 Cambiar Imagen"
+                          : "📸 Seleccionar Imagen"
+                        }
+                      </span>
                     </Button>
                   </label>
                 </div>
@@ -853,236 +846,125 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                 </div>
               </div>
 
-              {/* Property Plans - Simple Upload */}
+              {/* SINGLE FILE UPLOAD - PLAN OR IMAGE */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
-                    <Label className="text-base font-medium">Planos de la Propiedad</Label>
+                    <Label className="text-base font-medium">Plano de la Propiedad</Label>
                     <p className="text-sm text-muted-foreground">
-                      Sube planos arquitectónicos (PDF o imágenes) - Máximo 5 archivos, 10MB cada uno
+                      Sube UN archivo: plano (PDF) o imagen (JPG/PNG) - Máximo 10MB
                     </p>
                   </div>
                 </div>
                 
-                {/* Show uploaded plans */}
-                {formData.plans_url && formData.plans_url.length > 0 && (
-                  <div className="bg-green-50 p-4 rounded-lg border mb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FileText className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">
-                        {formData.plans_url.length} plano(s) subido(s)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {formData.plans_url.map((url, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
-                          <span className="text-sm text-gray-700">Plano {index + 1}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const newPlans = formData.plans_url.filter((_, i) => i !== index);
-                              updateFormData("plans_url", newPlans);
-                              toast.success("Plano removido");
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                {/* Show current uploaded plan */}
+                {formData.plans_url && formData.plans_url.length > 0 && formData.plans_url[0] && (
+                  <div className="bg-green-50 p-4 rounded-lg border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          ✅ Archivo subido correctamente
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          updateFormData("plans_url", []);
+                          const input = document.getElementById("single-plan") as HTMLInputElement;
+                          if (input) input.value = "";
+                          toast.success("🗑️ Archivo eliminado");
+                        }}
+                      >
+                        🗑️ Eliminar
+                      </Button>
                     </div>
                   </div>
                 )}
                 
-                {/* Botones individuales para subir planos */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
-                    <input
-                      id="plan1"
-                      type="file"
-                      accept=".pdf,image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
+                {/* Single file upload */}
+                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center hover:border-primary hover:bg-accent/5 transition-all">
+                  <input
+                    id="single-plan"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      
+                      // Validación de tamaño (10MB máximo)
+                      if (file.size > 10 * 1024 * 1024) {
+                        const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                        toast.error(`❌ ARCHIVO MUY GRANDE: ${sizeMB}MB. Máximo permitido: 10MB. Comprime el archivo.`);
+                        e.target.value = "";
+                        return;
+                      }
+                      
+                      try {
+                        const fileExt = file.name.split('.').pop()?.toLowerCase();
+                        const fileName = `plan-${Date.now()}.${fileExt}`;
                         
-                        // Validar tamaño del archivo
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast.error(`❌ Archivo muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo permitido: 5MB`);
+                        toast.info("📤 Subiendo archivo...");
+                        
+                        const { data, error } = await supabase.storage
+                          .from('property-plans')
+                          .upload(fileName, file);
+                        
+                        if (error) {
+                          console.error("Upload error:", error);
+                          if (error.message.includes('exceeded') || error.message.includes('quota')) {
+                            toast.error("❌ CUOTA EXCEDIDA: El almacenamiento está lleno. Contacta al administrador.");
+                          } else if (error.message.includes('network') || error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+                            toast.error("❌ SIN INTERNET: Revisa tu conexión a internet y vuelve a intentar.");
+                          } else if (error.message.includes('size') || error.message.includes('too large')) {
+                            toast.error("❌ ARCHIVO GRANDE: El archivo es demasiado pesado para el servidor. Comprímelo.");
+                          } else if (error.message.includes('timeout')) {
+                            toast.error("❌ TIEMPO AGOTADO: Conexión lenta. Intenta con un archivo más pequeño.");
+                          } else {
+                            toast.error(`❌ ERROR DE SERVIDOR: ${error.message}`);
+                          }
                           e.target.value = "";
                           return;
                         }
                         
-                        // Validar tamaño total (ambos archivos no deben superar 10MB)
-                        const existingPlans = formData.plans_url || [];
-                        if (existingPlans.length > 0) {
-                          // Si ya hay un archivo, verificar que el total no supere 10MB
-                          const totalSize = file.size + (5 * 1024 * 1024); // Asumimos 5MB para el existente
-                          if (totalSize > 10 * 1024 * 1024) {
-                            toast.error("❌ Los dos archivos juntos superarían 10MB. Usa archivos más pequeños.");
-                            e.target.value = "";
-                            return;
-                          }
-                        }
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('property-plans')
+                          .getPublicUrl(fileName);
                         
-                        try {
-                          const fileExt = file.name.split('.').pop();
-                          const fileName = `plan1-${Date.now()}.${fileExt}`;
-                          
-                          toast.info("📤 Subiendo Plano 1...");
-                          
-                          const { data, error } = await supabase.storage
-                            .from('property-plans')
-                            .upload(fileName, file);
-                          
-                          if (error) {
-                            // Manejar diferentes tipos de errores
-                            if (error.message.includes('exceeded')) {
-                              throw new Error("Cuota de almacenamiento excedida");
-                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
-                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
-                            } else if (error.message.includes('size')) {
-                              throw new Error("Archivo demasiado grande para el servidor");
-                            } else {
-                              throw new Error(`Error del servidor: ${error.message}`);
-                            }
-                          }
-                          
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('property-plans')
-                            .getPublicUrl(fileName);
-                          
-                          const newPlans = [...existingPlans];
-                          newPlans[0] = publicUrl;
-                          updateFormData("plans_url", newPlans);
-                          toast.success("✅ Plano 1 subido exitosamente");
-                        } catch (error: any) {
-                          console.error("Error uploading plan 1:", error);
-                          toast.error(`❌ Error subiendo Plano 1: ${error.message}`);
-                          e.target.value = "";
-                        }
-                      }}
-                      className="hidden"
-                    />
-                    <label htmlFor="plan1" className="cursor-pointer">
-                      <div className="text-2xl mb-2">📋</div>
-                      <div className="text-sm font-medium">Plano 1</div>
-                      <div className="text-xs text-muted-foreground">Máx 5MB</div>
-                    </label>
-                    {formData.plans_url?.[0] && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => {
-                          const newPlans = [...(formData.plans_url || [])];
-                          newPlans[0] = "";
-                          updateFormData("plans_url", newPlans.filter(Boolean));
-                          (document.getElementById("plan1") as HTMLInputElement).value = "";
-                          toast.success("🗑️ Plano 1 eliminado");
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
-                    <input
-                      id="plan2"
-                      type="file"
-                      accept=".pdf,image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
+                        updateFormData("plans_url", [publicUrl]);
+                        toast.success("✅ ARCHIVO SUBIDO: El archivo está disponible correctamente");
                         
-                        // Validar tamaño del archivo
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast.error(`❌ Archivo muy grande: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Máximo permitido: 5MB`);
-                          e.target.value = "";
-                          return;
+                      } catch (error: any) {
+                        console.error("Error uploading file:", error);
+                        toast.error(`❌ ERROR INESPERADO: ${error.message || "Error desconocido al subir"}`);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label htmlFor="single-plan" className="cursor-pointer">
+                    <div className="text-4xl mb-2">📋</div>
+                    <div className="text-lg font-medium mb-1">Subir Plano</div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      PDF, JPG o PNG - Máximo 10MB
+                    </div>
+                    <Button type="button" variant="outline" asChild>
+                      <span>
+                        {formData.plans_url && formData.plans_url.length > 0 && formData.plans_url[0]
+                          ? "🔄 Cambiar Archivo"
+                          : "📋 Seleccionar Archivo"
                         }
-                        
-                        // Validar tamaño total (ambos archivos no deben superar 10MB)
-                        const existingPlans = formData.plans_url || [];
-                        if (existingPlans.length > 0) {
-                          // Si ya hay un archivo, verificar que el total no supere 10MB
-                          const totalSize = file.size + (5 * 1024 * 1024); // Asumimos 5MB para el existente
-                          if (totalSize > 10 * 1024 * 1024) {
-                            toast.error("❌ Los dos archivos juntos superarían 10MB. Usa archivos más pequeños.");
-                            e.target.value = "";
-                            return;
-                          }
-                        }
-                        
-                        try {
-                          const fileExt = file.name.split('.').pop();
-                          const fileName = `plan2-${Date.now()}.${fileExt}`;
-                          
-                          toast.info("📤 Subiendo Plano 2...");
-                          
-                          const { data, error } = await supabase.storage
-                            .from('property-plans')
-                            .upload(fileName, file);
-                          
-                          if (error) {
-                            // Manejar diferentes tipos de errores
-                            if (error.message.includes('exceeded')) {
-                              throw new Error("Cuota de almacenamiento excedida");
-                            } else if (error.message.includes('network') || error.message.includes('fetch')) {
-                              throw new Error("Error de conexión a internet. Revisa tu conexión.");
-                            } else if (error.message.includes('size')) {
-                              throw new Error("Archivo demasiado grande para el servidor");
-                            } else {
-                              throw new Error(`Error del servidor: ${error.message}`);
-                            }
-                          }
-                          
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('property-plans')
-                            .getPublicUrl(fileName);
-                          
-                          const newPlans = [...existingPlans];
-                          newPlans[1] = publicUrl;
-                          updateFormData("plans_url", newPlans);
-                          toast.success("✅ Plano 2 subido exitosamente");
-                        } catch (error: any) {
-                          console.error("Error uploading plan 2:", error);
-                          toast.error(`❌ Error subiendo Plano 2: ${error.message}`);
-                          e.target.value = "";
-                        }
-                      }}
-                      className="hidden"
-                    />
-                    <label htmlFor="plan2" className="cursor-pointer">
-                      <div className="text-2xl mb-2">📋</div>
-                      <div className="text-sm font-medium">Plano 2</div>
-                      <div className="text-xs text-muted-foreground">Máx 5MB</div>
-                    </label>
-                    {formData.plans_url?.[1] && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => {
-                          const newPlans = [...(formData.plans_url || [])];
-                          newPlans[1] = "";
-                          updateFormData("plans_url", newPlans.filter(Boolean));
-                          (document.getElementById("plan2") as HTMLInputElement).value = "";
-                          toast.success("🗑️ Plano 2 eliminado");
-                        }}
-                      >
-                        🗑️ Eliminar
-                      </Button>
-                    )}
-                  </div>
+                      </span>
+                    </Button>
+                  </label>
                 </div>
-                <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg mt-4">
-                  📄 <strong>Formatos soportados:</strong> PDF, JPG, PNG | Subida rápida sin procesamiento adicional para máxima estabilidad
+                
+                <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
+                  📄 <strong>Un archivo por propiedad:</strong> Sube el plano más importante (máximo 10MB). 
+                  Si hay error, aparecerá mensaje específico para que sepas qué corregir.
                 </div>
               </div>
             </TabsContent>
