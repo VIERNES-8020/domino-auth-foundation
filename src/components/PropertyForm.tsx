@@ -316,7 +316,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       // Call onSubmit if provided
       if (onSubmit) {
-        await onSubmit(formData);
+        await Promise.resolve(onSubmit(formData));
         console.log("onSubmit completado exitosamente");
       } else {
         console.log("No onSubmit - simulando guardado");
@@ -364,11 +364,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       console.error("=== ERROR EN SUBMIT ===", error);
       console.error("Error completo:", error);
       toast.error("Error guardando propiedad: " + (error.message || "Error desconocido"));
-    } finally {
-      console.log("FINALIZANDO SUBMIT - Poniendo loading a false");
-      // Ensure loading is always set to false
-      setLoading(false);
     }
+    
+    // CRITICAL: Always set loading to false regardless of success or error
+    console.log("FINALIZANDO SUBMIT - Poniendo loading a false");
+    setLoading(false);
   };
 
   return (
