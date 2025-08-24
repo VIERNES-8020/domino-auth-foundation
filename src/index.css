@@ -139,4 +139,37 @@ All colors MUST be HSL.
   .amenity-button:hover {
     @apply border-primary text-primary;
   }
+
+  /* Property Card Image Styling - No white borders */
+  .property-image {
+    @apply object-cover transition-transform duration-300;
+    border: none !important;
+    outline: none !important;
+  }
+  
+  .property-image:focus {
+    outline: none !important;
+    border: none !important;
+  }
+
+  /* Watermark indicator styling */
+  .watermark-indicator {
+    @apply absolute bottom-1 right-1 bg-black/20 text-white text-xs px-2 py-1 rounded backdrop-blur-sm;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  /* Smooth image loading */
+  .loading-image {
+    @apply transition-opacity duration-300;
+  }
+
+  .loading-image.loaded {
+    @apply opacity-100;
+  }
+
+  .loading-image:not(.loaded) {
+    @apply opacity-0;
+  }
 }

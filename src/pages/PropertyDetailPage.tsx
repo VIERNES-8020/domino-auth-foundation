@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import WatermarkedImage from "@/components/WatermarkedImage";
 
 interface PropertyRow {
   id: string;
@@ -296,13 +297,10 @@ export default function PropertyDetailPage() {
                               <DialogTrigger asChild>
                                 <div className="relative cursor-pointer group/image">
                                   <AspectRatio ratio={16 / 10} className="rounded-xl overflow-hidden shadow-lg">
-                                    <img
+                                    <WatermarkedImage
                                       src={src || "/default-placeholder.jpg"}
                                       alt={`${property.title} - imagen ${idx + 1}`}
                                       className="h-full w-full object-cover transition-transform duration-300 group-hover/image:scale-105"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = '/default-placeholder.jpg';
-                                      }}
                                     />
                                     <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/20 transition-colors flex items-center justify-center">
                                       <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover/image:opacity-100 transition-opacity" />
@@ -342,16 +340,13 @@ export default function PropertyDetailPage() {
                   <div className="grid grid-cols-4 gap-3">
                     {images.slice(1, 5).map((src, idx) => (
                       <Dialog key={idx}>
-                        <DialogTrigger asChild>
-                          <div className="aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border-2 border-transparent hover:border-primary/50 transition-colors">
-                            <img
-                              src={src}
-                              alt={`Vista ${idx + 2}`}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/default-placeholder.jpg';
-                              }}
-                            />
+                         <DialogTrigger asChild>
+                           <div className="aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border-0 hover:shadow-md transition-all duration-300">
+                             <WatermarkedImage
+                               src={src}
+                               alt={`Vista ${idx + 2}`}
+                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                             />
                           </div>
                         </DialogTrigger>
                         <DialogContent className="max-w-4xl p-0">

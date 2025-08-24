@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, X, Image } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import WatermarkedImage from "@/components/WatermarkedImage";
 
 interface FileUploadProps {
   onFilesUploaded: (urls: string[]) => void;
@@ -71,9 +72,10 @@ export default function FileUpload({
         setUploadedFiles(prev => [...prev, { name: file.name, url: publicUrl }]);
       }
 
-      // Apply watermark to images if available
+      // Apply watermark to images automatically
       if (accept.includes('image')) {
         try {
+          console.log('Applying watermark to uploaded images...');
           const watermarkedUrls = await Promise.all(
             uploadedUrls.map(async (url) => {
               try {
@@ -82,13 +84,24 @@ export default function FileUpload({
                 });
                 
                 if (error) throw error;
+                
+                // Return watermarked URL if processing succeeded
                 return data?.watermarkedUrl || url;
               } catch (error) {
-                console.log('Watermark failed, using original:', error);
+                console.log('Watermark failed for image, using original:', error);
                 return url; // Fallback to original
               }
             })
           );
+          
+          // Update the uploaded files list with watermarked URLs
+          setUploadedFiles(prev => 
+            prev.map((file, index) => ({
+              ...file,
+              url: watermarkedUrls[watermarkedUrls.length - files.length + index] || file.url
+            }))
+          );
+          
           onFilesUploaded(watermarkedUrls);
         } catch (error) {
           console.error('Watermark processing failed:', error);
@@ -163,13 +176,15 @@ export default function FileUpload({
           <p className="text-sm font-medium">Archivos subidos:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 p-2 border rounded">
+              <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-card shadow-sm">
                 {accept.includes('image') && (
-                  <img
-                    src={file.url}
-                    alt={file.name}
-                    className="w-10 h-10 object-cover rounded"
-                  />
+                  <div className="w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                    <WatermarkedImage
+                      src={file.url}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{file.name}</p>

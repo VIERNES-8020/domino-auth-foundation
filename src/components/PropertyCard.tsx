@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, BedDouble, Bath, Ruler, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import WatermarkedImage from "@/components/WatermarkedImage";
 
 export interface PropertyCardProps {
   property: {
@@ -65,7 +66,7 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
 
 return (
   <Link id={`property-${property.id}`} to={`/propiedad/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
-    <Card key={property.id} className="relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border-2 border-transparent hover:border-primary/20 bg-gradient-to-br from-card to-card/80">
+    <Card key={property.id} className="relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-gradient-to-br from-card to-card/80 rounded-xl border-0">
       {onToggleFavorite && (
         <Button
           type="button"
@@ -84,18 +85,12 @@ return (
           {txLabel}
         </Badge>
       )}
-      <AspectRatio ratio={16 / 9}>
-        <img
+      <AspectRatio ratio={16 / 9} className="rounded-t-xl overflow-hidden">
+        <WatermarkedImage
           src={cover}
           alt={`Propiedad: ${property.title} — Inmobiliaria DOMINIO`}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
-          onError={(e) => {
-            const el = e.currentTarget as HTMLImageElement;
-            if (el.src !== window.location.origin + "/default-placeholder.jpg") {
-              el.src = "/default-placeholder.jpg";
-            }
-          }}
         />
         {/* Overlay de legibilidad y precio destacado */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
