@@ -125,6 +125,8 @@ export default function AuthForm() {
         .eq('id', session.user.id)
         .maybeSingle();
       
+      console.log("Datos del perfil:", profileData);
+      
       if (profileData?.is_super_admin === true) {
         console.log("Redirigiendo Super Admin a /admin/dashboard");
         navigate('/admin/dashboard');
@@ -143,12 +145,6 @@ export default function AuthForm() {
       if (roleData?.role === 'agent') {
         console.log("Redirigiendo Agente a /dashboard/agent");
         navigate('/dashboard/agent');
-        return;
-      }
-      
-      if (roleData?.role === 'super_admin') {
-        console.log("Redirigiendo Super Admin (por rol) a /admin/dashboard");
-        navigate('/admin/dashboard');
         return;
       }
       
