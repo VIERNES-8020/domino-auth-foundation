@@ -461,7 +461,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bedrooms">Dormitorios</Label>
+                  <Label htmlFor="bedrooms">
+                    {formData.property_type === 'local_comercial' || 
+                     formData.property_type === 'oficina' || 
+                     formData.property_type === 'terreno' ? 'Ambientes' : 'Dormitorios'}
+                  </Label>
                   <Input
                     id="bedrooms"
                     value={formData.bedrooms}
