@@ -72,43 +72,33 @@ export default function FileUpload({
         setUploadedFiles(prev => [...prev, { name: file.name, url: publicUrl }]);
       }
 
-      // Apply watermark to images automatically
+      // Always call onFilesUploaded with the uploaded URLs
+      onFilesUploaded(uploadedUrls);
+      
+      // Try to apply watermark to images in the background (optional enhancement)
       if (accept.includes('image')) {
         try {
-          console.log('Applying watermark to uploaded images...');
-          const watermarkedUrls = await Promise.all(
-            uploadedUrls.map(async (url) => {
-              try {
-                const { data, error } = await supabase.functions.invoke('watermark-images', {
-                  body: { imageUrl: url }
-                });
-                
-                if (error) throw error;
-                
-                // Return watermarked URL if processing succeeded
-                return data?.watermarkedUrl || url;
-              } catch (error) {
-                console.log('Watermark failed for image, using original:', error);
-                return url; // Fallback to original
+          console.log('Attempting to apply watermarks to images...');
+          // Process watermarks in background without blocking the upload
+          uploadedUrls.forEach(async (url, index) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('watermark-images', {
+                body: { imageUrl: url }
+              });
+              
+              if (!error && data?.watermarkedUrl) {
+                console.log(`Watermark applied successfully to image ${index + 1}`);
+                // Optionally update the display with watermarked version
+              } else {
+                console.log(`Watermark processing skipped for image ${index + 1}`);
               }
-            })
-          );
-          
-          // Update the uploaded files list with watermarked URLs
-          setUploadedFiles(prev => 
-            prev.map((file, index) => ({
-              ...file,
-              url: watermarkedUrls[watermarkedUrls.length - files.length + index] || file.url
-            }))
-          );
-          
-          onFilesUploaded(watermarkedUrls);
+            } catch (error) {
+              console.log(`Watermark failed for image ${index + 1}, original image preserved`);
+            }
+          });
         } catch (error) {
-          console.error('Watermark processing failed:', error);
-          onFilesUploaded(uploadedUrls); // Use original URLs if watermark fails
+          console.log('Watermark service unavailable, using original images');
         }
-      } else {
-        onFilesUploaded(uploadedUrls);
       }
 
       toast.success(`${files.length} archivo(s) subido(s) exitosamente`);

@@ -646,16 +646,55 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     </p>
                   </div>
                 </div>
+                
+                {/* Show existing images */}
+                {formData.image_urls && formData.image_urls.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Camera className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">
+                        {formData.image_urls.length} imagen(es) actual(es)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {formData.image_urls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={url} 
+                            alt={`Foto ${index + 1}`} 
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const newImages = formData.image_urls.filter((_, i) => i !== index);
+                              updateFormData("image_urls", newImages);
+                              toast.success("Imagen removida");
+                            }}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <FileUpload
                   onFilesUploaded={(urls) => {
                     console.log("Files uploaded:", urls);
-                    updateFormData("image_urls", urls);
+                    // Combine with existing images instead of replacing them
+                    updateFormData("image_urls", [...formData.image_urls, ...urls]);
+                    toast.success(`${urls.length} imagen(es) subidas exitosamente`);
                   }}
                   accept="image/*"
                   multiple={true}
                   maxFiles={10}
                   maxSize={5}
-                  label="📸 Seleccionar fotos"
+                  label="📸 Agregar más fotos"
                   bucket="property-images"
                 />
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg">
