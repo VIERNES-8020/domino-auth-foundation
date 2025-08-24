@@ -306,7 +306,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     }
   };
   
-  // Plans Upload System - Up to 3 independent files - FIXED VERSION
+  // Plans Upload System - COMPLETELY REWRITTEN - NO MORE 85% BUGS
   const handlePlanUpload = async (file: File, slotIndex: number) => {
     if (!file) return;
     
@@ -317,11 +317,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       return;
     }
     
-    // Initialize upload state
+    // Set uploading state immediately
     setPlansUploading(prev => ({ ...prev, [slotIndex]: true }));
     setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 0 }));
     
-    let progressInterval: NodeJS.Timeout | null = null;
+    console.log(`=== INICIO SUBIDA PLAN ${slotIndex + 1} ===`);
     
     try {
       const fileExt = file.name.split('.').pop()?.toLowerCase();
@@ -329,102 +329,91 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       
       toast.info(`📤 Subiendo archivo ${slotIndex + 1}...`);
       
-      // Robust progress simulation - goes to 90% then waits for real completion
-      let currentProgress = 0;
-      progressInterval = setInterval(() => {
-        currentProgress += 10;
-        if (currentProgress <= 90) {
-          setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: currentProgress }));
-        }
-      }, 200);
+      // SIMPLE PROGRESS: Start at 10%, then 50% during upload, 100% on success
+      setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 10 }));
       
-      // Actual upload
+      // Small delay to show initial progress
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 50 }));
+      
+      console.log(`Subiendo archivo: ${fileName}`);
+      
+      // ACTUAL UPLOAD - No intervals, no complications
       const { data, error } = await supabase.storage
         .from('property-plans')
         .upload(fileName, file);
       
-      // Clear progress interval immediately
-      if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-      }
-      
       if (error) {
-        console.error("Supabase upload error:", error);
-        
-        // Reset progress immediately on error
-        setPlansUploadProgress(prev => {
-          const newState = { ...prev };
-          delete newState[slotIndex];
-          return newState;
-        });
-        
-        // Handle specific errors
-        let errorMessage = "Error desconocido";
-        if (error.message.includes('exceeded') || error.message.includes('quota')) {
-          errorMessage = "CUOTA EXCEDIDA: El almacenamiento está lleno. Contacta al administrador.";
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = "SIN INTERNET: Revisa tu conexión a internet y vuelve a intentar.";
-        } else if (error.message.includes('size')) {
-          errorMessage = "ARCHIVO GRANDE: El archivo es demasiado pesado para el servidor. Comprímelo.";
-        } else {
-          errorMessage = `ERROR DE SERVIDOR: ${error.message}`;
-        }
-        
-        toast.error(`❌ ${errorMessage}`);
-        return; // Exit early on error, finally block will clean up
+        console.error("Upload error:", error);
+        throw new Error(error.message);
       }
       
-      // SUCCESS: Complete progress to 100%
-      setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 100 }));
+      console.log("Upload successful:", data);
+      
+      // Progress to 90%
+      setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 90 }));
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('property-plans')
         .getPublicUrl(fileName);
       
+      console.log("Public URL obtained:", publicUrl);
+      
+      // Progress to 100%
+      setPlansUploadProgress(prev => ({ ...prev, [slotIndex]: 100 }));
+      
       // Update form data
       const currentPlans = [...(formData.plans_url || [])];
+      while (currentPlans.length <= slotIndex) {
+        currentPlans.push("");
+      }
       currentPlans[slotIndex] = publicUrl;
       updateFormData("plans_url", currentPlans);
       
-      toast.success(`✅ ARCHIVO ${slotIndex + 1} SUBIDO: El archivo está disponible correctamente`);
+      console.log("Form data updated successfully");
       
-      // Clear progress after success (keep it visible for 1.5 seconds)
+      toast.success(`✅ ARCHIVO ${slotIndex + 1} SUBIDO EXITOSAMENTE`);
+      
+      // Keep progress visible for 2 seconds, then clear
       setTimeout(() => {
         setPlansUploadProgress(prev => {
           const newState = { ...prev };
           delete newState[slotIndex];
           return newState;
         });
-      }, 1500);
+        console.log(`Progress cleared for slot ${slotIndex + 1}`);
+      }, 2000);
       
     } catch (error: any) {
-      console.error("Unexpected error uploading plan:", error);
+      console.error(`=== ERROR SUBIDA PLAN ${slotIndex + 1} ===`, error);
       
-      // Clear progress interval if still running
-      if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-      }
-      
-      // Reset progress on catch
+      // Clear progress on error
       setPlansUploadProgress(prev => {
         const newState = { ...prev };
         delete newState[slotIndex];
         return newState;
       });
       
-      toast.error(`❌ ERROR INESPERADO: ${error.message || "Error desconocido al subir"}`);
+      // Specific error handling
+      let errorMessage = "Error desconocido";
+      if (error.message?.includes('exceeded') || error.message?.includes('quota')) {
+        errorMessage = "CUOTA EXCEDIDA: El almacenamiento está lleno.";
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "SIN INTERNET: Revisa tu conexión y reintenta.";
+      } else if (error.message?.includes('size') || error.message?.includes('large')) {
+        errorMessage = "ARCHIVO MUY GRANDE: Comprime el archivo.";
+      } else {
+        errorMessage = error.message || "Error inesperado al subir";
+      }
+      
+      toast.error(`❌ ${errorMessage}`);
       
     } finally {
-      // ALWAYS clean up upload state
+      // ALWAYS clear uploading state
       setPlansUploading(prev => ({ ...prev, [slotIndex]: false }));
-      
-      // Ensure progress interval is cleared
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
+      console.log(`=== FIN SUBIDA PLAN ${slotIndex + 1} ===`);
     }
   };
   
