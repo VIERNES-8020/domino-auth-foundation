@@ -522,7 +522,7 @@ export default function PropertyDetailPage() {
                             <DialogTrigger asChild>
                               <div className="cursor-pointer group">
                                 <AspectRatio ratio={4 / 3} className="rounded-lg overflow-hidden border">
-                                  <img
+                                  <WatermarkedImage
                                     src={planUrl}
                                     alt={`Plano ${index + 1}`}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
@@ -534,7 +534,7 @@ export default function PropertyDetailPage() {
                               </div>
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl p-0">
-                              <img
+                              <WatermarkedImage
                                 src={planUrl}
                                 alt={`Plano ${index + 1} ampliado`}
                                 className="w-full h-auto max-h-[80vh] object-contain rounded-lg"

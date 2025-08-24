@@ -94,23 +94,49 @@ export default function WatermarkedImage({
         {...props}
       />
       {isProcessing && (
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-50">
           <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-medium text-gray-800">
             Procesando marca de agua...
           </div>
         </div>
       )}
       {/* DOMIN10.COM watermark overlay - ALWAYS visible */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-        <div className="text-white/60 text-2xl font-bold tracking-wider transform rotate-0 drop-shadow-lg">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+        <div 
+          className="text-white font-bold tracking-wider transform rotate-0 select-none"
+          style={{
+            fontSize: 'clamp(1rem, 4vw, 2.5rem)',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.7), -1px -1px 2px rgba(0,0,0,0.5)',
+            color: 'rgba(255, 255, 255, 0.65)',
+            letterSpacing: '0.2em'
+          }}
+        >
           DOMIN10.COM
         </div>
       </div>
       {/* Corner watermark indicators */}
-      <div className="absolute top-2 left-2 text-white/40 text-xs font-medium tracking-wide drop-shadow-md pointer-events-none z-20">
+      <div 
+        className="absolute top-2 left-2 pointer-events-none z-30 select-none"
+        style={{
+          color: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '0.6rem',
+          fontWeight: '600',
+          letterSpacing: '0.1em',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+        }}
+      >
         DOMIN10.COM
       </div>
-      <div className="absolute bottom-2 right-2 text-white/40 text-xs font-medium tracking-wide drop-shadow-md pointer-events-none z-20">
+      <div 
+        className="absolute bottom-2 right-2 pointer-events-none z-30 select-none"
+        style={{
+          color: 'rgba(255, 255, 255, 0.5)',
+          fontSize: '0.6rem',
+          fontWeight: '600',
+          letterSpacing: '0.1em',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+        }}
+      >
         DOMIN10.COM
       </div>
     </div>

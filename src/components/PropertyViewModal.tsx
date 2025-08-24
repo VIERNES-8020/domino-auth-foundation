@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { X, MapPin, Bed, Bath, Ruler } from "lucide-react";
+import WatermarkedImage from "@/components/WatermarkedImage";
 
 interface Property {
   id: string;
@@ -55,7 +56,7 @@ export default function PropertyViewModal({ property, isOpen, onClose }: Propert
                 {images.map((url, index) => (
                   <CarouselItem key={index}>
                     <div className="aspect-video overflow-hidden rounded-lg">
-                      <img
+                      <WatermarkedImage
                         src={url}
                         alt={`${property.title} - imagen ${index + 1}`}
                         className="w-full h-full object-cover"
