@@ -50,8 +50,11 @@ const availableFeatures = [
 export default function PropertyForm({ onClose, onSubmit, initialData }: PropertyFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [formSubmitting, setFormSubmitting] = useState(false);
-  const [planUploading, setPlanUploading] = useState(false);
+  // Plan uploading removed - using simple FileUpload component instead
   const [videoUploading, setVideoUploading] = useState(false);
+  const [videoUploadTimeout, setVideoUploadTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [videoTimer, setVideoTimer] = useState(0);
+  const [videoTimerInterval, setVideoTimerInterval] = useState<NodeJS.Timeout | null>(null);
   const [customAmenities, setCustomAmenities] = useState<string[]>([]);
   const [newAmenity, setNewAmenity] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -137,11 +140,20 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     
     setVideoUploading(true);
     
-    // Create timeout to prevent hanging
+    // Start visual timer
+    setVideoTimer(0);
+    const timerInterval = setInterval(() => {
+      setVideoTimer(prev => prev + 1);
+    }, 1000);
+    setVideoTimerInterval(timerInterval);
+
     const uploadTimeout = setTimeout(() => {
       setVideoUploading(false);
+      setVideoTimer(0);
+      if (timerInterval) clearInterval(timerInterval);
       toast.error("Timeout en subida de video. Intenta con un archivo más pequeño.");
     }, 60000); // 60 seconds timeout
+    setVideoUploadTimeout(uploadTimeout);
     
     try {
       console.log("=== VIDEO UPLOAD STARTED ===");
@@ -161,6 +173,9 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
         .getPublicUrl(fileName);
       
       updateFormData("video_url", publicUrl);
+      setVideoTimer(0);
+      if (videoUploadTimeout) clearTimeout(videoUploadTimeout);
+      if (videoTimerInterval) clearInterval(videoTimerInterval);
       toast.success("✅ Video subido exitosamente");
       console.log("=== VIDEO UPLOAD SUCCESS ===");
       
@@ -168,71 +183,17 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       e.target.value = "";
     } catch (error: any) {
       console.error("=== VIDEO UPLOAD ERROR ===", error);
+      setVideoTimer(0);
+      if (videoUploadTimeout) clearTimeout(videoUploadTimeout);
+      if (videoTimerInterval) clearInterval(videoTimerInterval);
       toast.error("Error subiendo video: " + error.message);
     } finally {
-      clearTimeout(uploadTimeout);
       setVideoUploading(false);
       console.log("=== VIDEO UPLOAD FINISHED ===");
     }
   };
 
-  // Enhanced plans upload with AURA assistance and independent loading state  
-  const handlePlansUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    setPlanUploading(true);
-    
-    // Create timeout to prevent hanging - this is critical for AURA processing
-    const uploadTimeout = setTimeout(() => {
-      setPlanUploading(false);
-      toast.error("Timeout en procesamiento AURA. Los archivos pueden ser demasiado grandes.");
-    }, 90000); // 90 seconds timeout for AURA processing
-    
-    try {
-      console.log("=== AURA PLANS UPLOAD STARTED ===");
-      toast.success("AURA está procesando los planos...");
-      
-      const uploadPromises = Array.from(files).map(async (file, index) => {
-        console.log(`Processing file ${index + 1}/${files.length}:`, file.name);
-        
-        const fileExt = file.name.split('.').pop()?.toLowerCase();
-        const fileName = `plan-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        const { data, error } = await supabase.storage
-          .from('property-plans')
-          .upload(fileName, file);
-        
-        if (error) {
-          console.error(`Error uploading file ${file.name}:`, error);
-          throw error;
-        }
-        
-        // Get public URL correctly
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-plans')
-          .getPublicUrl(fileName);
-          
-        console.log(`File ${index + 1} uploaded successfully:`, publicUrl);
-        return publicUrl;
-      });
-      
-      const urls = await Promise.all(uploadPromises);
-      updateFormData("plans_url", [...formData.plans_url, ...urls]);
-      toast.success(`✅ ${files.length} plano(s) organizados por AURA exitosamente`);
-      console.log("=== AURA PLANS UPLOAD SUCCESS ===");
-      
-      // Clear the input after successful upload
-      e.target.value = "";
-    } catch (error: any) {
-      console.error("=== AURA PLANS UPLOAD ERROR ===", error);
-      toast.error("Error subiendo planos: " + error.message);
-    } finally {
-      clearTimeout(uploadTimeout);
-      setPlanUploading(false);
-      console.log("=== AURA PLANS UPLOAD FINISHED ===");
-    }
-  };
+  // Enhanced plans upload removed - using simple FileUpload component
 
   // Add custom amenity
   const addCustomAmenity = () => {
@@ -788,11 +749,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                       className="hidden"
                       id="video-upload"
                     />
-                    <label htmlFor="video-upload">
+                     <label htmlFor="video-upload">
                      <Button type="button" variant="outline" asChild>
                        <span className="flex items-center gap-2">
                          <Video className="h-4 w-4" />
-                         {videoUploading ? "Subiendo..." : "📹 Subir Video"}
+                         {videoUploading ? `Subiendo... ${videoTimer}s` : "📹 Subir Video"}
                        </span>
                      </Button>
                     </label>
@@ -829,14 +790,14 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                 </div>
               </div>
 
-              {/* Property Plans with AURA */}
+              {/* Property Plans - Simple Upload */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary" />
                   <div>
                     <Label className="text-base font-medium">Planos de la Propiedad</Label>
                     <p className="text-sm text-muted-foreground">
-                      AURA organiza y optimiza tus planos arquitectónicos automáticamente
+                      Sube planos arquitectónicos (PDF o imágenes) - Máximo 5 archivos, 10MB cada uno
                     </p>
                   </div>
                 </div>
@@ -877,21 +838,20 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   onFilesUploaded={(urls) => {
                     console.log("Plans uploaded:", urls);
                     if (urls && urls.length > 0) {
-                      // Combine with existing plans instead of replacing them
                       const existingPlans = formData.plans_url || [];
                       updateFormData("plans_url", [...existingPlans, ...urls]);
-                      toast.success(`✅ ${urls.length} plano(s) organizados por AURA exitosamente`);
+                      toast.success(`✅ ${urls.length} plano(s) subidos exitosamente`);
                     }
                   }}
                   accept=".pdf,image/*"
                   multiple={true}
                   maxFiles={5}
                   maxSize={10}
-                  label="📋 AURA Organizar Planos"
+                  label="📋 Subir Planos"
                   bucket="property-plans"
                 />
-                <div className="text-xs text-muted-foreground bg-green-50 p-3 rounded-lg mt-4">
-                  🤖 <strong>AURA asistente:</strong> Detecta automáticamente el tipo de plano, optimiza formato y organiza por categorías (planta baja, planta alta, etc.)
+                <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg mt-4">
+                  📄 <strong>Formatos soportados:</strong> PDF, JPG, PNG | Subida rápida sin procesamiento adicional para máxima estabilidad
                 </div>
               </div>
             </TabsContent>
@@ -903,13 +863,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={formSubmitting || planUploading || videoUploading || generatingDescription}>
+            <Button type="submit" disabled={formSubmitting || videoUploading || generatingDescription}>
               {formSubmitting 
                 ? "Guardando..." 
-                : planUploading 
-                ? "AURA procesando planos..." 
                 : videoUploading
-                ? "Subiendo video..."
+                ? `Subiendo video... (${videoTimer}s)`
                 : generatingDescription
                 ? "AURA generando descripción..."
                 : "Guardar Propiedad"
