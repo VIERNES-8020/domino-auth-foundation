@@ -834,32 +834,26 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                   </div>
                 )}
                 
-                {/* Simple Direct Upload for Plans */}
-                <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    accept=".pdf,image/*"
-                    multiple
-                    onChange={async (e) => {
-                      const files = Array.from(e.target.files || []);
-                      if (files.length === 0) return;
-                      
-                      if (files.length > 5) {
-                        toast.error("Máximo 5 archivos permitidos");
-                        return;
-                      }
-                      
-                      for (const file of files) {
-                        if (file.size > 10 * 1024 * 1024) { // 10MB
-                          toast.error(`Archivo ${file.name} es muy grande (máximo 10MB)`);
+                {/* Botones individuales para subir planos */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
+                    <input
+                      id="plan1"
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        if (file.size > 5 * 1024 * 1024) { // 5MB max per file
+                          toast.error("Archivo muy grande (máximo 5MB)");
+                          e.target.value = "";
                           return;
                         }
-                      }
-                      
-                      try {
-                        const uploadPromises = files.map(async (file) => {
+                        
+                        try {
                           const fileExt = file.name.split('.').pop();
-                          const fileName = `plan-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+                          const fileName = `plan1-${Date.now()}.${fileExt}`;
                           
                           const { data, error } = await supabase.storage
                             .from('property-plans')
@@ -871,24 +865,106 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                             .from('property-plans')
                             .getPublicUrl(fileName);
                           
-                          return publicUrl;
-                        });
+                          const existingPlans = formData.plans_url || [];
+                          const newPlans = [...existingPlans];
+                          newPlans[0] = publicUrl;
+                          updateFormData("plans_url", newPlans);
+                          toast.success("✅ Plano 1 subido");
+                        } catch (error: any) {
+                          toast.error("Error: " + error.message);
+                          e.target.value = "";
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="plan1" className="cursor-pointer">
+                      <div className="text-2xl mb-2">📋</div>
+                      <div className="text-sm font-medium">Plano 1</div>
+                      <div className="text-xs text-muted-foreground">Máx 5MB</div>
+                    </label>
+                    {formData.plans_url?.[0] && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          const newPlans = [...(formData.plans_url || [])];
+                          newPlans[0] = "";
+                          updateFormData("plans_url", newPlans.filter(Boolean));
+                          (document.getElementById("plan1") as HTMLInputElement).value = "";
+                          toast.success("Plano 1 eliminado");
+                        }}
+                      >
+                        🗑️ Eliminar
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
+                    <input
+                      id="plan2"
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
                         
-                        const urls = await Promise.all(uploadPromises);
-                        const existingPlans = formData.plans_url || [];
-                        updateFormData("plans_url", [...existingPlans, ...urls]);
-                        toast.success(`✅ ${urls.length} plano(s) subidos exitosamente`);
-                        e.target.value = ""; // Clear input
-                      } catch (error: any) {
-                        console.error("Error uploading plans:", error);
-                        toast.error("Error subiendo planos: " + error.message);
-                      }
-                    }}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    📋 Subir Planos - Máximo 5 archivos de 10MB cada uno
-                  </p>
+                        if (file.size > 5 * 1024 * 1024) { // 5MB max per file
+                          toast.error("Archivo muy grande (máximo 5MB)");
+                          e.target.value = "";
+                          return;
+                        }
+                        
+                        try {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `plan2-${Date.now()}.${fileExt}`;
+                          
+                          const { data, error } = await supabase.storage
+                            .from('property-plans')
+                            .upload(fileName, file);
+                          
+                          if (error) throw error;
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('property-plans')
+                            .getPublicUrl(fileName);
+                          
+                          const existingPlans = formData.plans_url || [];
+                          const newPlans = [...existingPlans];
+                          newPlans[1] = publicUrl;
+                          updateFormData("plans_url", newPlans);
+                          toast.success("✅ Plano 2 subido");
+                        } catch (error: any) {
+                          toast.error("Error: " + error.message);
+                          e.target.value = "";
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label htmlFor="plan2" className="cursor-pointer">
+                      <div className="text-2xl mb-2">📋</div>
+                      <div className="text-sm font-medium">Plano 2</div>
+                      <div className="text-xs text-muted-foreground">Máx 5MB</div>
+                    </label>
+                    {formData.plans_url?.[1] && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          const newPlans = [...(formData.plans_url || [])];
+                          newPlans[1] = "";
+                          updateFormData("plans_url", newPlans.filter(Boolean));
+                          (document.getElementById("plan2") as HTMLInputElement).value = "";
+                          toast.success("Plano 2 eliminado");
+                        }}
+                      >
+                        🗑️ Eliminar
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground bg-blue-50 p-3 rounded-lg mt-4">
                   📄 <strong>Formatos soportados:</strong> PDF, JPG, PNG | Subida rápida sin procesamiento adicional para máxima estabilidad
@@ -898,33 +974,50 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
           </Tabs>
 
           <div className="flex justify-end space-x-4 pt-6 border-t">
-            {onClose && (
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-            )}
-            <Button 
-              type="submit" 
-              disabled={formSubmitting || videoUploading || generatingDescription}
-              onClick={(e) => {
-                // Force reset states before submit to prevent hanging
-                if (formSubmitting && !videoUploading && !generatingDescription) {
-                  e.preventDefault();
+            <div className="flex gap-2">
+              {onClose && (
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+              )}
+              
+              <Button 
+                type="button" 
+                variant="secondary"
+                onClick={() => {
+                  // Reset all loading states
                   setFormSubmitting(false);
-                  toast.error("Resetendo estado. Intenta guardar de nuevo.");
-                  return;
+                  setVideoUploading(false);
+                  setGeneratingDescription(false);
+                  toast.success("Estados reseteados. Puedes continuar.");
+                }}
+              >
+                🔄 Actualizar
+              </Button>
+              
+              <Button 
+                type="submit" 
+                disabled={formSubmitting || videoUploading || generatingDescription}
+                onClick={(e) => {
+                  // Force reset if hanging
+                  if (formSubmitting && !videoUploading && !generatingDescription) {
+                    e.preventDefault();
+                    setFormSubmitting(false);
+                    toast.error("Reseteando estado. Intenta de nuevo.");
+                    return;
+                  }
+                }}
+              >
+                {formSubmitting 
+                  ? "Guardando..." 
+                  : videoUploading
+                  ? `Subiendo video... (${videoTimer}s)`
+                  : generatingDescription
+                  ? "AURA generando descripción..."
+                  : "Guardar Propiedad"
                 }
-              }}
-            >
-              {formSubmitting 
-                ? "Guardando..." 
-                : videoUploading
-                ? `Subiendo video... (${videoTimer}s)`
-                : generatingDescription
-                ? "AURA generando descripción..."
-                : "Guardar Propiedad"
-              }
-            </Button>
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>
