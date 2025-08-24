@@ -304,7 +304,6 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     if (!validateForm()) {
       console.log("VALIDACION FALLIDA");
       toast.error("Complete todos los campos obligatorios marcados para continuar");
-      setLoading(false);
       return;
     }
     
