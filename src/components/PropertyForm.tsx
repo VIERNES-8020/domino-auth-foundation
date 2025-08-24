@@ -397,6 +397,18 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     toast.success(`🗑️ Archivo ${slotIndex + 1} eliminado`);
   };
 
+  // Cancel plan upload
+  const cancelPlanUpload = (slotIndex: number) => {
+    setPlansUploading(prev => ({ ...prev, [slotIndex]: false }));
+    setPlansUploadProgress(prev => {
+      const newState = { ...prev };
+      delete newState[slotIndex];
+      return newState;
+    });
+    
+    toast.info(`❌ Subida cancelada para archivo ${slotIndex + 1}`);
+  };
+
   // Add custom amenity
   const addCustomAmenity = () => {
     if (newAmenity.trim() && !formData.features.includes(newAmenity.trim())) {
@@ -1084,9 +1096,20 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                       {isUploading && (
                         <div className="bg-blue-50 p-3 rounded-lg border">
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-600" />
-                              <span className="text-sm font-medium text-blue-800">📤 Subiendo archivo {slotIndex + 1}...</span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm font-medium text-blue-800">📤 Subiendo archivo {slotIndex + 1}...</span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => cancelPlanUpload(slotIndex)}
+                                className="h-6 w-6 p-0"
+                              >
+                                ✕
+                              </Button>
                             </div>
                             <div className="w-full bg-blue-200 rounded-full h-2">
                               <div 
