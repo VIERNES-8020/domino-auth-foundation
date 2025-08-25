@@ -43,6 +43,7 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
   const [visits, setVisits] = useState<PropertyVisit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVisit, setSelectedVisit] = useState<PropertyVisit | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [saleData, setSaleData] = useState({
     saleAmount: '',
     commissionPercentage: '',
@@ -185,7 +186,9 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
     color, 
     bgColor,
     subtitle,
-    details
+    details,
+    filterKey,
+    isActive
   }: {
     icon: any;
     title: string;
@@ -194,8 +197,15 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
     bgColor: string;
     subtitle?: string;
     details?: React.ReactNode;
+    filterKey: string;
+    isActive: boolean;
   }) => (
-    <Card className={`${bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden`}>
+    <Card 
+      className={`${bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden cursor-pointer ${
+        isActive ? 'ring-2 ring-primary ring-offset-2 scale-105' : ''
+      }`}
+      onClick={() => setActiveFilter(activeFilter === filterKey ? null : filterKey)}
+    >
       <div className={`absolute top-0 right-0 w-24 h-24 ${color} opacity-10 rounded-full -mr-8 -mt-8`}></div>
       <CardContent className="p-6 relative">
         <div className="flex items-start justify-between mb-4">
@@ -212,6 +222,11 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
           {subtitle && <p className="text-xs text-muted-foreground mb-2">{subtitle}</p>}
           {details && <div className="mt-3">{details}</div>}
         </div>
+        {isActive && (
+          <div className="absolute bottom-2 right-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -418,6 +433,8 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
           color="bg-amber-500"
           bgColor="bg-gradient-to-br from-amber-50 to-yellow-50"
           subtitle="Esperando confirmación"
+          filterKey="pending"
+          isActive={activeFilter === 'pending'}
         />
 
         <StatCard
@@ -427,6 +444,8 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
           color="bg-blue-500"
           bgColor="bg-gradient-to-br from-blue-50 to-indigo-50"
           subtitle="Listas para realizar"
+          filterKey="confirmed"
+          isActive={activeFilter === 'confirmed'}
         />
 
         <StatCard
@@ -436,6 +455,8 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
           color="bg-orange-500"
           bgColor="bg-gradient-to-br from-orange-50 to-red-50"
           subtitle="Esperando resultado"
+          filterKey="completed"
+          isActive={activeFilter === 'completed'}
         />
 
         <StatCard
@@ -445,6 +466,8 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
           color="bg-emerald-500"
           bgColor="bg-gradient-to-br from-emerald-50 to-green-50"
           subtitle="Transacciones completadas"
+          filterKey="successful"
+          isActive={activeFilter === 'successful'}
           details={
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center">
@@ -470,16 +493,81 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
         />
       </div>
 
-      {/* Active Appointments Management */}
-      {(stats.pending > 0 || stats.confirmed > 0 || stats.completed > 0) && (
+      {/* Filtered Content Based on Active Filter */}
+      {activeFilter && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                {activeFilter === 'pending' && <Clock className="w-4 h-4 text-amber-600" />}
+                {activeFilter === 'confirmed' && <CheckCircle className="w-4 h-4 text-blue-600" />}
+                {activeFilter === 'completed' && <Eye className="w-4 h-4 text-orange-600" />}
+                {activeFilter === 'successful' && <DollarSign className="w-4 h-4 text-green-600" />}
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">
+                {activeFilter === 'pending' && 'Citas Pendientes - Desglose Detallado'}
+                {activeFilter === 'confirmed' && 'Citas Confirmadas - Desglose Detallado'}
+                {activeFilter === 'completed' && 'Visitas Realizadas - Desglose Detallado'}
+                {activeFilter === 'successful' && 'Ventas Exitosas - Desglose Detallado'}
+              </h3>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setActiveFilter(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Cerrar
+            </Button>
+          </div>
+
+          <div className="grid gap-4">
+            {visits
+              .filter(v => {
+                if (activeFilter === 'pending') return v.status === 'pending';
+                if (activeFilter === 'confirmed') return v.status === 'confirmed';
+                if (activeFilter === 'completed') return v.status === 'completed';
+                if (activeFilter === 'successful') return v.status === 'successful';
+                return false;
+              })
+              .map(visit => (
+                <VisitCard key={visit.id} visit={visit} />
+              ))}
+            
+            {visits.filter(v => {
+              if (activeFilter === 'pending') return v.status === 'pending';
+              if (activeFilter === 'confirmed') return v.status === 'confirmed';
+              if (activeFilter === 'completed') return v.status === 'completed';
+              if (activeFilter === 'successful') return v.status === 'successful';
+              return false;
+            }).length === 0 && (
+              <Card className="p-8 text-center">
+                <div className="text-muted-foreground">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium mb-2">No hay datos disponibles</p>
+                  <p className="text-sm">
+                    {activeFilter === 'pending' && 'No tienes citas pendientes en este momento.'}
+                    {activeFilter === 'confirmed' && 'No tienes citas confirmadas en este momento.'}
+                    {activeFilter === 'completed' && 'No tienes visitas realizadas en este momento.'}
+                    {activeFilter === 'successful' && 'No tienes ventas exitosas registradas.'}
+                  </p>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Show all appointments when no filter is active */}
+      {!activeFilter && (stats.pending > 0 || stats.confirmed > 0 || stats.completed > 0) && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
               <Calendar className="w-4 h-4 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">Citas Programadas</h3>
+            <h3 className="text-lg font-semibold text-foreground">Todas las Citas Programadas</h3>
             <div className="text-sm text-muted-foreground">
-              Gestiona las visitas a tus propiedades solicitadas por clientes
+              Haz clic en las tarjetas de arriba para filtrar por estado
             </div>
           </div>
 
@@ -503,7 +591,7 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
       )}
 
       {/* Successful Sales History */}
-      {stats.successful > 0 && (
+      {!activeFilter && stats.successful > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded-md bg-green-100 flex items-center justify-center">
