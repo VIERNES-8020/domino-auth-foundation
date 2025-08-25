@@ -370,14 +370,14 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 <div className="md:col-span-2">
                   <Label>Departamento</Label>
                   <Select value={selectedDepartment} onValueChange={(value) => {
-                    setSelectedDepartment(value);
+                    setSelectedDepartment(value === "all" ? "" : value);
                     setSelectedProvince(""); // Reset province when department changes
                   }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los departamentos</SelectItem>
+                      <SelectItem value="all">Todos los departamentos</SelectItem>
                       {boliviaDepartments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
@@ -390,8 +390,8 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 <div className="md:col-span-2">
                   <Label>Provincia</Label>
                   <Select 
-                    value={selectedProvince} 
-                    onValueChange={setSelectedProvince}
+                    value={selectedProvince || "all"} 
+                    onValueChange={(value) => setSelectedProvince(value === "all" ? "" : value)}
                     disabled={!selectedDepartment}
                   >
                     <SelectTrigger>
@@ -400,7 +400,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas las provincias</SelectItem>
+                      <SelectItem value="all">Todas las provincias</SelectItem>
                       {selectedDepartment && 
                         boliviaDepartments
                           .find(d => d.id === selectedDepartment)
