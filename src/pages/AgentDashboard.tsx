@@ -446,11 +446,22 @@ export default function AgentDashboard() {
             <div className="relative p-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-pulse"></div>
-                    <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
-                      Panel de Agente
-                    </h1>
+                  <div className="flex items-center gap-4">
+                    {profile?.avatar_url && (
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Foto de perfil"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-pulse"></div>
+                      <h1 className="text-3xl lg:text-4xl font-bold text-primary">
+                        Panel de Agente
+                      </h1>
+                    </div>
                   </div>
                   {profile && (
                     <div className="space-y-2">
