@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import PropertyTypeStats from "@/components/PropertyTypeStats";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   LayoutDashboard, 
   Users, 
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState("30");
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
     fetchAllData();
@@ -210,6 +212,45 @@ export default function AdminDashboard() {
     } catch (error: any) {
       toast.error('Error actualizando Super Admin: ' + error.message);
     }
+  };
+
+  const handlePropertyTypeFilter = (type: string, status: 'all' | 'active' | 'concluded') => {
+    setPropertyTypeFilter({ type, status });
+  };
+
+  const getFilteredProperties = () => {
+    let filtered = properties;
+    
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(property => 
+        property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        property.address?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply status filter
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(property => property.status === selectedStatus);
+    }
+    
+    // Apply property type filter if active
+    if (propertyTypeFilter) {
+      // Filter by property type
+      filtered = filtered.filter(p => 
+        p.property_type?.toLowerCase() === propertyTypeFilter.type.toLowerCase()
+      );
+      
+      // Filter by status (active vs concluded)
+      if (propertyTypeFilter.status === 'active') {
+        filtered = filtered.filter(p => !p.concluded_status);
+      } else if (propertyTypeFilter.status === 'concluded') {
+        filtered = filtered.filter(p => p.concluded_status);
+      }
+      // 'all' doesn't need additional filtering
+    }
+    
+    return filtered;
   };
 
   const signOut = async () => {
@@ -553,6 +594,12 @@ export default function AdminDashboard() {
 
             {/* Properties Management Tab */}
             <TabsContent value="propiedades" className="space-y-6 mt-6">
+              {/* Property Type Statistics */}
+              <PropertyTypeStats 
+                properties={properties}
+                onFilterChange={handlePropertyTypeFilter}
+              />
+              
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1">
                   <div className="relative">
@@ -580,14 +627,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {properties
-                  .filter(property => {
-                    const matchesSearch = property.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                        property.address?.toLowerCase().includes(searchTerm.toLowerCase());
-                    const matchesStatus = selectedStatus === 'all' || property.status === selectedStatus;
-                    return matchesSearch && matchesStatus;
-                  })
-                  .map((property) => (
+                {getFilteredProperties().map((property) => (
                     <Card key={property.id} className="shadow-lg hover:shadow-xl transition-all duration-300 group">
                       <div className="relative">
                         {property.image_urls && property.image_urls[0] && (
