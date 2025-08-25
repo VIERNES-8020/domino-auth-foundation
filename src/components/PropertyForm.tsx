@@ -12,6 +12,7 @@ import MapPicker from "@/components/MapPicker";
 import { toast } from "sonner";
 import { Home, MapPin, Camera, Settings, Upload, FileText, Video, Sparkles, Plus, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { boliviaDepartments } from "@/data/bolivia-locations";
 
 const supabaseUrl = "https://rzsailqcijraplggryyy.supabase.co";
 
@@ -67,6 +68,11 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  
+  // Location selection states
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedZone, setSelectedZone] = useState("");
   
   const [formData, setFormData] = useState<PropertyFormData>({
     title: initialData?.title || "",
@@ -933,14 +939,119 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
             </TabsContent>
 
             <TabsContent value="ubicacion" className="space-y-6">
+              {/* Department, Province, Zone Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Departamento</Label>
+                  <Select value={selectedDepartment || "all"} onValueChange={(value) => {
+                    const newDept = value === "all" ? "" : value;
+                    setSelectedDepartment(newDept);
+                    setSelectedProvince(""); // Reset province when department changes
+                    setSelectedZone(""); // Reset zone when department changes
+                    
+                    // Update address with department
+                    if (newDept) {
+                      const dept = boliviaDepartments.find(d => d.id === newDept);
+                      if (dept) {
+                        const currentAddress = formData.address.replace(/,\s*\w+\s*$/g, ''); // Remove existing department
+                        updateFormData("address", `${currentAddress}, ${dept.name}`.replace(/^,\s*/, ''));
+                      }
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Seleccionar departamento</SelectItem>
+                      {boliviaDepartments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Provincia</Label>
+                  <Select 
+                    value={selectedProvince || "all"} 
+                    onValueChange={(value) => {
+                      const newProv = value === "all" ? "" : value;
+                      setSelectedProvince(newProv);
+                      setSelectedZone(""); // Reset zone when province changes
+                      
+                      // Update address with province
+                      if (newProv && selectedDepartment) {
+                        const dept = boliviaDepartments.find(d => d.id === selectedDepartment);
+                        const province = dept?.provinces.find(p => p.id === newProv);
+                        if (province) {
+                          const baseAddress = formData.address.split(',')[0] || '';
+                          updateFormData("address", `${baseAddress}, ${province.name}, ${dept?.name}`.replace(/^,\s*/, ''));
+                        }
+                      }
+                    }}
+                    disabled={!selectedDepartment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue 
+                        placeholder={selectedDepartment ? "Selecciona provincia" : "Primero elige departamento"} 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Seleccionar provincia</SelectItem>
+                      {selectedDepartment && 
+                        boliviaDepartments
+                          .find(d => d.id === selectedDepartment)
+                          ?.provinces.map((province) => (
+                            <SelectItem key={province.id} value={province.id}>
+                              {province.name}
+                            </SelectItem>
+                          ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Zona específica</Label>
+                  <Input
+                    value={selectedZone}
+                    onChange={(e) => {
+                      const newZone = e.target.value;
+                      setSelectedZone(newZone);
+                      
+                      // Update address with zone
+                      if (selectedDepartment && selectedProvince) {
+                        const dept = boliviaDepartments.find(d => d.id === selectedDepartment);
+                        const province = dept?.provinces.find(p => p.id === selectedProvince);
+                        if (province && dept) {
+                          const baseAddress = formData.address.split(',')[0] || '';
+                          updateFormData("address", 
+                            newZone 
+                              ? `${baseAddress}, ${newZone}, ${province.name}, ${dept.name}`.replace(/^,\s*/, '')
+                              : `${baseAddress}, ${province.name}, ${dept.name}`.replace(/^,\s*/, '')
+                          );
+                        }
+                      }
+                    }}
+                    placeholder={selectedProvince ? "Ej: Zona Sur, Centro, etc." : "Primero elige provincia"}
+                    disabled={!selectedProvince}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="address">Dirección</Label>
+                <Label htmlFor="address">Dirección Completa</Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) => updateFormData("address", e.target.value)}
-                  placeholder="Ingresa la dirección o selecciona en el mapa"
+                  placeholder="Calle Ingavi, Cochabamba, Departamento de Cochabamba, Bolivia"
                 />
+                <p className="text-xs text-muted-foreground">
+                  La dirección se actualizará automáticamente al seleccionar ubicación
+                </p>
               </div>
               
               <div className="space-y-2">
