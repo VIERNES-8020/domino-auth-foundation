@@ -697,39 +697,57 @@ export type Database = {
           client_email: string
           client_name: string
           client_phone: string | null
+          commission_amount: number | null
+          commission_percentage: number | null
           created_at: string
+          currency: string | null
           id: string
           message: string | null
           property_id: string
+          sale_amount: number | null
           scheduled_at: string
           status: string
+          transaction_type: string | null
           updated_at: string
+          visit_result: string | null
         }
         Insert: {
           agent_id: string
           client_email: string
           client_name: string
           client_phone?: string | null
+          commission_amount?: number | null
+          commission_percentage?: number | null
           created_at?: string
+          currency?: string | null
           id?: string
           message?: string | null
           property_id: string
+          sale_amount?: number | null
           scheduled_at: string
           status?: string
+          transaction_type?: string | null
           updated_at?: string
+          visit_result?: string | null
         }
         Update: {
           agent_id?: string
           client_email?: string
           client_name?: string
           client_phone?: string | null
+          commission_amount?: number | null
+          commission_percentage?: number | null
           created_at?: string
+          currency?: string | null
           id?: string
           message?: string | null
           property_id?: string
+          sale_amount?: number | null
           scheduled_at?: string
           status?: string
+          transaction_type?: string | null
           updated_at?: string
+          visit_result?: string | null
         }
         Relationships: []
       }

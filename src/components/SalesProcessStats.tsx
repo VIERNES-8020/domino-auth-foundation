@@ -18,21 +18,21 @@ interface PropertyVisit {
   client_email: string;
   client_phone: string;
   scheduled_at: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'successful' | 'rejected';
+  status: string;
   message?: string;
-  visit_result?: 'successful' | 'rejected';
+  visit_result?: string;
   sale_amount?: number;
   commission_percentage?: number;
   commission_amount?: number;
-  currency?: 'USD' | 'BOB';
-  transaction_type?: 'venta' | 'alquiler' | 'anticretico';
+  currency?: string;
+  transaction_type?: string;
   created_at: string;
   properties?: {
     title: string;
     address: string;
     price: number;
     price_currency: string;
-  };
+  } | null;
 }
 
 interface SalesProcessStatsProps {
@@ -73,7 +73,7 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setVisits(data || []);
+      setVisits((data as any) || []);
     } catch (error) {
       console.error('Error fetching visits:', error);
     } finally {

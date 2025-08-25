@@ -14,6 +14,7 @@ import DeletePropertyModal from "@/components/DeletePropertyModal";
 import ArchivePropertyModal from "@/components/ArchivePropertyModal";
 import NotificationResponseModal from "@/components/NotificationResponseModal";
 import PropertyTypeStats from "@/components/PropertyTypeStats";
+import SalesProcessStats from "@/components/SalesProcessStats";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
@@ -560,6 +561,9 @@ export default function AgentDashboard() {
             properties={properties}
             onFilterChange={handlePropertyTypeFilter}
           />
+
+          {/* Sales Process Statistics */}
+          <SalesProcessStats agentId={profile?.id || ''} />
 
           {/* Enhanced Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
