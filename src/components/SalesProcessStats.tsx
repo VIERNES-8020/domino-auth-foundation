@@ -174,203 +174,342 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
     title, 
     count, 
     color, 
-    bgColor, 
-    children 
+    bgColor,
+    subtitle,
+    details
   }: {
     icon: any;
     title: string;
     count: number;
     color: string;
     bgColor: string;
-    children?: React.ReactNode;
+    subtitle?: string;
+    details?: React.ReactNode;
   }) => (
-    <Card className={`${bgColor} border-2 hover:shadow-lg transition-all duration-300`}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center`}>
-            <Icon className="w-5 h-5 text-white" />
+    <Card className={`${bgColor} border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden`}>
+      <div className={`absolute top-0 right-0 w-24 h-24 ${color} opacity-10 rounded-full -mr-8 -mt-8`}></div>
+      <CardContent className="p-6 relative">
+        <div className="flex items-start justify-between mb-4">
+          <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shadow-lg`}>
+            <Icon className="w-6 h-6 text-white" />
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gray-800">{count}</div>
-            <div className="text-xs text-gray-600">Total</div>
+            <div className="text-3xl font-bold text-foreground">{count}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wide">Total</div>
           </div>
         </div>
-        <div className="text-sm font-medium text-gray-700 text-center mb-3">
-          {title}
+        <div>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
+          {subtitle && <p className="text-xs text-muted-foreground mb-2">{subtitle}</p>}
+          {details && <div className="mt-3">{details}</div>}
         </div>
-        {children}
       </CardContent>
     </Card>
   );
 
-  const VisitCard = ({ visit }: { visit: PropertyVisit }) => (
-    <Card className="mb-3 border-l-4 border-l-primary">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <h4 className="font-semibold">{visit.properties?.title}</h4>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-              <MapPin className="w-4 h-4" />
-              {visit.properties?.address}
-            </div>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                {visit.client_name}
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { color: 'bg-amber-100 text-amber-800 border-amber-200', label: 'Pendiente', icon: Clock };
+      case 'confirmed':
+        return { color: 'bg-blue-100 text-blue-800 border-blue-200', label: 'Confirmada', icon: CheckCircle };
+      case 'completed':
+        return { color: 'bg-orange-100 text-orange-800 border-orange-200', label: 'Realizada', icon: Eye };
+      case 'successful':
+        return { color: 'bg-green-100 text-green-800 border-green-200', label: 'Exitosa', icon: DollarSign };
+      case 'rejected':
+        return { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rechazada', icon: Clock };
+      default:
+        return { color: 'bg-gray-100 text-gray-800 border-gray-200', label: status, icon: Clock };
+    }
+  };
+
+  const VisitCard = ({ visit }: { visit: PropertyVisit }) => {
+    const statusInfo = getStatusInfo(visit.status);
+    const StatusIcon = statusInfo.icon;
+
+    return (
+      <Card className="border-l-4 border-l-primary hover:shadow-md transition-all duration-200">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h4 className="font-semibold text-lg text-foreground">{visit.properties?.title}</h4>
+                <Badge className={`${statusInfo.color} flex items-center gap-1`}>
+                  <StatusIcon className="w-3 h-3" />
+                  {statusInfo.label}
+                </Badge>
               </div>
-              <div className="flex items-center gap-1">
-                <Phone className="w-4 h-4" />
-                {visit.client_phone}
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <MapPin className="w-4 h-4" />
+                <span>{visit.properties?.address}</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">{visit.client_name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  <span>{visit.client_phone}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <span>{visit.client_email}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <Badge variant="outline" className="mb-2">
+                {new Date(visit.scheduled_at).toLocaleDateString('es-ES', {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short'
+                })}
+              </Badge>
+              <div className="text-xs text-muted-foreground">
+                {new Date(visit.scheduled_at).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </div>
             </div>
           </div>
-          <Badge variant="outline">
-            {new Date(visit.scheduled_at).toLocaleDateString()}
-          </Badge>
-        </div>
-        
-        {visit.status === 'pending' && (
-          <Button 
-            size="sm" 
-            onClick={() => updateVisitStatus(visit.id, 'confirmed')}
-            className="w-full"
-          >
-            Confirmar Cita
-          </Button>
-        )}
-        
-        {visit.status === 'confirmed' && (
-          <Button 
-            size="sm" 
-            onClick={() => updateVisitStatus(visit.id, 'completed')}
-            className="w-full"
-          >
-            Marcar como Realizada
-          </Button>
-        )}
-        
-        {visit.status === 'completed' && (
-          <div className="flex gap-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleVisitResult(visit, 'rejected')}
-              className="flex-1"
-            >
-              Visita Rechazada
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={() => handleVisitResult(visit, 'successful')}
-              className="flex-1"
-            >
-              Visita Exitosa
-            </Button>
-          </div>
-        )}
-        
-        {visit.status === 'successful' && visit.sale_amount && (
-          <div className="bg-green-50 p-3 rounded-lg">
-            <div className="text-sm text-green-800">
-              <div><strong>Tipo:</strong> {visit.transaction_type}</div>
-              <div><strong>Monto:</strong> {visit.sale_amount?.toLocaleString()} {visit.currency}</div>
-              <div><strong>Comisión:</strong> {visit.commission_amount?.toLocaleString()} {visit.currency} ({visit.commission_percentage}%)</div>
+
+          {visit.message && (
+            <div className="bg-muted/50 p-3 rounded-lg mb-4">
+              <p className="text-sm text-muted-foreground">
+                <strong>Mensaje:</strong> {visit.message}
+              </p>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+          )}
+          
+          {visit.status === 'pending' && (
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => updateVisitStatus(visit.id, 'confirmed')}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Confirmar Cita
+              </Button>
+            </div>
+          )}
+          
+          {visit.status === 'confirmed' && (
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={() => updateVisitStatus(visit.id, 'completed')}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Marcar como Realizada
+              </Button>
+            </div>
+          )}
+          
+          {visit.status === 'completed' && (
+            <div className="flex gap-3">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => handleVisitResult(visit, 'rejected')}
+                className="flex-1 border-red-200 text-red-700 hover:bg-red-50"
+              >
+                Visita Rechazada
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => handleVisitResult(visit, 'successful')}
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Visita Exitosa
+              </Button>
+            </div>
+          )}
+          
+          {visit.status === 'successful' && visit.sale_amount && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 p-4 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-green-700 font-medium">Tipo de Transacción:</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      {visit.transaction_type?.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-700">Monto de Venta:</span>
+                    <span className="font-bold text-green-800">
+                      {visit.currency === 'USD' ? '$' : 'Bs. '}{visit.sale_amount?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-green-700">Porcentaje Comisión:</span>
+                    <span className="font-semibold text-green-800">{visit.commission_percentage}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-700">Comisión Ganada:</span>
+                    <span className="font-bold text-green-800">
+                      {visit.currency === 'USD' ? '$' : 'Bs. '}{visit.commission_amount?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {visit.currency === 'USD' && (
+                <div className="mt-3 pt-3 border-t border-green-200">
+                  <div className="text-xs text-green-600">
+                    <strong>Equivalente en Bolivianos:</strong> Bs. {((visit.commission_amount || 0) * exchangeRate).toLocaleString()}
+                  </div>
+                </div>
+              )}
+              
+              {visit.currency === 'BOB' && (
+                <div className="mt-3 pt-3 border-t border-green-200">
+                  <div className="text-xs text-green-600">
+                    <strong>Equivalente en Dólares:</strong> ${((visit.commission_amount || 0) / exchangeRate).toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (isLoading) {
     return <div className="text-center py-4">Cargando estadísticas...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-5 h-5 text-primary" />
-        <h2 className="text-xl font-semibold text-primary">Proceso de Ventas</h2>
+    <div className="space-y-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <TrendingUp className="w-5 h-5 text-primary" />
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Proceso de Ventas</h2>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           icon={Clock}
           title="Citas Pendientes"
           count={stats.pending}
-          color="bg-yellow-500"
-          bgColor="bg-yellow-50"
-        >
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {visits.filter(v => v.status === 'pending').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-          </div>
-        </StatCard>
+          color="bg-amber-500"
+          bgColor="bg-gradient-to-br from-amber-50 to-yellow-50"
+          subtitle="Esperando confirmación"
+        />
 
         <StatCard
           icon={CheckCircle}
           title="Citas Confirmadas"
           count={stats.confirmed}
           color="bg-blue-500"
-          bgColor="bg-blue-50"
-        >
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {visits.filter(v => v.status === 'confirmed').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-          </div>
-        </StatCard>
+          bgColor="bg-gradient-to-br from-blue-50 to-indigo-50"
+          subtitle="Listas para realizar"
+        />
 
         <StatCard
           icon={Eye}
           title="Visitas Realizadas"
           count={stats.completed}
           color="bg-orange-500"
-          bgColor="bg-orange-50"
-        >
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {visits.filter(v => v.status === 'completed').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-          </div>
-        </StatCard>
+          bgColor="bg-gradient-to-br from-orange-50 to-red-50"
+          subtitle="Esperando resultado"
+        />
 
         <StatCard
           icon={DollarSign}
           title="Ventas Exitosas"
           count={stats.successful}
-          color="bg-green-500"
-          bgColor="bg-green-50"
-        >
-          <div className="space-y-3">
-            <div className="text-center">
-              <div className="text-sm font-semibold text-green-700 mb-1">Ventas Totales</div>
-              {stats.totalSalesUSD > 0 && (
-                <div className="text-xs">USD: ${stats.totalSalesUSD.toLocaleString()}</div>
-              )}
-              {stats.totalSalesBOB > 0 && (
-                <div className="text-xs">BOB: Bs. {stats.totalSalesBOB.toLocaleString()}</div>
-              )}
+          color="bg-emerald-500"
+          bgColor="bg-gradient-to-br from-emerald-50 to-green-50"
+          subtitle="Transacciones completadas"
+          details={
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Ventas USD:</span>
+                <span className="font-semibold text-green-600">${stats.totalSalesUSD.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Ventas BOB:</span>
+                <span className="font-semibold text-green-600">Bs. {stats.totalSalesBOB.toLocaleString()}</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Comisión USD:</span>
+                  <span className="font-bold text-emerald-600">${stats.totalCommissionUSD.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Comisión BOB:</span>
+                  <span className="font-bold text-emerald-600">Bs. {stats.totalCommissionBOB.toLocaleString()}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-center border-t pt-2">
-              <div className="text-sm font-semibold text-green-700 mb-1">Comisiones</div>
-              {stats.totalCommissionUSD > 0 && (
-                <div className="text-xs">USD: ${stats.totalCommissionUSD.toLocaleString()}</div>
-              )}
-              {stats.totalCommissionBOB > 0 && (
-                <div className="text-xs">BOB: Bs. {stats.totalCommissionBOB.toLocaleString()}</div>
-              )}
+          }
+        />
+      </div>
+
+      {/* Active Appointments Management */}
+      {(stats.pending > 0 || stats.confirmed > 0 || stats.completed > 0) && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-primary" />
             </div>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {visits.filter(v => v.status === 'successful').map(visit => (
-                <VisitCard key={visit.id} visit={visit} />
-              ))}
+            <h3 className="text-lg font-semibold text-foreground">Citas Programadas</h3>
+            <div className="text-sm text-muted-foreground">
+              Gestiona las visitas a tus propiedades solicitadas por clientes
             </div>
           </div>
-        </StatCard>
-      </div>
+
+          <div className="grid gap-4">
+            {/* Pending Appointments */}
+            {visits.filter(v => v.status === 'pending').map(visit => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+            
+            {/* Confirmed Appointments */}
+            {visits.filter(v => v.status === 'confirmed').map(visit => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+            
+            {/* Completed Visits */}
+            {visits.filter(v => v.status === 'completed').map(visit => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Successful Sales History */}
+      {stats.successful > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-md bg-green-100 flex items-center justify-center">
+              <DollarSign className="w-4 h-4 text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Historial de Ventas Exitosas</h3>
+          </div>
+
+          <div className="grid gap-4">
+            {visits.filter(v => v.status === 'successful').map(visit => (
+              <VisitCard key={visit.id} visit={visit} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sale Completion Dialog */}
       <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
