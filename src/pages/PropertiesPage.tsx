@@ -73,6 +73,7 @@ export default function PropertiesPage() {
   const [lifestyle, setLifestyle] = useState<string>("");
   const [amenities, setAmenities] = useState<{ id: string; name: string }[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [transactionType, setTransactionType] = useState<string>("");
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -86,8 +87,8 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
-    () => [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(",")].join("|"),
-    [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities]
+    () => [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(","), transactionType].join("|"),
+    [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities, transactionType]
   );
 
   const markers = useMemo(() => {
@@ -281,6 +282,9 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         if (propertyType) {
           query = query.eq("property_type", propertyType);
         }
+        if (transactionType) {
+          query = query.eq("transaction_type", transactionType);
+        }
         if (lifestyle.trim()) {
           const term = lifestyle.trim();
           // Use broad search across key text fields (stable fallback)
@@ -323,6 +327,29 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
           <h2 id="filters-heading" className="sr-only">Filtros</h2>
           <Card className="shadow-sm" role="region" aria-labelledby="filters-heading">
             <CardContent className="p-4 md:p-6" aria-live="polite">
+              {/* Transaction Type Filters */}
+              <div className="mb-6">
+                <Label className="text-base font-semibold">Tipo de Transacción</Label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    { value: "", label: "Todas" },
+                    { value: "venta", label: "Venta" },
+                    { value: "alquiler", label: "Alquiler" },
+                    { value: "anticretico", label: "Anticrético" }
+                  ].map((option) => (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      size="sm"
+                      variant={transactionType === option.value ? "default" : "outline"}
+                      onClick={() => setTransactionType(option.value)}
+                      className={transactionType === option.value ? "bg-primary hover:bg-primary/90 text-white" : ""}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="city">Ciudad / Zona</Label>
@@ -433,6 +460,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     setPropertyType("");
                     setLifestyle("");
                     setSelectedAmenities([]);
+                    setTransactionType("");
                     setUsingNearMe(false);
                     setNearMeCenter(null);
                   }}>Limpiar filtros</Button>
