@@ -8,7 +8,8 @@ import PropertyCard from "@/components/PropertyCard";
 import PropertiesMap from "@/components/PropertiesMap";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, Phone, Mail } from "lucide-react";
+import { boliviaDepartments } from "@/data/bolivia-locations";
 
 // SEO helper (scoped to this page)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -65,6 +66,8 @@ export default function PropertiesPage() {
   
 
   const [city, setCity] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
@@ -87,8 +90,8 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
-    () => [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(","), transactionType].join("|"),
-    [city, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities, transactionType]
+    () => [city, selectedDepartment, selectedProvince, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(","), transactionType].join("|"),
+    [city, selectedDepartment, selectedProvince, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities, transactionType]
   );
 
   const markers = useMemo(() => {
@@ -267,6 +270,19 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         if (city.trim()) {
           query = query.ilike("address", `%${city.trim()}%`);
         }
+        if (selectedDepartment) {
+          const dept = boliviaDepartments.find(d => d.id === selectedDepartment);
+          if (dept) {
+            query = query.ilike("address", `%${dept.name}%`);
+          }
+        }
+        if (selectedProvince) {
+          const dept = boliviaDepartments.find(d => d.id === selectedDepartment);
+          const province = dept?.provinces.find(p => p.id === selectedProvince);
+          if (province) {
+            query = query.ilike("address", `%${province.name}%`);
+          }
+        }
         if (priceMin.trim() && !isNaN(Number(priceMin))) {
           query = query.gte("price", Number(priceMin));
         }
@@ -352,8 +368,60 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
               </div>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="city">Ciudad / Zona</Label>
-                  <Input id="city" placeholder="Ej. La Paz, Equipetrol" value={city} onChange={(e) => setCity(e.target.value)} aria-describedby="results-heading" />
+                  <Label>Departamento</Label>
+                  <Select value={selectedDepartment} onValueChange={(value) => {
+                    setSelectedDepartment(value);
+                    setSelectedProvince(""); // Reset province when department changes
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona departamento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todos los departamentos</SelectItem>
+                      {boliviaDepartments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label>Provincia</Label>
+                  <Select 
+                    value={selectedProvince} 
+                    onValueChange={setSelectedProvince}
+                    disabled={!selectedDepartment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue 
+                        placeholder={selectedDepartment ? "Selecciona provincia" : "Primero elige departamento"} 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Todas las provincias</SelectItem>
+                      {selectedDepartment && 
+                        boliviaDepartments
+                          .find(d => d.id === selectedDepartment)
+                          ?.provinces.map((province) => (
+                            <SelectItem key={province.id} value={province.id}>
+                              {province.name}
+                            </SelectItem>
+                          ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label htmlFor="city">Ciudad / Zona específica</Label>
+                  <Input 
+                    id="city" 
+                    placeholder="Ej. Equipetrol, Zona Sur..." 
+                    value={city} 
+                    onChange={(e) => setCity(e.target.value)} 
+                  />
                 </div>
                 <div className="flex items-end">
                   <Button
@@ -453,6 +521,8 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 <div className="self-end">
                   <Button type="button" variant="ghost" onClick={() => {
                     setCity("");
+                    setSelectedDepartment("");
+                    setSelectedProvince("");
                     setPriceMin("");
                     setPriceMax("");
                     setBedrooms("");
@@ -516,12 +586,32 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 <p className="text-muted-foreground mb-4">
                   {usingNearMe 
                     ? "No he encontrado propiedades cerca de tu ubicación." 
-                    : "No he encontrado propiedades con esos detalles específicos."
+                    : "No se encontraron propiedades en esta zona por el momento."
                   }
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Quizás te interesen estas opciones populares en la zona...
+                <p className="text-sm text-muted-foreground mb-4">
+                  Puedes contactar con un agente para solicitar más información específica o enviar un mensaje y serás atendido a la brevedad.
                 </p>
+                <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.location.href = '/agentes'}
+                    className="flex items-center gap-2"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Contactar Agente
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/contacto'}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Enviar Mensaje
+                  </Button>
+                </div>
                 <Button 
                   className="mt-3 w-full" 
                   variant="outline"
