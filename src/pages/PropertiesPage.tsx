@@ -68,6 +68,7 @@ export default function PropertiesPage() {
   const [city, setCity] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedZone, setSelectedZone] = useState("");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
   const [bedrooms, setBedrooms] = useState<string>("");
@@ -90,8 +91,8 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
   // Build a simple key for memoization of query deps
   const filterKey = useMemo(
-    () => [city, selectedDepartment, selectedProvince, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(","), transactionType].join("|"),
-    [city, selectedDepartment, selectedProvince, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities, transactionType]
+    () => [city, selectedDepartment, selectedProvince, selectedZone, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities.sort().join(","), transactionType].join("|"),
+    [city, selectedDepartment, selectedProvince, selectedZone, priceMin, priceMax, bedrooms, bathrooms, propertyType, lifestyle, selectedAmenities, transactionType]
   );
 
   const markers = useMemo(() => {
@@ -104,12 +105,17 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
       if (g) {
         // Handle PostGIS POINT geometry format
         if (typeof g === 'string') {
-          // Parse PostGIS binary format or WKT
+          // Try to parse PostGIS WKT format like "POINT(-63.123 -17.456)"
           try {
-            // For now, we'll skip string parsing as it requires complex PostGIS parsing
-            continue;
+            const match = g.match(/POINT\(([^)]+)\)/);
+            if (match) {
+              const coords = match[1].split(' ').map(Number);
+              if (coords.length >= 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                coordinates = coords;
+              }
+            }
           } catch (e) {
-            continue;
+            // Skip invalid coordinates
           }
         } else if (g.coordinates && Array.isArray(g.coordinates)) {
           coordinates = g.coordinates;
@@ -283,6 +289,9 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
             query = query.ilike("address", `%${province.name}%`);
           }
         }
+        if (selectedZone) {
+          query = query.ilike("address", `%${selectedZone}%`);
+        }
         if (priceMin.trim() && !isNaN(Number(priceMin))) {
           query = query.gte("price", Number(priceMin));
         }
@@ -369,9 +378,10 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="md:col-span-2">
                   <Label>Departamento</Label>
-                  <Select value={selectedDepartment} onValueChange={(value) => {
+                  <Select value={selectedDepartment || "all"} onValueChange={(value) => {
                     setSelectedDepartment(value === "all" ? "" : value);
                     setSelectedProvince(""); // Reset province when department changes
+                    setSelectedZone(""); // Reset zone when department changes
                   }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona departamento" />
@@ -391,7 +401,10 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   <Label>Provincia</Label>
                   <Select 
                     value={selectedProvince || "all"} 
-                    onValueChange={(value) => setSelectedProvince(value === "all" ? "" : value)}
+                    onValueChange={(value) => {
+                      setSelectedProvince(value === "all" ? "" : value);
+                      setSelectedZone(""); // Reset zone when province changes
+                    }}
                     disabled={!selectedDepartment}
                   >
                     <SelectTrigger>
@@ -415,24 +428,32 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 </div>
                 
                 <div className="md:col-span-2">
-                  <Label htmlFor="city">Ciudad / Zona específica</Label>
-                  <Input 
-                    id="city" 
-                    placeholder="Ej. Equipetrol, Zona Sur..." 
-                    value={city} 
-                    onChange={(e) => setCity(e.target.value)} 
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleNearMeClick}
-                    disabled={nearMeLoading}
-                    aria-label="Buscar propiedades cerca de mi ubicación"
+                  <Label>Zona específica</Label>
+                  <Select 
+                    value={selectedZone || "all"} 
+                    onValueChange={(value) => setSelectedZone(value === "all" ? "" : value)}
+                    disabled={!selectedProvince}
                   >
-                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? "Buscando..." : "Buscar cerca de mí"}
-                  </Button>
+                    <SelectTrigger>
+                      <SelectValue 
+                        placeholder={selectedProvince ? "Selecciona zona" : "Primero elige provincia"} 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las zonas</SelectItem>
+                      {/* Zonas comunes de Bolivia */}
+                      {selectedProvince && [
+                        "Centro", "Norte", "Sur", "Este", "Oeste",
+                        "Zona Central", "Zona Norte", "Zona Sur", "Zona Este", "Zona Oeste",
+                        "Equipetrol", "Las Palmas", "Radial 10", "Radial 26", "4to Anillo",
+                        "Calacoto", "San Miguel", "Sopocachi", "Miraflores", "Achumani"
+                      ].map((zone) => (
+                        <SelectItem key={zone} value={zone.toLowerCase()}>
+                          {zone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="priceMin">Precio mín.</Label>
@@ -469,7 +490,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   </Select>
                 </div>
 
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <Label htmlFor="lifestyle">Búsqueda AURA (estilo de vida)</Label>
                   <Input
                     id="lifestyle"
@@ -477,6 +498,19 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     value={lifestyle}
                     onChange={(e) => setLifestyle(e.target.value)}
                   />
+                </div>
+
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleNearMeClick}
+                    disabled={nearMeLoading}
+                    aria-label="Buscar propiedades cerca de mi ubicación"
+                    className="w-full"
+                  >
+                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? "Buscando..." : "Buscar cerca de mí"}
+                  </Button>
                 </div>
 
                 <div className="md:col-span-6">
@@ -522,7 +556,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   <Button type="button" variant="ghost" onClick={() => {
                     setCity("");
                     setSelectedDepartment("");
-                    setSelectedProvince("");
+                    setSelectedZone("");
                     setPriceMin("");
                     setPriceMax("");
                     setBedrooms("");
