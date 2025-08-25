@@ -310,7 +310,7 @@ export default function AdminDashboard() {
               <div className="flex items-center space-x-2">
                 <Crown className="h-8 w-8 text-primary" />
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold text-primary">
                     Super Admin Dashboard
                   </h1>
                   <p className="text-sm text-muted-foreground">Control total de DOMINIO</p>
