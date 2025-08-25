@@ -200,13 +200,38 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         try {
           setUsingNearMe(true);
           setLoading(true);
-          const { data, error } = await supabase.rpc("properties_nearby", {
+          
+          // Get nearby properties first
+          const { data: nearbyData, error: nearbyError } = await supabase.rpc("properties_nearby", {
             lon: longitude,
             lat: latitude,
             radius_km: 5,
           });
-          if (error) throw error;
-          setProperties((data as Property[]) ?? []);
+          if (nearbyError) throw nearbyError;
+          
+          let filteredProperties = (nearbyData as Property[]) ?? [];
+          
+          // Apply current filters to nearby results
+          if (transactionType) {
+            filteredProperties = filteredProperties.filter(p => (p as any).transaction_type === transactionType);
+          }
+          if (propertyType) {
+            filteredProperties = filteredProperties.filter(p => p.property_type === propertyType);
+          }
+          if (priceMin.trim() && !isNaN(Number(priceMin))) {
+            filteredProperties = filteredProperties.filter(p => (p.price ?? 0) >= Number(priceMin));
+          }
+          if (priceMax.trim() && !isNaN(Number(priceMax))) {
+            filteredProperties = filteredProperties.filter(p => (p.price ?? 0) <= Number(priceMax));
+          }
+          if (bedrooms.trim() && !isNaN(Number(bedrooms))) {
+            filteredProperties = filteredProperties.filter(p => (p.bedrooms ?? 0) >= Number(bedrooms));
+          }
+          if (bathrooms.trim() && !isNaN(Number(bathrooms))) {
+            filteredProperties = filteredProperties.filter(p => (p.bathrooms ?? 0) >= Number(bathrooms));
+          }
+          
+          setProperties(filteredProperties);
           setNearMeCenter({ lng: longitude, lat: latitude });
           setError(null);
         } catch (e) {
