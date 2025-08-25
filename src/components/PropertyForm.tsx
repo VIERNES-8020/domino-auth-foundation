@@ -21,6 +21,8 @@ interface PropertyFormData {
   price: string;
   currency: string;
   property_type: string;
+  transaction_type: string;
+  commission_percentage: string;
   bedrooms: string;
   bathrooms: string;
   area: string;
@@ -64,6 +66,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   const [newAmenity, setNewAmenity] = useState("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   
   const [formData, setFormData] = useState<PropertyFormData>({
     title: initialData?.title || "",
@@ -71,6 +74,8 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     price: initialData?.price?.toString() || "",
     currency: initialData?.price_currency || "USD",
     property_type: initialData?.property_type || "",
+    transaction_type: initialData?.transaction_type || "",
+    commission_percentage: initialData?.commission_percentage?.toString() || "",
     bedrooms: initialData?.bedrooms?.toString() || "",
     bathrooms: initialData?.bathrooms?.toString() || "",
     area: initialData?.area_m2?.toString() || "",
@@ -129,6 +134,24 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       }
     };
     getMapboxToken();
+
+    // Get current user profile to check permissions
+    const getCurrentUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, is_super_admin, full_name')
+            .eq('id', user.id)
+            .single();
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error("Error getting user profile:", error);
+      }
+    };
+    getCurrentUserProfile();
   }, []);
 
   // Enhanced video upload with size validation and progress bar
@@ -466,6 +489,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     
     if (!formData.title) errors.push("El título es obligatorio");
     if (!formData.property_type) errors.push("El tipo de propiedad es obligatorio");
+    if (!formData.transaction_type) errors.push("El tipo de transacción es obligatorio");
     if (!formData.price) errors.push("El precio es obligatorio");
     if (!formData.description) errors.push("La descripción es obligatoria para una mejor presentación");
     
@@ -499,7 +523,7 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       const propertyData = {
         title: formData.title,
         property_type: formData.property_type,
-        transaction_type: "venta", // Default
+        transaction_type: formData.transaction_type || "venta",
         price: formData.price,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
@@ -574,27 +598,29 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
       setSaveSuccess(true);
       toast.success("🎉 ¡Propiedad guardada exitosamente!");
       
-      // Reset form after successful submission
-      setTimeout(() => {
-        console.log("Reseteando formulario");
-        setFormData({
-          title: "",
-          description: "",
-          price: "",
-          currency: "USD",
-          property_type: "",
-          bedrooms: "",
-          bathrooms: "",
-          area: "",
-          constructed_area_m2: "",
-          address: "",
-          latitude: null,
-          longitude: null,
-          features: [],
-          image_urls: [],
-          video_url: "",
-          plans_url: []
-        });
+        // Reset form after successful submission
+        setTimeout(() => {
+          console.log("Reseteando formulario");
+          setFormData({
+            title: "",
+            description: "",
+            price: "",
+            currency: "USD",
+            property_type: "",
+            transaction_type: "",
+            commission_percentage: "",
+            bedrooms: "",
+            bathrooms: "",
+            area: "",
+            constructed_area_m2: "",
+            address: "",
+            latitude: null,
+            longitude: null,
+            features: [],
+            image_urls: [],
+            video_url: "",
+            plans_url: []
+          });
         setActiveTab("general");
         setValidationErrors([]);
         setSaveSuccess(false);
@@ -700,6 +726,40 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="transaction_type">Tipo de Transacción *</Label>
+                  <Select value={formData.transaction_type} onValueChange={(value) => updateFormData("transaction_type", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona el tipo de transacción" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="venta">Venta</SelectItem>
+                      <SelectItem value="alquiler">Alquiler</SelectItem>
+                      <SelectItem value="anticretico">Anticrético</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(userProfile?.is_super_admin || userProfile) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="commission_percentage">Comisión (%) - Solo visible para agentes</Label>
+                    <Input
+                      id="commission_percentage"
+                      value={formData.commission_percentage}
+                      onChange={(e) => updateFormData("commission_percentage", e.target.value)}
+                      placeholder="5.0"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Este campo no será visible en el portal público
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
