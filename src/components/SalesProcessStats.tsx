@@ -73,6 +73,10 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Fetched visits data:', data);
+      console.log('Agent ID:', agentId);
+      
       setVisits((data as any) || []);
     } catch (error) {
       console.error('Error fetching visits:', error);
@@ -134,10 +138,15 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
   };
 
   const getStatsData = () => {
+    console.log('All visits:', visits);
+    console.log('Visit statuses:', visits.map(v => ({ id: v.id, status: v.status })));
+    
     const pending = visits.filter(v => v.status === 'pending').length;
     const confirmed = visits.filter(v => v.status === 'confirmed').length;
     const completed = visits.filter(v => v.status === 'completed').length;
     const successful = visits.filter(v => v.status === 'successful');
+    
+    console.log('Stats:', { pending, confirmed, completed, successful: successful.length });
     
     const totalSalesUSD = successful
       .filter(v => v.currency === 'USD')
