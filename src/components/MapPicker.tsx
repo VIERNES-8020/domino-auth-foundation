@@ -8,9 +8,11 @@ interface MapPickerProps {
   lng?: number | null;
   onChange?: (coords: { lat: number; lng: number }) => void;
   className?: string;
+  centerLat?: number;
+  centerLng?: number;
 }
 
-const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange, className }) => {
+const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange, className, centerLat, centerLng }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -41,9 +43,9 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange, className }) 
     mapboxgl.accessToken = token;
 
     const center: [number, number] = [
-      typeof lng === "number" ? lng : -66.1568,
-      typeof lat === "number" ? lat : -17.3895,
-    ]; // Cochabamba por defecto
+      typeof centerLng === "number" ? centerLng : typeof lng === "number" ? lng : -66.1568,
+      typeof centerLat === "number" ? centerLat : typeof lat === "number" ? lat : -17.3895,
+    ]; // Usa centerLat/centerLng si están disponibles, sino las coordenadas del marcador, sino Cochabamba por defecto
 
     mapRef.current = new mapboxgl.Map({
       container: containerRef.current,
@@ -88,7 +90,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ lat, lng, onChange, className }) 
       markerRef.current?.remove();
       mapRef.current?.remove();
     };
-  }, [token]);
+  }, [token, centerLat, centerLng]);
 
   if (error) {
     return (

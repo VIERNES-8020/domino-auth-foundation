@@ -30,14 +30,35 @@ export default function VendePage() {
   });
 
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Si el campo es provincia, centrar el mapa en la provincia seleccionada
+    if (field === "province" && selectedDepartment && value) {
+      const province = selectedDepartment.provinces.find(p => p.id === value);
+      if (province) {
+        setMapCenter({
+          lng: province.coordinates[0],
+          lat: province.coordinates[1]
+        });
+      }
+    }
   };
 
   const handleDepartmentChange = (departmentId: string) => {
     const department = boliviaDepartments.find(d => d.id === departmentId);
     setSelectedDepartment(department || null);
+    
+    // Centrar el mapa en el departamento seleccionado
+    if (department) {
+      setMapCenter({
+        lng: department.coordinates[0],
+        lat: department.coordinates[1]
+      });
+    }
+    
     setFormData(prev => ({ 
       ...prev, 
       department: departmentId,
@@ -95,6 +116,7 @@ export default function VendePage() {
         property_lng: null
       });
       setSelectedDepartment(null);
+      setMapCenter(null);
 
       // Redirect to home after success
       setTimeout(() => {
@@ -278,6 +300,8 @@ export default function VendePage() {
                   <MapPicker
                     lat={formData.property_lat || undefined}
                     lng={formData.property_lng || undefined}
+                    centerLat={mapCenter?.lat}
+                    centerLng={mapCenter?.lng}
                     onChange={handleMapChange}
                     className="w-full h-64 rounded-lg border"
                   />
