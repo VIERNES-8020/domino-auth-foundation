@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import heroImage from "@/assets/hero-warm.jpg";
+import heroImage from "@/assets/hero-family-home.jpg";
 
 import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -156,7 +156,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img
             src={heroImage}
-            alt="Pareja pintando su nuevo hogar con luz cálida - inspiración DOMINIO"
+            alt="Familia feliz en su hogar ideal - Encuentra tu casa perfecta con DOMINIO"
             className="h-[72vh] w-full object-cover"
             loading="eager"
             style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
