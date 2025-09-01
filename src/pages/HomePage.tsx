@@ -179,10 +179,12 @@ export default function HomePage() {
             <Button size="lg" variant="outline" asChild className="bg-white text-primary border-white hover:bg-white/90">
               <Link to="/propiedades">Explorar Propiedades</Link>
             </Button>
-            <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2 text-primary hover-scale">
-              <span>Únete como Franquicia</span>
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <Button size="lg" variant="outline" asChild className="bg-transparent border-white text-white hover:bg-white/10">
+              <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2">
+                <span>Únete como Franquicia</span>
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
