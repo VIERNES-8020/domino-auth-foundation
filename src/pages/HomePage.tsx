@@ -162,7 +162,6 @@ export default function HomePage() {
             loading="eager"
             style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60" />
         </div>
 
         <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
