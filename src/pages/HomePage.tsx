@@ -176,7 +176,7 @@ export default function HomePage() {
             <Button size="lg" asChild>
               <Link to="/vende">Vende o Alquila</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="bg-white text-primary border-white hover:bg-white/90">
               <Link to="/propiedades">Explorar Propiedades</Link>
             </Button>
             <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2 text-primary hover-scale">
