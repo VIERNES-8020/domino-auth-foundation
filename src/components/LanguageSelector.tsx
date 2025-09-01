@@ -29,17 +29,13 @@ export function LanguageSelector() {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="relative group overflow-hidden bg-gradient-to-r from-background to-secondary/20 border-2 border-primary/20 hover:border-primary/40 transition-all duration-500 hover:scale-105 hover:shadow-lg"
+          size="sm"
+          className="h-8 px-3 border-muted-foreground/20 hover:border-muted-foreground/40 bg-background"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <div className="relative flex items-center gap-2 px-1">
-            <Globe className="h-4 w-4 text-primary group-hover:rotate-12 transition-transform duration-300" />
-            <span className="text-lg">{currentLanguage?.flag}</span>
-            <span className="font-medium text-sm hidden sm:block">
-              {t(currentLanguage?.name || 'language.spanish')}
-            </span>
-            <ChevronDown className="h-3 w-3 ml-1 group-hover:rotate-180 transition-transform duration-300" />
-          </div>
+          <span className="text-sm font-medium uppercase tracking-wide">
+            {currentLanguage?.code || 'ES'}
+          </span>
+          <ChevronDown className="h-3 w-3 ml-1" />
         </Button>
       </PopoverTrigger>
       
