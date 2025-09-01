@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import heroImage from "@/assets/hero-family-home.jpg";
+const heroImage = "/lovable-uploads/3e497d3a-9eb3-4c01-88c3-d96c49fb6818.png";
 
 import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -156,7 +156,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img
             src={heroImage}
-            alt="Familia feliz en su hogar ideal - Encuentra tu casa perfecta con DOMINIO"
+            alt="Equipo profesional de DOMINIO planificando proyectos inmobiliarios"
             className="h-[72vh] w-full object-cover"
             loading="eager"
             style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
@@ -166,7 +166,7 @@ export default function HomePage() {
 
         <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Encuentra tu Hogar Ideal
+            Hogar para tu Familia, Proyectos para tu Futuro
           </h1>
           <p className="mt-4 max-w-3xl text-muted-foreground">
             La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas,
