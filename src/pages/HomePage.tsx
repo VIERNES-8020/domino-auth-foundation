@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const heroImage = "/lovable-uploads/41e22ec0-d5eb-4d45-b728-45b59710b191.png";
+const heroImage = "/lovable-uploads/90b782af-a7b8-4f13-8cef-038ebfcb471d.png";
 
 import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
