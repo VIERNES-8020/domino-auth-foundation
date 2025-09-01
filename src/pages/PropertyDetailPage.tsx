@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import WatermarkedImage from "@/components/WatermarkedImage";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PropertyRow {
   id: string;
@@ -81,6 +82,7 @@ interface Review {
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   const [property, setProperty] = useState<PropertyRow | null>(null);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
@@ -175,7 +177,7 @@ export default function PropertyDetailPage() {
       } catch (e: any) {
         console.error(e);
         if (!active) return;
-        setError("No se pudo cargar la propiedad.");
+        setError(t('property.errorLoading'));
       } finally {
         if (active) setLoading(false);
       }
@@ -186,18 +188,18 @@ export default function PropertyDetailPage() {
   }, [id]);
 
   usePageSEO({
-    title: property?.title ? `${property.title} | DOMINIO` : "Detalle de Propiedad | DOMINIO",
-    description: property?.description?.slice(0, 150) ?? "Explora detalles de la propiedad en DOMINIO.",
+    title: property?.title ? `${property.title} | DOMINIO` : `${t('property.viewDetails')} | DOMINIO`,
+    description: property?.description?.slice(0, 150) ?? t('property.viewDetails'),
     canonicalPath: `/properties/${id ?? ""}`,
   });
 
   const images = property?.image_urls ?? [];
   const priceStr = useMemo(() => {
-    if (!property?.price) return "Precio a consultar";
+    if (!property?.price) return t('property.priceConsult');
     const currency = (property.price_currency || "USD").toUpperCase();
     const prefix = currency === "USD" ? "US$" : `${currency} `;
     return `${prefix}${property.price.toLocaleString()}`;
-  }, [property]);
+  }, [property, t]);
 
   // Try to extract coordinates from a PostGIS GeoJSON response
   const coords = useMemo(() => {
@@ -226,7 +228,7 @@ export default function PropertyDetailPage() {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">Cargando propiedad...</p>
+              <p className="text-muted-foreground">{t('property.loading')}</p>
             </div>
           </div>
         )}
@@ -239,7 +241,7 @@ export default function PropertyDetailPage() {
         
         {!loading && !property && !error && (
           <Card className="p-8 text-center">
-            <p className="text-muted-foreground text-lg">No encontramos esta propiedad.</p>
+            <p className="text-muted-foreground text-lg">{t('property.notFound')}</p>
           </Card>
         )}
 
@@ -267,7 +269,7 @@ export default function PropertyDetailPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-sm">({reviews.length} reseñas)</span>
+                    <span className="text-sm">({reviews.length} {t('property.reviews')})</span>
                   </div>
                 )}
               </div>
@@ -280,7 +282,7 @@ export default function PropertyDetailPage() {
                   className="gap-2"
                 >
                   <Heart className={`h-4 w-4 ${isFavorite ? "fill-current text-red-500" : ""}`} />
-                  {isFavorite ? "Guardado" : "Guardar"}
+                  {isFavorite ? t('property.saved') : t('property.save')}
                 </Button>
               </div>
             </div>
@@ -332,7 +334,7 @@ export default function PropertyDetailPage() {
                   ) : (
                     <AspectRatio ratio={16 / 10} className="rounded-xl overflow-hidden shadow-lg bg-muted">
                       <div className="flex items-center justify-center h-full">
-                        <p className="text-muted-foreground">Sin imágenes disponibles</p>
+                        <p className="text-muted-foreground">{t('property.noImages')}</p>
                       </div>
                     </AspectRatio>
                   )}
@@ -347,7 +349,7 @@ export default function PropertyDetailPage() {
                            <div className="aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border-0 hover:shadow-md transition-all duration-300">
                              <WatermarkedImage
                                src={src}
-                               alt={`Vista ${idx + 2}`}
+                               alt={`${t('property.view')} ${idx + 2}`}
                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                              />
                           </div>
@@ -377,13 +379,13 @@ export default function PropertyDetailPage() {
                       </p>
                       {property.concluded_status ? (
                         <Badge variant="secondary" className="px-3 py-1 text-sm font-medium bg-orange-500 text-white">
-                          {property.concluded_status === 'vendido' && 'VENDIDO ✓'}
-                          {property.concluded_status === 'alquilado' && 'ALQUILADO ✓'}
-                          {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO ✓'}
+                          {property.concluded_status === 'vendido' && t('property.sold')}
+                          {property.concluded_status === 'alquilado' && t('property.rented')}
+                          {property.concluded_status === 'anticretico' && t('property.anticretico')}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="px-3 py-1 text-sm font-medium">
-                          Disponible
+                          {t('property.available')}
                         </Badge>
                       )}
                     </div>
@@ -396,21 +398,21 @@ export default function PropertyDetailPage() {
                         <div className="text-center p-3 rounded-lg bg-background/50">
                           <BedDouble size={28} className="mx-auto text-primary mb-2" />
                           <p className="text-2xl font-bold">{property.bedrooms}</p>
-                          <p className="text-xs text-muted-foreground">Habitaciones</p>
+                          <p className="text-xs text-muted-foreground">{t('property.bedrooms')}</p>
                         </div>
                       )}
                       {typeof property.bathrooms === "number" && (
                         <div className="text-center p-3 rounded-lg bg-background/50">
                           <Bath size={28} className="mx-auto text-primary mb-2" />
                           <p className="text-2xl font-bold">{property.bathrooms}</p>
-                          <p className="text-xs text-muted-foreground">Baños</p>
+                          <p className="text-xs text-muted-foreground">{t('property.bathrooms')}</p>
                         </div>
                       )}
                       {typeof property.area_m2 === "number" && (
                         <div className="text-center p-3 rounded-lg bg-background/50">
                           <Ruler size={28} className="mx-auto text-primary mb-2" />
                           <p className="text-2xl font-bold">{property.area_m2}</p>
-                          <p className="text-xs text-muted-foreground">m²</p>
+                          <p className="text-xs text-muted-foreground">{t('property.area')}</p>
                         </div>
                       )}
                     </div>
@@ -450,7 +452,7 @@ export default function PropertyDetailPage() {
                     </div>
                   ) : (
                     <>
-                      <h3 className="font-semibold mb-4">Contacto rápido</h3>
+                      <h3 className="font-semibold mb-4">{t('property.contact')}</h3>
                       <div className="space-y-3">
                         <Button 
                           className="w-full" 
@@ -459,7 +461,7 @@ export default function PropertyDetailPage() {
                             document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
                           }}
                         >
-                          Solicitar información
+                          {t('property.contactAgent')}
                         </Button>
                         <Button 
                           variant="outline" 
@@ -468,7 +470,7 @@ export default function PropertyDetailPage() {
                           onClick={() => setShowBookingCalendar(true)}
                         >
                           <CalendarDays className="h-4 w-4" />
-                          Agendar visita
+                          {t('property.scheduleVisit')}
                         </Button>
                       </div>
                     </>
@@ -482,7 +484,7 @@ export default function PropertyDetailPage() {
             {/* Description */}
             {property.description && (
               <section>
-                <h2 className="text-2xl font-semibold mb-4 text-primary">Descripción</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">{t('property.description')}</h2>
                 <Card className="p-6">
                   <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                     {property.description}
@@ -600,7 +602,7 @@ export default function PropertyDetailPage() {
             {/* Map section */}
             {coords && (
               <section>
-                <h2 className="text-2xl font-semibold mb-4 text-primary">Ubicación</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">{t('property.location')}</h2>
                 <Card className="p-6">
                   <div className="space-y-4">
                     <div className="rounded-lg overflow-hidden shadow-lg">
@@ -619,7 +621,7 @@ export default function PropertyDetailPage() {
             {/* Reviews section */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-semibold text-primary">Reseñas y puntuaciones</h2>
+                <h2 className="text-2xl font-semibold text-primary">{t('property.clientReviews')}</h2>
                 {!property.concluded_status && (
                   <Button 
                     variant="outline" 
@@ -627,7 +629,7 @@ export default function PropertyDetailPage() {
                     className="gap-2"
                   >
                     <MessageSquare className="h-4 w-4" />
-                    Escribir reseña
+                    {t('property.leaveReview')}
                   </Button>
                 )}
                 {property.concluded_status && (
@@ -737,7 +739,7 @@ export default function PropertyDetailPage() {
             {/* Contact form */}
             {!property.concluded_status && (
               <section id="contact-form">
-                <h2 className="text-2xl font-semibold mb-4 text-primary">Contactar al agente</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-primary">{t('property.contactAgent')}</h2>
               <Card className="p-6">
                 <form
                   className="grid grid-cols-1 md:grid-cols-2 gap-4"

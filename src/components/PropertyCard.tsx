@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, BedDouble, Bath, Ruler, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import WatermarkedImage from "@/components/WatermarkedImage";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface PropertyCardProps {
   property: {
@@ -27,14 +28,16 @@ export interface PropertyCardProps {
   reviewCount?: number; // Number of reviews
 }
 
-function formatPrice(price?: number | null, currency?: string | null) {
-  if (typeof price !== "number") return "Precio a consultar";
+function formatPrice(price?: number | null, currency?: string | null, t?: (key: string) => string) {
+  if (typeof price !== "number") return t ? t('property.priceConsult') : "Precio a consultar";
   const cur = (currency || "USD").toUpperCase();
   const symbol = cur === "BOB" ? "Bs." : "$us.";
   return `${symbol} ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function PropertyCard({ property, isFavorited = false, onToggleFavorite, showConcludedBadge = false, rating = 4.2, reviewCount = Math.floor(Math.random() * 50) + 5 }: PropertyCardProps) {
+  const { t } = useLanguage();
+  
   // Fix image display: check if image_urls array exists and has valid URL
   const hasValidImage = property.image_urls && 
     Array.isArray(property.image_urls) && 
@@ -45,17 +48,17 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
     !property.image_urls[0].includes('google.com/search'); // Filter out invalid URLs
   
   const cover = hasValidImage ? property.image_urls[0] : "/default-placeholder.jpg";
-  const priceText = formatPrice(property.price, property.price_currency);
+  const priceText = formatPrice(property.price, property.price_currency, t);
   const br = typeof property.bedrooms === "number" ? property.bedrooms : undefined;
   const ba = typeof property.bathrooms === "number" ? property.bathrooms : undefined;
   const ar = typeof property.area_m2 === "number" ? property.area_m2 : undefined;
   const car = typeof property.constructed_area_m2 === "number" ? property.constructed_area_m2 : undefined;
   const txLabel = property.transaction_type === "rent"
-    ? "Alquiler"
+    ? t('property.rent')
     : property.transaction_type === "anticretico"
-    ? "Anticrético"
+    ? t('properties.anticretico')
     : property.transaction_type === "sale"
-    ? "Venta"
+    ? t('property.sale')
     : undefined;
 
   const handleFavClick = (e: React.MouseEvent) => {
@@ -65,14 +68,14 @@ export default function PropertyCard({ property, isFavorited = false, onToggleFa
   };
 
 return (
-  <Link id={`property-${property.id}`} to={`/propiedad/${property.id}`} aria-label={`Ver ${property.title}`} className="block">
+  <Link id={`property-${property.id}`} to={`/propiedad/${property.id}`} aria-label={`${t('property.view')} ${property.title}`} className="block">
     <Card key={property.id} className="relative overflow-hidden group shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 bg-gradient-to-br from-card to-card/80 rounded-xl border-0">
       {onToggleFavorite && (
         <Button
           type="button"
           size="icon"
           variant="secondary"
-          aria-label={isFavorited ? "Quitar de favoritos" : "Agregar a favoritos"}
+          aria-label={isFavorited ? t('card.removeFavorites') : t('card.addFavorites')}
           aria-pressed={isFavorited}
           className="absolute right-2 top-2 z-20 bg-background/90 backdrop-blur-sm hover:bg-background hover:scale-110 transition-all duration-200"
           onClick={handleFavClick}
@@ -88,7 +91,7 @@ return (
       <AspectRatio ratio={16 / 9} className="rounded-t-xl overflow-hidden">
         <WatermarkedImage
           src={cover}
-          alt={`Propiedad: ${property.title} — Inmobiliaria DOMINIO`}
+          alt={`${t('properties.propertyType')}: ${property.title} — Inmobiliaria DOMINIO`}
           className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -99,9 +102,9 @@ return (
         {showConcludedBadge && property.concluded_status && (
           <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center z-10">
             <div className="bg-orange-500/90 text-white px-4 py-2 rounded-md font-bold text-lg uppercase tracking-wide shadow-lg">
-              {property.concluded_status === 'vendido' && 'VENDIDO'}
-              {property.concluded_status === 'alquilado' && 'ALQUILADO'}
-              {property.concluded_status === 'anticretico' && 'EN ANTICRÉTICO'}
+              {property.concluded_status === 'vendido' && t('property.sold').replace(' ✓', '')}
+              {property.concluded_status === 'alquilado' && t('property.rented').replace(' ✓', '')}
+              {property.concluded_status === 'anticretico' && t('property.anticretico').replace(' ✓', '')}
             </div>
           </div>
         )}
@@ -115,16 +118,16 @@ return (
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <BedDouble className="h-4 w-4" aria-hidden="true" />
-            {typeof br === "number" ? `${br} Hab.` : "—"}
+            {typeof br === "number" ? `${br} ${t('card.bedrooms')}` : "—"}
           </span>
           <span className="inline-flex items-center gap-1">
             <Bath className="h-4 w-4" aria-hidden="true" />
-            {typeof ba === "number" ? `${ba} Baños` : "—"}
+            {typeof ba === "number" ? `${ba} ${t('card.bathrooms')}` : "—"}
           </span>
           <span className="inline-flex items-center gap-1">
             <Ruler className="h-4 w-4" aria-hidden="true" />
-            {typeof ar === "number" ? `${ar} m²` : "—"}
-            {typeof car === "number" && ` (${car} m² const.)` }
+            {typeof ar === "number" ? `${ar} ${t('property.area')}` : "—"}
+            {typeof car === "number" && ` (${car} ${t('card.constructed')})` }
           </span>
         </div>
         {/* Rating Section */}
@@ -155,7 +158,7 @@ return (
         
         <div className="mt-4">
           <Button size="sm" className="w-full group-hover:bg-primary/90 transition-colors" asChild>
-            <span>Ver Detalles</span>
+            <span>{t('property.viewDetails')}</span>
           </Button>
         </div>
       </CardContent>
