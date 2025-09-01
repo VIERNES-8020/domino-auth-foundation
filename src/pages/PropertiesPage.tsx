@@ -377,18 +377,18 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
         {/* Filters */}
         <section aria-labelledby="filters-heading" className="mb-8">
-          <h2 id="filters-heading" className="sr-only">Filtros</h2>
+          <h2 id="filters-heading" className="sr-only">{t('properties.filters')}</h2>
           <Card className="shadow-sm" role="region" aria-labelledby="filters-heading">
             <CardContent className="p-4 md:p-6" aria-live="polite">
               {/* Transaction Type Filters */}
               <div className="mb-6">
-                <Label className="text-base font-semibold">Tipo de Transacción</Label>
+                <Label className="text-base font-semibold">{t('properties.transactionType')}</Label>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {[
-                    { value: "", label: "Todas" },
-                    { value: "venta", label: "Venta" },
-                    { value: "alquiler", label: "Alquiler" },
-                    { value: "anticretico", label: "Anticrético" }
+                    { value: "", label: t('properties.all') },
+                    { value: "venta", label: t('properties.sale') },
+                    { value: "alquiler", label: t('properties.rent') },
+                    { value: "anticretico", label: t('properties.anticretico') }
                   ].map((option) => (
                     <Button
                       key={option.value}
@@ -405,17 +405,17 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
               </div>
               <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div className="md:col-span-2">
-                  <Label>Departamento</Label>
+                  <Label>{t('properties.department')}</Label>
                   <Select value={selectedDepartment || "all"} onValueChange={(value) => {
                     setSelectedDepartment(value === "all" ? "" : value);
                     setSelectedProvince(""); // Reset province when department changes
                     setSelectedZone(""); // Reset zone when department changes
                   }}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona departamento" />
+                      <SelectValue placeholder={t('properties.selectDepartment')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los departamentos</SelectItem>
+                      <SelectItem value="all">{t('properties.allDepartments')}</SelectItem>
                       {boliviaDepartments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           {dept.name}
@@ -426,7 +426,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 </div>
                 
                 <div className="md:col-span-2">
-                  <Label>Provincia</Label>
+                  <Label>{t('properties.province')}</Label>
                   <Select 
                     value={selectedProvince || "all"} 
                     onValueChange={(value) => {
@@ -437,11 +437,11 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   >
                     <SelectTrigger>
                       <SelectValue 
-                        placeholder={selectedDepartment ? "Selecciona provincia" : "Primero elige departamento"} 
+                        placeholder={selectedDepartment ? t('properties.selectProvince') : t('properties.selectDepartment')} 
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todas las provincias</SelectItem>
+                      <SelectItem value="all">{t('properties.allProvinces')}</SelectItem>
                       {selectedDepartment && 
                         boliviaDepartments
                           .find(d => d.id === selectedDepartment)
@@ -456,7 +456,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 </div>
                 
                 <div className="md:col-span-2">
-                  <Label>Zona específica</Label>
+                  <Label>{t('properties.specificZone')}</Label>
                   <Select 
                     value={selectedZone || "all"} 
                     onValueChange={(value) => setSelectedZone(value === "all" ? "" : value)}
@@ -464,11 +464,11 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   >
                     <SelectTrigger>
                       <SelectValue 
-                        placeholder={selectedProvince ? "Selecciona zona" : "Primero elige provincia"} 
+                        placeholder={selectedProvince ? t('properties.selectProvince') : t('properties.selectDepartment')} 
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todas las zonas</SelectItem>
+                      <SelectItem value="all">{t('properties.allZones')}</SelectItem>
                       {/* Zonas comunes de Bolivia */}
                       {selectedProvince && [
                         "Centro", "Norte", "Sur", "Este", "Oeste",
@@ -484,45 +484,45 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="priceMin">Precio mín.</Label>
+                  <Label htmlFor="priceMin">{t('properties.minPrice')}</Label>
                   <Input id="priceMin" type="number" min={0} placeholder="0" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} inputMode="numeric" />
                 </div>
                 <div>
-                  <Label htmlFor="priceMax">Precio máx.</Label>
+                  <Label htmlFor="priceMax">{t('properties.maxPrice')}</Label>
                   <Input id="priceMax" type="number" min={0} placeholder="500000" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} inputMode="numeric" />
                 </div>
 
                 <div>
-                  <Label htmlFor="bedrooms">Habitaciones</Label>
+                  <Label htmlFor="bedrooms">{t('properties.bedrooms')}</Label>
                   <Input id="bedrooms" type="number" min={0} placeholder="2" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label htmlFor="bathrooms">Baños</Label>
+                  <Label htmlFor="bathrooms">{t('properties.bathrooms')}</Label>
                   <Input id="bathrooms" type="number" min={0} placeholder="1" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
                 </div>
 
                 <div>
-                  <Label>Tipo</Label>
+                  <Label>{t('properties.propertyType')}</Label>
                   <Select value={propertyType} onValueChange={setPropertyType}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona" />
+                      <SelectValue placeholder={t('properties.select')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="casa">Casa</SelectItem>
-                      <SelectItem value="departamento">Departamento</SelectItem>
-                      <SelectItem value="terreno">Terreno</SelectItem>
-                      <SelectItem value="oficina">Oficina</SelectItem>
-                      <SelectItem value="local_comercial">Local Comercial</SelectItem>
+                      <SelectItem value="casa">{t('properties.house')}</SelectItem>
+                      <SelectItem value="departamento">{t('properties.apartment')}</SelectItem>
+                      <SelectItem value="terreno">{t('properties.land')}</SelectItem>
+                      <SelectItem value="oficina">{t('properties.office')}</SelectItem>
+                      <SelectItem value="local_comercial">{t('properties.commercial')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="lifestyle">Búsqueda AURA (estilo de vida)</Label>
+                  <Label htmlFor="lifestyle">{t('properties.lifestyle')}</Label>
                   <Input
                     id="lifestyle"
-                    placeholder="Ej. cerca de parques, zona tranquila, coworking..."
+                    placeholder={t('properties.lifestylePlaceholder')}
                     value={lifestyle}
                     onChange={(e) => setLifestyle(e.target.value)}
                   />
@@ -534,15 +534,15 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     variant="outline"
                     onClick={handleNearMeClick}
                     disabled={nearMeLoading}
-                    aria-label="Buscar propiedades cerca de mi ubicación"
+                    aria-label={t('properties.searchNearMe')}
                     className="w-full"
                   >
-                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? "Buscando..." : "Buscar cerca de mí"}
+                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? t('properties.loading') : t('properties.searchNearMe')}
                   </Button>
                 </div>
 
                 <div className="md:col-span-6">
-                  <Label>Amenidades</Label>
+                  <Label>{t('properties.amenities')}</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {amenities.map((a) => {
                       const selected = selectedAmenities.includes(a.id);
@@ -563,7 +563,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                       );
                     })}
                     {amenities.length === 0 && (
-                      <span className="text-sm text-muted-foreground">Cargando amenidades...</span>
+                      <span className="text-sm text-muted-foreground">{t('properties.loading')}</span>
                     )}
                   </div>
                 </div>
@@ -573,11 +573,11 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     type="button" 
                     onClick={() => {
                       // The search is already reactive - filters update automatically
-                      toast.success("Búsqueda actualizada con nuevos filtros");
+                      toast.success(t('properties.loading'));
                     }}
                     className="bg-primary hover:bg-primary/90 text-white"
                   >
-                    Buscar
+                    {t('properties.search')}
                   </Button>
                 </div>
                 <div className="self-end">
@@ -595,7 +595,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     setTransactionType("");
                     setUsingNearMe(false);
                     setNearMeCenter(null);
-                  }}>Limpiar filtros</Button>
+                  }}>{t('properties.clearFilters')}</Button>
                 </div>
               </div>
             </CardContent>
@@ -605,22 +605,22 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
         {/* Map */}
         {mapToken && (
           <section aria-labelledby="map-heading" className="mb-8">
-            <h2 id="map-heading" className="text-xl font-semibold mb-3">Mapa de resultados</h2>
+            <h2 id="map-heading" className="text-xl font-semibold mb-3">{t('properties.results')}</h2>
             <PropertiesMap token={mapToken} markers={markers} defaultCenter={nearMeCenter ?? undefined} className="w-full h-80 rounded-lg overflow-hidden" />
           </section>
         )}
         {/* Results */}
         <section aria-labelledby="results-heading">
           <div className="flex items-center justify-between mb-4">
-            <h2 id="results-heading" className="text-xl font-semibold">Resultados</h2>
+            <h2 id="results-heading" className="text-xl font-semibold">{t('properties.results')}</h2>
             <div className="text-sm text-muted-foreground">
-              {loading ? "Cargando propiedades..." : `${properties.length} propiedades`}
+              {loading ? t('properties.loading') : `${properties.length} ${t('properties.propertiesFound')}`}
             </div>
           </div>
           {suggestedCity && !city && (
             <div className="mb-4 rounded-md border p-3 text-sm flex items-center justify-between">
-              <span>¿Quieres ver propiedades en {suggestedCity}?</span>
-              <Button size="sm" onClick={() => setCity(suggestedCity!)}>Sí, mostrar</Button>
+              <span>{t('properties.noResults')}</span>
+              <Button size="sm" onClick={() => setCity(suggestedCity!)}>{t('properties.search')}</Button>
             </div>
           )}
 
@@ -647,12 +647,12 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                 </div>
                 <p className="text-muted-foreground mb-4">
                   {usingNearMe 
-                    ? "No he encontrado propiedades cerca de tu ubicación." 
-                    : "No se encontraron propiedades en esta zona por el momento."
+                    ? t('properties.noResults') 
+                    : t('properties.noResults')
                   }
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Puedes contactar con un agente para solicitar más información específica o enviar un mensaje y serás atendido a la brevedad.
+                  {t('properties.tryDifferentFilters')}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 mb-3">
                   <Button 
@@ -662,7 +662,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     className="flex items-center gap-2"
                   >
                     <Phone className="h-4 w-4" />
-                    Contactar Agente
+                    {t('agents.contactNow')}
                   </Button>
                   <Button 
                     variant="outline"
@@ -671,7 +671,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     className="flex items-center gap-2"
                   >
                     <Mail className="h-4 w-4" />
-                    Enviar Mensaje
+                    {t('contact.send')}
                   </Button>
                 </div>
                 <Button 
@@ -684,10 +684,10 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                     setBedrooms("");
                     setBathrooms("");
                     setSelectedAmenities([]);
-                    toast.success("Mostrando opciones similares sugeridas por AURA");
+                    toast.success(t('properties.clearFilters'));
                   }}
                 >
-                  Ver opciones similares
+                  {t('properties.tryDifferentFilters')}
                 </Button>
               </div>
             </div>
