@@ -12,6 +12,18 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const translations = {
   es: {
+    // Navigation
+    'nav.home': 'Inicio',
+    'nav.properties': 'Propiedades',
+    'nav.agents': 'Nuestros Agentes',
+    'nav.clients': 'Nuestros Clientes',
+    'nav.about': 'Sobre Nosotros',
+    'nav.contact': 'Contacto',
+    'nav.login': 'Iniciar Sesión',
+    'nav.register': 'Registrarse',
+    'nav.dashboard': 'Panel',
+    'nav.signOut': 'Cerrar Sesión',
+    
     // Hero Section
     'hero.title': 'Hogar para tu Familia, Proyectos para tu Futuro',
     'hero.subtitle': 'La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas, agentes certificados y el respaldo de DOMINIO.',
@@ -45,6 +57,18 @@ const translations = {
     'language.chinese': 'Chino (tradicional)'
   },
   en: {
+    // Navigation
+    'nav.home': 'Home',
+    'nav.properties': 'Properties',
+    'nav.agents': 'Our Agents',
+    'nav.clients': 'Our Clients',
+    'nav.about': 'About Us',
+    'nav.contact': 'Contact',
+    'nav.login': 'Sign In',
+    'nav.register': 'Register',
+    'nav.dashboard': 'Dashboard',
+    'nav.signOut': 'Sign Out',
+    
     // Hero Section
     'hero.title': 'Home for Your Family, Projects for Your Future',
     'hero.subtitle': 'Bolivia\'s largest real estate franchise network. Thousands of verified properties, certified agents and DOMINIO\'s backing.',
@@ -78,6 +102,18 @@ const translations = {
     'language.chinese': '繁體中文'
   },
   fr: {
+    // Navigation
+    'nav.home': 'Accueil',
+    'nav.properties': 'Propriétés',
+    'nav.agents': 'Nos Agents',
+    'nav.clients': 'Nos Clients',
+    'nav.about': 'À Propos',
+    'nav.contact': 'Contact',
+    'nav.login': 'Se Connecter',
+    'nav.register': 'S\'inscrire',
+    'nav.dashboard': 'Tableau de Bord',
+    'nav.signOut': 'Se Déconnecter',
+    
     // Hero Section
     'hero.title': 'Maison pour Votre Famille, Projets pour Votre Avenir',
     'hero.subtitle': 'Le plus grand réseau de franchises immobilières de Bolivie. Des milliers de propriétés vérifiées, des agents certifiés et le soutien de DOMINIO.',
@@ -111,6 +147,18 @@ const translations = {
     'language.chinese': '繁體中文'
   },
   de: {
+    // Navigation
+    'nav.home': 'Startseite',
+    'nav.properties': 'Immobilien',
+    'nav.agents': 'Unsere Makler',
+    'nav.clients': 'Unsere Kunden',
+    'nav.about': 'Über Uns',
+    'nav.contact': 'Kontakt',
+    'nav.login': 'Anmelden',
+    'nav.register': 'Registrieren',
+    'nav.dashboard': 'Dashboard',
+    'nav.signOut': 'Abmelden',
+    
     // Hero Section
     'hero.title': 'Zuhause für Ihre Familie, Projekte für Ihre Zukunft',
     'hero.subtitle': 'Boliviens größtes Immobilien-Franchise-Netzwerk. Tausende verifizierte Immobilien, zertifizierte Makler und DOMINIOs Unterstützung.',
@@ -144,6 +192,18 @@ const translations = {
     'language.chinese': '繁體中文'
   },
   pt: {
+    // Navigation
+    'nav.home': 'Início',
+    'nav.properties': 'Propriedades',
+    'nav.agents': 'Nossos Corretores',
+    'nav.clients': 'Nossos Clientes',
+    'nav.about': 'Sobre Nós',
+    'nav.contact': 'Contato',
+    'nav.login': 'Entrar',
+    'nav.register': 'Registrar-se',
+    'nav.dashboard': 'Painel',
+    'nav.signOut': 'Sair',
+    
     // Hero Section
     'hero.title': 'Lar para Sua Família, Projetos para Seu Futuro',
     'hero.subtitle': 'A maior rede de franquias imobiliárias da Bolívia. Milhares de propriedades verificadas, corretores certificados e o respaldo da DOMINIO.',
@@ -177,6 +237,18 @@ const translations = {
     'language.chinese': '繁體中文'
   },
   zh: {
+    // Navigation
+    'nav.home': '首頁',
+    'nav.properties': '物業',
+    'nav.agents': '我們的代理人',
+    'nav.clients': '我們的客戶',
+    'nav.about': '關於我們',
+    'nav.contact': '聯繫我們',
+    'nav.login': '登入',
+    'nav.register': '註冊',
+    'nav.dashboard': '儀表板',
+    'nav.signOut': '登出',
+    
     // Hero Section
     'hero.title': '為您的家庭築家，為您的未來築夢',
     'hero.subtitle': '玻利維亞最大的房地產加盟網絡。數千套經過驗證的物業，認證代理人和DOMINIO的支持。',

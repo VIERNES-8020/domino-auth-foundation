@@ -5,8 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { User, LogOut, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 export default function Header() {
+  const { t } = useLanguage();
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -111,41 +114,44 @@ export default function Header() {
               to="/" 
               className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
             >
-              Inicio
+              {t('nav.home')}
             </Link>
             <Link 
               to="/propiedades" 
               className={`nav-link ${location.pathname === '/propiedades' ? 'active' : ''}`}
             >
-              Propiedades
+              {t('nav.properties')}
             </Link>
             <Link 
               to="/nuestros-agentes" 
               className={`nav-link ${location.pathname === '/nuestros-agentes' ? 'active' : ''}`}
             >
-              Nuestros Agentes
+              {t('nav.agents')}
             </Link>
             <Link 
               to="/nuestros-clientes" 
               className={`nav-link ${location.pathname === '/nuestros-clientes' ? 'active' : ''}`}
             >
-              Nuestros Clientes
+              {t('nav.clients')}
             </Link>
             <Link 
               to="/sobre-nosotros" 
               className={`nav-link ${location.pathname === '/sobre-nosotros' ? 'active' : ''}`}
             >
-              Sobre Nosotros
+              {t('nav.about')}
             </Link>
             <Link 
               to="/contacto" 
               className={`nav-link ${location.pathname === '/contacto' ? 'active' : ''}`}
             >
-              Contacto
+              {t('nav.contact')}
             </Link>
           </div>
-          {session ? (
-            <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            
+            {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
@@ -188,7 +194,7 @@ export default function Header() {
                     <DropdownMenuItem asChild>
                       <Link to={getDashboardLink()} className="flex items-center gap-2 w-full cursor-pointer">
                         <User className="h-4 w-4" />
-                        Ir a mi Panel
+                        {t('nav.dashboard')}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -198,21 +204,21 @@ export default function Header() {
                     className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
-                    Cerrar Sesión
+                    {t('nav.signOut')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" asChild>
-                <Link to="/auth">Iniciar Sesión</Link>
-              </Button>
-              <Button asChild>
-                <Link to="/auth">Registrarse</Link>
-              </Button>
-            </div>
-          )}
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link to="/auth">{t('nav.login')}</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/auth">{t('nav.register')}</Link>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </nav>
     </header>

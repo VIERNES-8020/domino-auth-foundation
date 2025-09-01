@@ -421,23 +421,6 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Language Selector Section */}
-      <section className="py-8 bg-gradient-to-r from-secondary/10 to-primary/5 border-t border-border/50">
-        <div className="container mx-auto flex justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {t('language.select')}
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-md">
-                {t('language.select')} - DOMINIO está disponible en múltiples idiomas
-              </p>
-            </div>
-            <LanguageSelector />
-          </div>
-        </div>
-      </section>
-
       {/* Structured Data */}
       <script
         type="application/ld+json"
