@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LocateFixed, Phone, Mail } from "lucide-react";
 import { boliviaDepartments } from "@/data/bolivia-locations";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // SEO helper (scoped to this page)
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -57,9 +58,11 @@ interface Property {
 }
 
 export default function PropertiesPage() {
+  const { t } = useLanguage();
+  
   usePageSEO({
-    title: "Propiedades en Venta y Alquiler | DOMINIO",
-    description: "Explora propiedades aprobadas por DOMINIO. Filtra por precio, habitaciones, tipo y más.",
+    title: `${t('properties.title')} | DOMINIO`,
+    description: t('properties.subtitle'),
     canonicalPath: "/properties",
   });
 
@@ -366,9 +369,9 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
       <main className="container mx-auto py-10 animate-fade-in">
         <header className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Busca tu próximo hogar</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{t('properties.title')}</h1>
           <p className="mt-2 text-muted-foreground">
-            Filtra por ciudad, presupuesto, habitaciones y más. Todas las propiedades están verificadas por DOMINIO.
+            {t('properties.subtitle')}
           </p>
           </header>
 
