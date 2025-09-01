@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { User, MapPin, Star, Search, Filter } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AgentProfile { 
   id: string; 
@@ -35,7 +36,8 @@ function usePageSEO(opts: { title: string; description: string; canonicalPath: s
 }
 
 export default function AgentsPage() {
-  usePageSEO({ title: "Nuestros Agentes | DOMINIO", description: "Conoce a nuestros agentes certificados en toda Bolivia.", canonicalPath: "/agents" });
+  const { t } = useLanguage();
+  usePageSEO({ title: t("agents_page_title"), description: t("agents_seo_description"), canonicalPath: "/agents" });
   
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [filteredAgents, setFilteredAgents] = useState<AgentProfile[]>([]);
@@ -115,7 +117,7 @@ export default function AgentsPage() {
         <main className="container mx-auto py-16">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Cargando agentes...</p>
+            <p className="mt-4 text-muted-foreground">{t("loading_agents")}</p>
           </div>
         </main>
       </div>
@@ -127,10 +129,10 @@ export default function AgentsPage() {
       <main className="container mx-auto py-16">
         <header className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            Nuestros Agentes
+            {t("our_agents")}
           </h1>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Profesionales certificados y experimentados, listos para ayudarte a encontrar la propiedad perfecta en toda Bolivia.
+            {t("agents_description")}
           </p>
         </header>
 
@@ -142,7 +144,7 @@ export default function AgentsPage() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
-                    placeholder="Buscar por nombre o código de agente..."
+                    placeholder={t("search_agents_placeholder")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -153,21 +155,21 @@ export default function AgentsPage() {
                 <Select value={minRating} onValueChange={setMinRating}>
                   <SelectTrigger>
                     <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Calificación mínima" />
+                    <SelectValue placeholder={t("minimum_rating")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas las calificaciones</SelectItem>
-                    <SelectItem value="4.5">4.5+ estrellas</SelectItem>
-                    <SelectItem value="4.0">4.0+ estrellas</SelectItem>
-                    <SelectItem value="3.5">3.5+ estrellas</SelectItem>
-                    <SelectItem value="3.0">3.0+ estrellas</SelectItem>
+                    <SelectItem value="all">{t("all_ratings")}</SelectItem>
+                    <SelectItem value="4.5">{t("stars_45_plus")}</SelectItem>
+                    <SelectItem value="4.0">{t("stars_40_plus")}</SelectItem>
+                    <SelectItem value="3.5">{t("stars_35_plus")}</SelectItem>
+                    <SelectItem value="3.0">{t("stars_30_plus")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             {(searchTerm || (minRating && minRating !== "all")) && (
               <div className="mt-4 text-sm text-muted-foreground">
-                Mostrando {filteredAgents.length} de {agents.length} agentes
+                {t("showing_agents")} {filteredAgents.length} {t("of_agents")} {agents.length} {t("agents")}
               </div>
             )}
           </Card>
@@ -177,8 +179,8 @@ export default function AgentsPage() {
           {agents.length === 0 ? (
             <div className="text-center py-16">
               <User className="h-24 w-24 text-muted-foreground/40 mx-auto mb-6" />
-              <h3 className="text-2xl font-semibold text-muted-foreground mb-2">Próximamente</h3>
-              <p className="text-muted-foreground">Estamos preparando el perfil de nuestros agentes profesionales.</p>
+              <h3 className="text-2xl font-semibold text-muted-foreground mb-2">{t("coming_soon")}</h3>
+              <p className="text-muted-foreground">{t("preparing_profiles")}</p>
             </div>
           ) : (
             <>
@@ -193,7 +195,7 @@ export default function AgentsPage() {
                         <div className="relative aspect-[4/3] overflow-hidden">
                           <img 
                             src={agent.avatar_url || "/default-placeholder.jpg"}
-                            alt={`Agente ${agent.full_name ?? agent.id}`}
+                            alt={`${t("agent")} ${agent.full_name ?? agent.id}`}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                             onError={(e) => { 
                               (e.currentTarget as HTMLImageElement).src = "/default-placeholder.jpg"; 
@@ -212,13 +214,13 @@ export default function AgentsPage() {
                         <div className="p-6">
                           <div className="mb-4">
                             <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-1">
-                              {agent.full_name ?? `Agente ${agent.id.slice(0,8)}`}
+                              {agent.full_name ?? `${t("agent")} ${agent.id.slice(0,8)}`}
                             </h3>
                             <p className="text-primary font-medium text-sm mt-1">
-                              {agent.title || "Corredor de Bienes Raíces"}
+                              {agent.title || t("real_estate_broker")}
                             </p>
                             <p className="text-muted-foreground text-xs mt-1">
-                              Código: {agent.agent_code || "N/A"}
+                              {t("code")}: {agent.agent_code || "N/A"}
                             </p>
                           </div>
 
@@ -230,7 +232,7 @@ export default function AgentsPage() {
 
                           <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
                             <MapPin className="h-3 w-3" />
-                            <span>Disponible en Bolivia</span>
+                            <span>{t("available_in_bolivia")}</span>
                           </div>
 
                           <Button 
@@ -238,7 +240,7 @@ export default function AgentsPage() {
                             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 hover:shadow-lg"
                           >
                             <Link to={`/agente/${agent.agent_code}`}>
-                              Ver Perfil Completo
+                              {t("view_full_profile")}
                             </Link>
                           </Button>
                         </div>
@@ -255,7 +257,7 @@ export default function AgentsPage() {
                     size="lg"
                     onClick={() => setDisplayCount(prev => prev + 12)}
                   >
-                    Cargar más agentes
+                    {t("load_more_agents")}
                   </Button>
                 </div>
               )}
@@ -266,13 +268,12 @@ export default function AgentsPage() {
         {agents.length > 0 && (
           <section className="mt-20 text-center">
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-8 border border-primary/20">
-              <h2 className="text-2xl font-bold mb-4">¿Necesitas ayuda personalizada?</h2>
+              <h2 className="text-2xl font-bold mb-4">{t("need_personalized_help")}</h2>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                Nuestros agentes están listos para asesorarte en la búsqueda de tu propiedad ideal. 
-                Contacta directamente con cualquiera de ellos.
+                {t("agents_ready_help")}
               </p>
               <Button asChild variant="outline" size="lg">
-                <Link to="/contact">Contactar Ahora</Link>
+                <Link to="/contact">{t("contact_now")}</Link>
               </Button>
             </div>
           </section>
