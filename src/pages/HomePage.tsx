@@ -165,10 +165,10 @@ export default function HomePage() {
         </div>
 
         <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
             Hogar para tu Familia, Proyectos para tu Futuro
           </h1>
-          <p className="mt-4 max-w-3xl text-muted-foreground">
+          <p className="mt-4 max-w-3xl text-white/90">
             La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas,
             agentes certificados y el respaldo de DOMINIO.
           </p>
