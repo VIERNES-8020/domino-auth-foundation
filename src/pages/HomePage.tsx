@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { removeBackground, loadImageFromUrl } from "@/utils/backgroundRemoval";
 
 const heroImage = "/lovable-uploads/3e497d3a-9eb3-4c01-88c3-d96c49fb6818.png";
 
@@ -71,36 +70,9 @@ export default function HomePage() {
     monthlySales: 150
   });
 
-  const [processedHeroImage, setProcessedHeroImage] = useState<string | null>(null);
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
-
 
   useEffect(() => {
     let active = true;
-    
-    // Process hero image to remove background
-    const processHeroImage = async () => {
-      try {
-        setIsProcessingImage(true);
-        const image = await loadImageFromUrl(heroImage);
-        const processedBlob = await removeBackground(image);
-        const processedUrl = URL.createObjectURL(processedBlob);
-        if (active) {
-          setProcessedHeroImage(processedUrl);
-        }
-      } catch (error) {
-        console.error('Error processing hero image:', error);
-        // Fallback to original image
-        if (active) {
-          setProcessedHeroImage(heroImage);
-        }
-      } finally {
-        if (active) {
-          setIsProcessingImage(false);
-        }
-      }
-    };
-
     (async () => {
         const fetchType = async (type: string) => {
         const { data } = await supabase
@@ -166,16 +138,7 @@ export default function HomePage() {
       setFeatHouse(houses); setFeatApt(apts); setFeatLand(lands); setFeatOffice(offices); setFeatCommercial(commercials);
       setConcludedHouse(concludedHouses); setConcludedApt(concludedApts); setConcludedLand(concludedLands); setConcludedOffice(concludedOffices); setConcludedCommercial(concludedCommercials);
     })();
-
-    // Process hero image
-    processHeroImage();
-    
-    return () => { 
-      active = false;
-      if (processedHeroImage) {
-        URL.revokeObjectURL(processedHeroImage);
-      }
-    };
+    return () => { active = false; };
   }, []);
 
   const orgJsonLd = {
@@ -192,23 +155,14 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          {isProcessingImage ? (
-            <div className="h-[72vh] w-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Procesando imagen...</p>
-              </div>
-            </div>
-          ) : (
-            <img
-              src={processedHeroImage || heroImage}
-              alt="Equipo profesional de DOMINIO planificando proyectos inmobiliarios"
-              className="h-[72vh] w-full object-cover"
-              loading="eager"
-              style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/50" />
+          <img
+            src={heroImage}
+            alt="Equipo profesional de DOMINIO planificando proyectos inmobiliarios"
+            className="h-[72vh] w-full object-cover"
+            loading="eager"
+            style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/40" />
         </div>
 
         <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
