@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const heroImage = "/lovable-uploads/90b782af-a7b8-4f13-8cef-038ebfcb471d.png";
 
@@ -43,6 +45,8 @@ function usePageSEO(options: { title: string; description: string; canonicalPath
 }
 
 export default function HomePage() {
+  const { t } = useLanguage();
+  
   usePageSEO({
     title: "Encuentra tu Hogar Ideal | DOMINIO Inmobiliaria",
     description:
@@ -166,22 +170,21 @@ export default function HomePage() {
 
         <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
-            Hogar para tu Familia, Proyectos para tu Futuro
+            {t('hero.title')}
           </h1>
           <p className="mt-4 max-w-3xl text-white/90">
-            La red de franquicias inmobiliarias más grande de Bolivia. Miles de propiedades verificadas,
-            agentes certificados y el respaldo de DOMINIO.
+            {t('hero.subtitle')}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
             <Button size="lg" asChild>
-              <Link to="/vende">Vende o Alquila</Link>
+              <Link to="/vende">{t('hero.sellRent')}</Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="bg-white text-primary border-white hover:bg-white/90">
-              <Link to="/propiedades">Explorar Propiedades</Link>
+              <Link to="/propiedades">{t('hero.explore')}</Link>
             </Button>
             <Button size="lg" variant="outline" asChild className="bg-transparent border-white text-white hover:bg-white/10">
               <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2">
-                <span>Únete como Franquicia</span>
+                <span>{t('hero.franchise')}</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
@@ -191,23 +194,23 @@ export default function HomePage() {
 
       {/* Featured Properties */}
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
-        <h2 id="featured-heading" className="text-2xl font-semibold mb-3">Propiedades Destacadas</h2>
+        <h2 id="featured-heading" className="text-2xl font-semibold mb-3">{t('properties.featured')}</h2>
         <Tabs defaultValue="house">
         <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
           <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Casas</span>
+            <span className="relative z-10">{t('properties.house')}</span>
           </TabsTrigger>
           <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Departamentos</span>
+            <span className="relative z-10">{t('properties.apartment')}</span>
           </TabsTrigger>
           <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Terrenos</span>
+            <span className="relative z-10">{t('properties.land')}</span>
           </TabsTrigger>
           <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Oficinas</span>
+            <span className="relative z-10">{t('properties.office')}</span>
           </TabsTrigger>
           <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Local comercial</span>
+            <span className="relative z-10">{t('properties.commercial')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -285,23 +288,23 @@ export default function HomePage() {
 
       {/* Concluded Properties */}
       <section className="container mx-auto py-10" aria-labelledby="concluded-heading">
-        <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">Éxitos Recientes</h2>
+        <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">{t('properties.success')}</h2>
         <Tabs defaultValue="house">
         <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
           <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Casas</span>
+            <span className="relative z-10">{t('properties.house')}</span>
           </TabsTrigger>
           <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Departamentos</span>
+            <span className="relative z-10">{t('properties.apartment')}</span>
           </TabsTrigger>
           <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Terrenos</span>
+            <span className="relative z-10">{t('properties.land')}</span>
           </TabsTrigger>
           <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Oficinas</span>
+            <span className="relative z-10">{t('properties.office')}</span>
           </TabsTrigger>
           <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">Local comercial</span>
+            <span className="relative z-10">{t('properties.commercial')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -380,13 +383,13 @@ export default function HomePage() {
       {/* Metrics Section */}
       <main>
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
-          <h2 id="metrics-heading" className="sr-only">Métricas de DOMINIO</h2>
+          <h2 id="metrics-heading" className="text-2xl font-semibold mb-6 text-center">{t('stats.title')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
             <Link to="/propiedades" aria-label="Ver propiedades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Propiedades</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.properties')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -394,7 +397,7 @@ export default function HomePage() {
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Franquicias</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.franchises')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -402,7 +405,7 @@ export default function HomePage() {
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalCities}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Ciudades</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.cities')}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -410,13 +413,30 @@ export default function HomePage() {
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
                 <CardContent className="p-6 text-center">
                   <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.monthlySales}+</div>
-                  <p className="mt-1 text-sm text-muted-foreground">Venta / Alquiler</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.sales')}</p>
                 </CardContent>
               </Card>
             </Link>
           </div>
         </section>
       </main>
+
+      {/* Language Selector Section */}
+      <section className="py-8 bg-gradient-to-r from-secondary/10 to-primary/5 border-t border-border/50">
+        <div className="container mx-auto flex justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {t('language.select')}
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-md">
+                {t('language.select')} - DOMINIO está disponible en múltiples idiomas
+              </p>
+            </div>
+            <LanguageSelector />
+          </div>
+        </div>
+      </section>
 
       {/* Structured Data */}
       <script
