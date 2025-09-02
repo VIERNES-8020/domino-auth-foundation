@@ -130,6 +130,16 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
     return <div className="min-h-screen flex items-center justify-center">Verificando permisos...</div>;
   }
 
+  // Auto-redirect superadmins trying to access agent dashboard
+  if (profile?.role === 'Super Administrador' && requiredRole === 'Agente Inmobiliario') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  // Auto-redirect agents trying to access admin dashboard
+  if (profile?.role === 'Agente Inmobiliario' && requiredRole === 'Super Administrador') {
+    return <Navigate to="/dashboard/agent" replace />;
+  }
+
   if (requiredRole && profile?.role !== requiredRole) {
     return <AccessDenied />;
   }
