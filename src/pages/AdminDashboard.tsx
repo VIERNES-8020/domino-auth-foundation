@@ -35,6 +35,7 @@ import {
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
 import WatermarkManagement from "@/components/admin/WatermarkManagement";
+import AdminUserManagement from "@/pages/AdminUserManagement";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -720,133 +721,8 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Users Management Tab */}
-            <TabsContent value="usuarios" className="space-y-6 mt-6">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Gestión de Usuarios
-                  </CardTitle>
-                  <CardDescription>
-                    Administra los roles y permisos de todos los usuarios de la plataforma
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Search */}
-                    <div className="flex gap-4">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar usuarios por nombre o email..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    {/* User Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {users
-                        .filter(user => 
-                          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          user.agent_code?.toLowerCase().includes(searchTerm.toLowerCase())
-                        )
-                        .map((user) => (
-                          <Card key={user.id} className="hover:shadow-lg transition-all duration-300">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                                    <Users className="h-5 w-5 text-white" />
-                                  </div>
-                                  <div>
-                                    <h4 className="font-semibold">{user.full_name || 'Sin nombre'}</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {user.agent_code || `ID: ${user.id.substring(0, 8)}...`}
-                                    </p>
-                                  </div>
-                                </div>
-                                <Badge 
-                                  variant={user.is_super_admin ? 'default' : 
-                                          getUserRole(user.id) === 'agent' ? 'secondary' : 'outline'}
-                                  className="whitespace-nowrap"
-                                >
-                                  {getUserRole(user.id) === 'Super Admin' ? (
-                                    <div className="flex items-center gap-1">
-                                      <Crown className="h-3 w-3" />
-                                      Super Admin
-                                    </div>
-                                  ) : getUserRole(user.id) === 'agent' ? (
-                                    <div className="flex items-center gap-1">
-                                      <Shield className="h-3 w-3" />
-                                      Agente
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-1">
-                                      <Users className="h-3 w-3" />
-                                      Cliente
-                                    </div>
-                                  )}
-                                </Badge>
-                              </div>
-
-                              <div className="space-y-2">
-                                {user.franchise_id && (
-                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <TrendingUp className="h-4 w-4" />
-                                    <span>Franquicia asignada</span>
-                                  </div>
-                                )}
-                                
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>Desde {new Date(user.created_at).toLocaleDateString('es-ES')}</span>
-                                </div>
-
-                                <div className="flex gap-2 pt-3">
-                                  {!user.is_super_admin && (
-                                    <Select 
-                                      value={getUserRole(user.id)} 
-                                      onValueChange={(value) => updateUserRole(user.id, value as "agent" | "client")}
-                                    >
-                                      <SelectTrigger className="flex-1">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="client">Cliente</SelectItem>
-                                        <SelectItem value="agent">Agente</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  )}
-                                  
-                                  <Button
-                                    size="sm"
-                                    variant={user.is_super_admin ? "destructive" : "default"}
-                                    onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
-                                  >
-                                    {user.is_super_admin ? (
-                                      <>
-                                        <UserX className="h-4 w-4 mr-1" />
-                                        Remover
-                                      </>
-                                    ) : (
-                                      <>
-                                        <UserCheck className="h-4 w-4 mr-1" />
-                                        Admin
-                                      </>
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="usuarios" className="mt-6">
+              <AdminUserManagement />
             </TabsContent>
 
             {/* Franchises Management Tab */}
