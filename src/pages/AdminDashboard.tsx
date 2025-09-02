@@ -92,6 +92,7 @@ export default function AdminDashboard() {
           // Only allow access if they have super_admin role
           if (roleData?.role !== 'super_admin') {
             toast.error('No tienes permisos para acceder a esta sección');
+            setLoading(false);
             return;
           }
         }
