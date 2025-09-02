@@ -1,24 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Users, Plus, Edit, Trash2, Filter } from "lucide-react";
-import { Navigate } from "react-router-dom";
-import { useUser } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Database } from "@/integrations/supabase/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -38,28 +35,28 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
-  const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
-  const user = useUser();
   const { t } = useLanguage();
 
-  // Check if user is super admin
-  const { data: isSuperAdmin, isLoading: checkingAdmin } = useQuery({
-    queryKey: ["check-super-admin", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      
-      const { data, error } = await supabase
-        .from("super_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .single();
+  useEffect(() => {
+    const initializeUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error('Error getting user:', error);
+        toast.error('Error obteniendo usuario');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      if (error || !data) return false;
-      return true;
-    },
-    enabled: !!user?.id,
-  });
+    initializeUser();
+  }, []);
 
   // Fetch all users with their profiles
   const { data: users = [], isLoading: usersLoading } = useQuery({
@@ -82,17 +79,17 @@ const AdminUserManagement = () => {
               .from("user_roles")
               .select("role")
               .eq("user_id", profile.id)
-              .single();
+              .maybeSingle();
 
             return {
               ...profile,
-              role: roleData?.role || "none",
+              role: roleData?.role || "client",
               email: null, // We cannot access auth.users directly from client
             };
           } catch (error) {
             return {
               ...profile,
-              role: "none",
+              role: "client",
               email: null,
             };
           }
@@ -101,7 +98,7 @@ const AdminUserManagement = () => {
 
       return usersWithAuth;
     },
-    enabled: !!isSuperAdmin,
+    enabled: !!currentUser && !loading,
   });
 
   const form = useForm<UserFormValues>({
@@ -160,20 +157,13 @@ const AdminUserManagement = () => {
       return authData;
     },
     onSuccess: () => {
-      toast({
-        title: t('success'),
-        description: t('userCreatedSuccess'),
-      });
+      toast.success(t('userCreatedSuccess') || 'Usuario creado exitosamente');
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
       setIsCreateModalOpen(false);
       form.reset();
     },
     onError: (error: any) => {
-      toast({
-        title: t('error'),
-        description: error.message || t('unexpectedError'),
-        variant: "destructive",
-      });
+      toast.error(error.message || t('unexpectedError') || 'Error inesperado');
     },
   });
 
@@ -189,18 +179,11 @@ const AdminUserManagement = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({
-        title: t('success'),
-        description: t('roleUpdatedSuccess'),
-      });
+      toast.success(t('roleUpdatedSuccess') || 'Rol actualizado exitosamente');
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
     },
     onError: (error: any) => {
-      toast({
-        title: t('error'),
-        description: error.message || t('unexpectedError'),
-        variant: "destructive",
-      });
+      toast.error(error.message || t('unexpectedError') || 'Error inesperado');
     },
   });
 
@@ -238,15 +221,6 @@ const AdminUserManagement = () => {
   const handleRoleChange = (userId: string, newRole: string) => {
     updateRoleMutation.mutate({ userId, newRole });
   };
-
-  // Redirect if not super admin
-  if (checkingAdmin) {
-    return <div className="flex justify-center items-center min-h-screen">{t('admin.checkingPermissions')}</div>;
-  }
-
-  if (!isSuperAdmin) {
-    return <Navigate to="/dashboard/agent" replace />;
-  }
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
