@@ -51,6 +51,8 @@ export default function AdminDashboard() {
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
   const [listingLeads, setListingLeads] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -64,6 +66,37 @@ export default function AdminDashboard() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
+      // Check current user role first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUser(user);
+        
+        // Check if user is super admin
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('is_super_admin')
+          .eq('id', user.id)
+          .single();
+        
+        const isSuper = profileData?.is_super_admin === true;
+        setIsSuperAdmin(isSuper);
+        
+        // If not super admin, check if they have admin role in user_roles
+        if (!isSuper) {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+          
+          // Only allow access if they have super_admin role
+          if (roleData?.role !== 'super_admin') {
+            toast.error('No tienes permisos para acceder a esta sección');
+            return;
+          }
+        }
+      }
+
       // Fetch properties
       const { data: propertiesData } = await supabase
         .from('properties')
@@ -377,7 +410,7 @@ export default function AdminDashboard() {
         {/* Navigation Tabs */}
         <Card className="shadow-lg border-0 bg-background/95 backdrop-blur">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-9 h-14 bg-muted/50">
+            <TabsList className={`grid w-full h-14 bg-muted/50 ${isSuperAdmin ? 'grid-cols-9' : 'grid-cols-8'}`}>
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
@@ -386,10 +419,12 @@ export default function AdminDashboard() {
                 <Building2 className="h-4 w-4" />
                 Propiedades
               </TabsTrigger>
-              <TabsTrigger value="usuarios" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Usuarios
-              </TabsTrigger>
+              {isSuperAdmin && (
+                <TabsTrigger value="usuarios" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Usuarios
+                </TabsTrigger>
+              )}
               <TabsTrigger value="franquicias" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Franquicias
@@ -720,10 +755,12 @@ export default function AdminDashboard() {
               )}
             </TabsContent>
 
-            {/* Users Management Tab */}
-            <TabsContent value="usuarios" className="mt-6">
-              <AdminUserManagement />
-            </TabsContent>
+            {/* Users Management Tab - Only for Super Admins */}
+            {isSuperAdmin && (
+              <TabsContent value="usuarios" className="mt-6">
+                <AdminUserManagement />
+              </TabsContent>
+            )}
 
             {/* Franchises Management Tab */}
             <TabsContent value="franquicias" className="space-y-6 mt-6">
