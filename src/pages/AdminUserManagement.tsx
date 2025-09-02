@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Plus, Edit, Trash2 } from "lucide-react";
+import { Users, Plus, Edit, Trash2, Filter } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
@@ -18,8 +18,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Database } from "@/integrations/supabase/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
+
+type UserFilter = 'all' | 'agents' | 'clients';
 
 const userFormSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -34,9 +37,11 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 
 const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [userFilter, setUserFilter] = useState<UserFilter>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = useUser();
+  const { t } = useLanguage();
 
   // Check if user is super admin
   const { data: isSuperAdmin, isLoading: checkingAdmin } = useQuery({
@@ -81,13 +86,13 @@ const AdminUserManagement = () => {
 
             return {
               ...profile,
-              role: roleData?.role || "Sin rol",
+              role: roleData?.role || "none",
               email: null, // We cannot access auth.users directly from client
             };
           } catch (error) {
             return {
               ...profile,
-              role: "Sin rol",
+              role: "none",
               email: null,
             };
           }
@@ -156,8 +161,8 @@ const AdminUserManagement = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Usuario creado exitosamente",
-        description: "El nuevo usuario ha sido registrado en la plataforma.",
+        title: t('success'),
+        description: t('userCreatedSuccess'),
       });
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
       setIsCreateModalOpen(false);
@@ -165,8 +170,8 @@ const AdminUserManagement = () => {
     },
     onError: (error: any) => {
       toast({
-        title: "Error al crear usuario",
-        description: error.message || "Ocurrió un error inesperado",
+        title: t('error'),
+        description: error.message || t('unexpectedError'),
         variant: "destructive",
       });
     },
@@ -185,15 +190,15 @@ const AdminUserManagement = () => {
     },
     onSuccess: () => {
       toast({
-        title: "Rol actualizado",
-        description: "El rol del usuario ha sido actualizado correctamente.",
+        title: t('success'),
+        description: t('roleUpdatedSuccess'),
       });
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
     },
     onError: (error: any) => {
       toast({
-        title: "Error al actualizar rol",
-        description: error.message || "Ocurrió un error inesperado",
+        title: t('error'),
+        description: error.message || t('unexpectedError'),
         variant: "destructive",
       });
     },
@@ -208,6 +213,24 @@ const AdminUserManagement = () => {
     "client",
   ];
 
+  // Filter logic
+  const agentRoles = ["super_admin", "agent", "franchise_admin", "office_manager", "supervisor"];
+  const clientRoles = ["client"];
+
+  const filteredUsers = users.filter(user => {
+    if (userFilter === 'agents') {
+      return agentRoles.includes(user.role);
+    }
+    if (userFilter === 'clients') {
+      return clientRoles.includes(user.role);
+    }
+    return true; // Show all for 'all' filter
+  });
+
+  const getRoleLabel = (role: string) => {
+    return t(`role.${role}`);
+  };
+
   const onSubmit = async (values: UserFormValues) => {
     createUserMutation.mutate(values);
   };
@@ -218,7 +241,7 @@ const AdminUserManagement = () => {
 
   // Redirect if not super admin
   if (checkingAdmin) {
-    return <div className="flex justify-center items-center min-h-screen">Verificando permisos...</div>;
+    return <div className="flex justify-center items-center min-h-screen">{t('admin.checkingPermissions')}</div>;
   }
 
   if (!isSuperAdmin) {
@@ -243,9 +266,9 @@ const AdminUserManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Gestión de Usuarios</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('admin.userManagement')}</h1>
           <p className="text-muted-foreground">
-            Administra todos los usuarios de la plataforma
+            {t('admin.userManagementDescription')}
           </p>
         </div>
         
@@ -253,14 +276,14 @@ const AdminUserManagement = () => {
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Nuevo Usuario
+              {t('admin.newUser')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+              <DialogTitle>{t('admin.createUser')}</DialogTitle>
               <DialogDescription>
-                Complete los datos del nuevo usuario y seleccione su rol.
+                {t('admin.createUserDescription')}
               </DialogDescription>
             </DialogHeader>
             
@@ -271,7 +294,7 @@ const AdminUserManagement = () => {
                   name="full_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre Completo</FormLabel>
+                      <FormLabel>{t('admin.fullName')}</FormLabel>
                       <FormControl>
                         <Input placeholder="Juan Pérez" {...field} />
                       </FormControl>
@@ -285,7 +308,7 @@ const AdminUserManagement = () => {
                   name="identity_card"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Carnet de Identidad</FormLabel>
+                      <FormLabel>{t('admin.identityCard')}</FormLabel>
                       <FormControl>
                         <Input placeholder="12345678" {...field} />
                       </FormControl>
@@ -299,7 +322,7 @@ const AdminUserManagement = () => {
                   name="corporate_phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Celular Corporativo</FormLabel>
+                      <FormLabel>{t('admin.corporatePhone')}</FormLabel>
                       <FormControl>
                         <Input placeholder="+1234567890" {...field} />
                       </FormControl>
@@ -313,7 +336,7 @@ const AdminUserManagement = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{t('admin.email')}</FormLabel>
                       <FormControl>
                         <Input type="email" placeholder="usuario@ejemplo.com" {...field} />
                       </FormControl>
@@ -327,7 +350,7 @@ const AdminUserManagement = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contraseña</FormLabel>
+                      <FormLabel>{t('admin.password')}</FormLabel>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
@@ -341,22 +364,17 @@ const AdminUserManagement = () => {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Rol</FormLabel>
+                      <FormLabel>{t('admin.role')}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar rol" />
+                            <SelectValue placeholder={t('admin.selectRole')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {roles.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role === "super_admin" ? "Super Administrador" :
-                               role === "agent" ? "Agente Inmobiliario" :
-                               role === "franchise_admin" ? "Administrador de Franquicia" :
-                               role === "office_manager" ? "Gerente de Oficina" :
-                               role === "supervisor" ? "Supervisor" :
-                               role === "client" ? "Cliente" : role}
+                              {getRoleLabel(role)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -372,13 +390,13 @@ const AdminUserManagement = () => {
                     variant="outline"
                     onClick={() => setIsCreateModalOpen(false)}
                   >
-                    Cancelar
+                    {t('admin.cancel')}
                   </Button>
                   <Button
                     type="submit"
                     disabled={createUserMutation.isPending}
                   >
-                    {createUserMutation.isPending ? "Creando..." : "Crear Usuario"}
+                    {createUserMutation.isPending ? t('admin.creating') : t('admin.create')}
                   </Button>
                 </div>
               </form>
@@ -392,37 +410,65 @@ const AdminUserManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Lista de Usuarios
+            {t('admin.usersList')}
           </CardTitle>
           <CardDescription>
-            {users.length} usuarios registrados en la plataforma
+            {users.length} {t('admin.usersCount')}
           </CardDescription>
+          
+          {/* Filter Buttons */}
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant={userFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setUserFilter('all')}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {t('admin.filterAll')}
+            </Button>
+            <Button
+              variant={userFilter === 'agents' ? 'default' : 'outline'}
+              onClick={() => setUserFilter('agents')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {t('admin.filterAgents')}
+            </Button>
+            <Button
+              variant={userFilter === 'clients' ? 'default' : 'outline'}
+              onClick={() => setUserFilter('clients')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              {t('admin.filterClients')}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {usersLoading ? (
             <div className="flex justify-center py-8">
-              <div className="text-muted-foreground">Cargando usuarios...</div>
+              <div className="text-muted-foreground">{t('admin.loadingUsers')}</div>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre Completo</TableHead>
-                  <TableHead>Carnet de Identidad</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Fecha de Registro</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead>{t('admin.fullName')}</TableHead>
+                  <TableHead>{t('admin.identityCard')}</TableHead>
+                  <TableHead>{t('admin.corporatePhone')}</TableHead>
+                  <TableHead>{t('admin.role')}</TableHead>
+                  <TableHead>{t('admin.registrationDate')}</TableHead>
+                  <TableHead>{t('admin.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">
-                      {user.full_name || "Sin nombre"}
+                      {user.full_name || t('admin.noName')}
                     </TableCell>
-                    <TableCell>{user.identity_card || "N/A"}</TableCell>
-                    <TableCell>{user.corporate_phone || "N/A"}</TableCell>
+                    <TableCell>{user.identity_card || t('admin.notAvailable')}</TableCell>
+                    <TableCell>{user.corporate_phone || t('admin.notAvailable')}</TableCell>
                     <TableCell>
                       <Select
                         value={user.role}
@@ -432,31 +478,21 @@ const AdminUserManagement = () => {
                         <SelectTrigger className="w-48">
                           <SelectValue>
                             <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {user.role === "super_admin" ? "Super Administrador" :
-                               user.role === "agent" ? "Agente Inmobiliario" :
-                               user.role === "franchise_admin" ? "Administrador de Franquicia" :
-                               user.role === "office_manager" ? "Gerente de Oficina" :
-                               user.role === "supervisor" ? "Supervisor" :
-                               user.role === "client" ? "Cliente" : user.role}
+                              {getRoleLabel(user.role)}
                             </Badge>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {roles.map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role === "super_admin" ? "Super Administrador" :
-                               role === "agent" ? "Agente Inmobiliario" :
-                               role === "franchise_admin" ? "Administrador de Franquicia" :
-                               role === "office_manager" ? "Gerente de Oficina" :
-                               role === "supervisor" ? "Supervisor" :
-                               role === "client" ? "Cliente" : role}
+                              {getRoleLabel(role)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString("es-ES") : "N/A"}
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : t('admin.notAvailable')}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
