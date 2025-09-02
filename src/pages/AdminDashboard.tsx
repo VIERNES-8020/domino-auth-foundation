@@ -112,7 +112,7 @@ export default function AdminDashboard() {
       }
 
       // If we reach here, user has permissions - now load data
-      await fetchAllData();
+      await fetchAllData(user);
     } catch (error) {
       console.error('Error checking permissions:', error);
       toast.error('Error verificando permisos');
@@ -120,9 +120,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (user?: any) => {
     try {
-      if (!currentUser) return;
+      const userToUse = user || currentUser;
+      if (!userToUse) {
+        console.error('No user available for data fetching');
+        setLoading(false);
+        return;
+      }
 
       // Fetch all data in parallel with timeout protection
       const fetchPromises = [
@@ -147,7 +152,7 @@ export default function AdminDashboard() {
           new Promise((_, reject) => setTimeout(() => reject(new Error('Messages timeout')), 8000))
         ]),
         Promise.race([
-          supabase.from('admin_notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20),
+          supabase.from('admin_notifications').select('*').eq('user_id', userToUse.id).order('created_at', { ascending: false }).limit(20),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Notifications timeout')), 8000))
         ]),
         Promise.race([
