@@ -60,10 +60,10 @@ export default function AdminDashboard() {
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
-    fetchAllData();
+    checkUserPermissions();
   }, []);
 
-  const fetchAllData = async () => {
+  const checkUserPermissions = async () => {
     setLoading(true);
     try {
       // Check current user role first
@@ -111,6 +111,19 @@ export default function AdminDashboard() {
         }
       }
 
+      // If we reach here, user has permissions - now load data
+      await fetchAllData();
+    } catch (error) {
+      console.error('Error checking permissions:', error);
+      toast.error('Error verificando permisos');
+      setLoading(false);
+    }
+  };
+
+  const fetchAllData = async () => {
+    try {
+      if (!currentUser) return;
+
       // Fetch all data in parallel with timeout protection
       const fetchPromises = [
         Promise.race([
@@ -134,7 +147,7 @@ export default function AdminDashboard() {
           new Promise((_, reject) => setTimeout(() => reject(new Error('Messages timeout')), 8000))
         ]),
         Promise.race([
-          supabase.from('admin_notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+          supabase.from('admin_notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Notifications timeout')), 8000))
         ]),
         Promise.race([
