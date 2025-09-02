@@ -1,9 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Toaster } from '@/components/ui/toaster';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
+
+// Create a client
+const queryClient = new QueryClient();
 
 // Import all pages
 import HomePage from '@/pages/HomePage';
@@ -158,7 +162,8 @@ export default function App() {
   useAutoLogout();
   
   return (
-    <Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
       <Routes>
         {/* Public Routes with Header/Footer */}
         <Route path="/" element={
@@ -260,5 +265,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </Router>
+    </QueryClientProvider>
   );
 }
