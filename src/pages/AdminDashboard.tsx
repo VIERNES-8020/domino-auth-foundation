@@ -68,105 +68,159 @@ export default function AdminDashboard() {
     try {
       // Check current user role first
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUser(user);
-        
-        // Check if user is super admin
-        const { data: profileData } = await supabase
+      if (!user) {
+        toast.error('Usuario no autenticado');
+        setLoading(false);
+        return;
+      }
+
+      setCurrentUser(user);
+      
+      // Check if user is super admin with timeout
+      const profilePromise = Promise.race([
+        supabase
           .from('profiles')
           .select('is_super_admin')
           .eq('id', user.id)
-          .single();
-        
-        const isSuper = profileData?.is_super_admin === true;
-        setIsSuperAdmin(isSuper);
-        
-        // If not super admin, check if they have admin role in user_roles
-        if (!isSuper) {
-          const { data: roleData } = await supabase
+          .maybeSingle(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ]);
+
+      const { data: profileData } = await profilePromise as any;
+      const isSuper = profileData?.is_super_admin === true;
+      setIsSuperAdmin(isSuper);
+      
+      // If not super admin, check if they have admin role in user_roles
+      if (!isSuper) {
+        const rolePromise = Promise.race([
+          supabase
             .from('user_roles')
             .select('role')
             .eq('user_id', user.id)
-            .single();
-          
-          // Only allow access if they have super_admin role
-          if (roleData?.role !== 'super_admin') {
-            toast.error('No tienes permisos para acceder a esta sección');
-            setLoading(false);
-            return;
-          }
+            .maybeSingle(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+        ]);
+
+        const { data: roleData } = await rolePromise as any;
+        
+        // Only allow access if they have super_admin role
+        if (roleData?.role !== 'super_admin') {
+          toast.error('No tienes permisos para acceder a esta sección');
+          setLoading(false);
+          return;
         }
       }
 
-      // Fetch properties
-      const { data: propertiesData } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      setProperties(propertiesData || []);
+      // Fetch all data in parallel with timeout protection
+      const fetchPromises = [
+        Promise.race([
+          supabase.from('properties').select('*').order('created_at', { ascending: false }).limit(100),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Properties timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Users timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('user_roles').select('*').limit(100),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Roles timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('franchises').select('*').order('created_at', { ascending: false }).limit(50),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Franchises timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('contact_messages').select('*').order('created_at', { ascending: false }).limit(50),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Messages timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('admin_notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Notifications timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('franchise_applications').select('*').order('created_at', { ascending: false }).limit(50),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Applications timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('listing_leads').select('*').order('created_at', { ascending: false }).limit(50),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Leads timeout')), 8000))
+        ])
+      ];
 
-      // Fetch users with profiles
-      const { data: usersData } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const results = await Promise.allSettled(fetchPromises);
       
-      setUsers(usersData || []);
-
-      // Fetch user roles
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('*');
+      // Process results
+      const [propertiesResult, usersResult, rolesResult, franchisesResult, messagesResult, notificationsResult, applicationsResult, leadsResult] = results;
       
-      setUserRoles(rolesData || []);
-
-      // Fetch franchises
-      const { data: franchisesData } = await supabase
-        .from('franchises')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (propertiesResult.status === 'fulfilled') {
+        setProperties((propertiesResult.value as any)?.data || []);
+      } else {
+        console.error('Properties fetch failed:', propertiesResult.reason);
+        setProperties([]);
+      }
       
-      setFranchises(franchisesData || []);
-
-      // Fetch contact messages
-      const { data: messagesData } = await supabase
-        .from('contact_messages')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (usersResult.status === 'fulfilled') {
+        setUsers((usersResult.value as any)?.data || []);
+      } else {
+        console.error('Users fetch failed:', usersResult.reason);
+        setUsers([]);
+      }
       
-      setContactMessages(messagesData || []);
-
-      // Fetch admin notifications
-      const { data: auth } = await supabase.auth.getUser();
-      if (auth.user) {
-        const { data: notificationsData } = await supabase
-          .from('admin_notifications')
-          .select('*')
-          .eq('user_id', auth.user.id)
-          .order('created_at', { ascending: false });
-        
-        setNotifications(notificationsData || []);
+      if (rolesResult.status === 'fulfilled') {
+        setUserRoles((rolesResult.value as any)?.data || []);
+      } else {
+        console.error('Roles fetch failed:', rolesResult.reason);
+        setUserRoles([]);
+      }
+      
+      if (franchisesResult.status === 'fulfilled') {
+        setFranchises((franchisesResult.value as any)?.data || []);
+      } else {
+        console.error('Franchises fetch failed:', franchisesResult.reason);
+        setFranchises([]);
+      }
+      
+      if (messagesResult.status === 'fulfilled') {
+        setContactMessages((messagesResult.value as any)?.data || []);
+      } else {
+        console.error('Messages fetch failed:', messagesResult.reason);
+        setContactMessages([]);
+      }
+      
+      if (notificationsResult.status === 'fulfilled') {
+        setNotifications((notificationsResult.value as any)?.data || []);
+      } else {
+        console.error('Notifications fetch failed:', notificationsResult.reason);
+        setNotifications([]);
+      }
+      
+      if (applicationsResult.status === 'fulfilled') {
+        setFranchiseApplications((applicationsResult.value as any)?.data || []);
+      } else {
+        console.error('Applications fetch failed:', applicationsResult.reason);
+        setFranchiseApplications([]);
+      }
+      
+      if (leadsResult.status === 'fulfilled') {
+        setListingLeads((leadsResult.value as any)?.data || []);
+      } else {
+        console.error('Leads fetch failed:', leadsResult.reason);
+        setListingLeads([]);
       }
 
-      // Fetch franchise applications
-      const { data: franchiseData } = await supabase
-        .from('franchise_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      setFranchiseApplications(franchiseData || []);
-
-      // Fetch listing leads
-      const { data: listingData } = await supabase
-        .from('listing_leads')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      setListingLeads(listingData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Error loading dashboard data');
+      toast.error('Error cargando datos del dashboard. Reintentando...');
+      
+      // Set empty arrays to prevent UI issues
+      setProperties([]);
+      setUsers([]);
+      setUserRoles([]);
+      setFranchises([]);
+      setContactMessages([]);
+      setNotifications([]);
+      setFranchiseApplications([]);
+      setListingLeads([]);
     } finally {
       setLoading(false);
     }
