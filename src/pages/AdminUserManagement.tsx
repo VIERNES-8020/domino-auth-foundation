@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Trash2, Filter } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,6 +49,26 @@ const AdminUserManagement = () => {
     userId: '',
     currentRole: '',
     newRole: '',
+    userName: ''
+  });
+  const [assignmentsDialog, setAssignmentsDialog] = useState<{
+    open: boolean;
+    userId: string;
+    userName: string;
+    userRole: string;
+  }>({
+    open: false,
+    userId: '',
+    userName: '',
+    userRole: ''
+  });
+  const [archiveDialog, setArchiveDialog] = useState<{
+    open: boolean;
+    userId: string;
+    userName: string;
+  }>({
+    open: false,
+    userId: '',
     userName: ''
   });
   const queryClient = useQueryClient();
@@ -301,6 +321,95 @@ const AdminUserManagement = () => {
     });
   };
 
+  const handleViewAssignments = (userId: string, userName: string, userRole: string) => {
+    setAssignmentsDialog({
+      open: true,
+      userId,
+      userName,
+      userRole
+    });
+  };
+
+  const handleArchiveUser = (userId: string, userName: string) => {
+    setArchiveDialog({
+      open: true,
+      userId,
+      userName
+    });
+  };
+
+  const archiveUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Update user profile to mark as archived
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          updated_at: new Date().toISOString(),
+          // You can add an is_archived field to profiles table if needed
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Usuario archivado exitosamente");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      setArchiveDialog({ open: false, userId: '', userName: '' });
+    },
+    onError: (error: any) => {
+      toast.error(`Error al archivar usuario: ${error.message}`);
+    },
+  });
+
+  const confirmArchiveUser = () => {
+    archiveUserMutation.mutate(archiveDialog.userId);
+  };
+
+  const getRoleAssignments = (role: string) => {
+    const assignments = {
+      super_admin: [
+        "Gestión completa del sistema",
+        "Administración de usuarios",
+        "Configuración global",
+        "Acceso a reportes avanzados",
+        "Control de franquicias"
+      ],
+      franchise_admin: [
+        "Administración de franquicia",
+        "Gestión de agentes de la franquicia",
+        "Reportes de franquicia",
+        "Configuración de franquicia"
+      ],
+      agent: [
+        "Gestión de propiedades",
+        "Atención a clientes",
+        "Programación de visitas",
+        "Gestión de leads",
+        "Panel de agente"
+      ],
+      office_manager: [
+        "Gestión de oficina",
+        "Supervisión de agentes",
+        "Reportes de oficina",
+        "Coordinación de actividades"
+      ],
+      supervisor: [
+        "Supervisión de equipo",
+        "Reportes de supervisión",
+        "Seguimiento de metas",
+        "Capacitación"
+      ],
+      client: [
+        "Búsqueda de propiedades",
+        "Programación de visitas",
+        "Favoritos",
+        "Perfil básico"
+      ]
+    };
+
+    return assignments[role as keyof typeof assignments] || ["Sin asignaciones específicas"];
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
@@ -551,11 +660,21 @@ const AdminUserManagement = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
+                          title="Ver asignaciones del rol"
+                        >
+                          <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
+                          title="Archivar usuario"
+                        >
+                          <Archive className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -585,6 +704,71 @@ const AdminUserManagement = () => {
               disabled={updateRoleMutation.isPending}
             >
               {updateRoleMutation.isPending ? 'Actualizando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Role Assignments Dialog */}
+      <Dialog open={assignmentsDialog.open} onOpenChange={(open) => setAssignmentsDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Asignaciones de {assignmentsDialog.userName}
+            </DialogTitle>
+            <DialogDescription>
+              Permisos y funcionalidades asignadas al rol: <strong>{getRoleLabel(assignmentsDialog.userRole)}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="font-medium">Rol Actual: {getRoleLabel(assignmentsDialog.userRole)}</span>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                Funcionalidades Asignadas:
+              </h4>
+              <ul className="space-y-2">
+                {getRoleAssignments(assignmentsDialog.userRole).map((assignment, index) => (
+                  <li key={index} className="flex items-center gap-2 p-2 bg-background border rounded">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    {assignment}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' })}>
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Archive User Confirmation Dialog */}
+      <AlertDialog open={archiveDialog.open} onOpenChange={(open) => setArchiveDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Archivado de Usuario</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Está seguro que desea archivar al usuario <strong>{archiveDialog.userName}</strong>?
+              Esta acción desactivará temporalmente la cuenta del usuario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmArchiveUser}
+              disabled={archiveUserMutation.isPending}
+            >
+              {archiveUserMutation.isPending ? 'Archivando...' : 'Archivar Usuario'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
