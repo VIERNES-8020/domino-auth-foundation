@@ -84,13 +84,11 @@ const AdminUserManagement = () => {
             return {
               ...profile,
               role: roleData?.role || "client",
-              email: null, // We cannot access auth.users directly from client
             };
           } catch (error) {
             return {
               ...profile,
               role: "client",
-              email: null,
             };
           }
         })
@@ -139,6 +137,7 @@ const AdminUserManagement = () => {
             full_name: values.full_name,
             identity_card: values.identity_card,
             corporate_phone: values.corporate_phone,
+            email: values.email,
           });
 
         if (profileError) throw profileError;
@@ -430,6 +429,7 @@ const AdminUserManagement = () => {
                   <TableHead>{t('admin.fullName')}</TableHead>
                   <TableHead>{t('admin.identityCard')}</TableHead>
                   <TableHead>{t('admin.corporatePhone')}</TableHead>
+                  <TableHead>{t('admin.email')}</TableHead>
                   <TableHead>{t('admin.role')}</TableHead>
                   <TableHead>{t('admin.registrationDate')}</TableHead>
                   <TableHead>{t('admin.actions')}</TableHead>
@@ -443,6 +443,7 @@ const AdminUserManagement = () => {
                     </TableCell>
                     <TableCell>{user.identity_card || t('admin.notAvailable')}</TableCell>
                     <TableCell>{user.corporate_phone || t('admin.notAvailable')}</TableCell>
+                    <TableCell>{(user as any).email || t('admin.notAvailable')}</TableCell>
                     <TableCell>
                       <Select
                         value={user.role}
