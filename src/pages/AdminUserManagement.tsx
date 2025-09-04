@@ -183,38 +183,73 @@ const AdminUserManagement = () => {
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+      console.log('Updating role for user:', userId, 'to role:', newRole);
+      
       // First, check if a role already exists for this user
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: selectError } = await supabase
         .from("user_roles")
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
+      if (selectError) {
+        console.error('Error checking existing role:', selectError);
+        throw selectError;
+      }
+
+      console.log('Existing role:', existingRole);
+
       if (existingRole) {
         // Update existing role
-        const { error } = await supabase
+        console.log('Updating existing role...');
+        const { data, error } = await supabase
           .from("user_roles")
           .update({ role: newRole as any })
-          .eq("user_id", userId);
+          .eq("user_id", userId)
+          .select();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating role:', error);
+          throw error;
+        }
+        console.log('Role updated successfully:', data);
       } else {
         // Insert new role
-        const { error } = await supabase
+        console.log('Inserting new role...');
+        const { data, error } = await supabase
           .from("user_roles")
-          .insert([{ user_id: userId, role: newRole as any }]);
+          .insert([{ user_id: userId, role: newRole as any }])
+          .select();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error inserting role:', error);
+          throw error;
+        }
+        console.log('Role inserted successfully:', data);
       }
+
+      // Verify the update worked
+      const { data: verifyRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+      
+      console.log('Role verification after update:', verifyRole);
     },
     onSuccess: (_, variables) => {
+      console.log('Role mutation successful, invalidating queries...');
       toast.success(`Rol actualizado a ${getRoleLabel(variables.newRole)} exitosamente`);
+      
+      // Force refresh the data
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
+      
       setRoleChangeDialog({ open: false, userId: '', currentRole: '', newRole: '', userName: '' });
     },
     onError: (error: any) => {
+      console.error('Role update mutation error:', error);
       toast.error(`Error al actualizar rol: ${error.message}`);
-      console.error('Role update error:', error);
     },
   });
 
