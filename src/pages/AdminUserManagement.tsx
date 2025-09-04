@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,19 @@ const AdminUserManagement = () => {
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [roleChangeDialog, setRoleChangeDialog] = useState<{
+    open: boolean;
+    userId: string;
+    currentRole: string;
+    newRole: string;
+    userName: string;
+  }>({
+    open: false,
+    userId: '',
+    currentRole: '',
+    newRole: '',
+    userName: ''
+  });
   const queryClient = useQueryClient();
   const { t } = useLanguage();
 
@@ -169,20 +183,38 @@ const AdminUserManagement = () => {
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      const { error } = await supabase
+      // First, check if a role already exists for this user
+      const { data: existingRole } = await supabase
         .from("user_roles")
-        .upsert([
-          { user_id: userId, role: newRole as any }
-        ], { onConflict: "user_id" });
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: newRole as any })
+          .eq("user_id", userId);
+        
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from("user_roles")
+          .insert([{ user_id: userId, role: newRole as any }]);
+        
+        if (error) throw error;
+      }
     },
-    onSuccess: () => {
-      toast.success(t('roleUpdatedSuccess') || 'Rol actualizado exitosamente');
+    onSuccess: (_, variables) => {
+      toast.success(`Rol actualizado a ${getRoleLabel(variables.newRole)} exitosamente`);
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      setRoleChangeDialog({ open: false, userId: '', currentRole: '', newRole: '', userName: '' });
     },
     onError: (error: any) => {
-      toast.error(error.message || t('unexpectedError') || 'Error inesperado');
+      toast.error(`Error al actualizar rol: ${error.message}`);
+      console.error('Role update error:', error);
     },
   });
 
@@ -217,8 +249,21 @@ const AdminUserManagement = () => {
     createUserMutation.mutate(values);
   };
 
-  const handleRoleChange = (userId: string, newRole: string) => {
-    updateRoleMutation.mutate({ userId, newRole });
+  const handleRoleChange = (userId: string, newRole: string, currentRole: string, userName: string) => {
+    setRoleChangeDialog({
+      open: true,
+      userId,
+      currentRole,
+      newRole,
+      userName
+    });
+  };
+
+  const confirmRoleChange = () => {
+    updateRoleMutation.mutate({ 
+      userId: roleChangeDialog.userId, 
+      newRole: roleChangeDialog.newRole 
+    });
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -447,7 +492,7 @@ const AdminUserManagement = () => {
                     <TableCell>
                       <Select
                         value={user.role}
-                        onValueChange={(newRole) => handleRoleChange(user.id, newRole)}
+                        onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
                         disabled={updateRoleMutation.isPending}
                       >
                         <SelectTrigger className="w-48">
@@ -486,6 +531,29 @@ const AdminUserManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Role Change Confirmation Dialog */}
+      <AlertDialog open={roleChangeDialog.open} onOpenChange={(open) => setRoleChangeDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Cambio de Rol</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Está seguro que desea cambiar el rol de <strong>{roleChangeDialog.userName}</strong> 
+              de <strong>{getRoleLabel(roleChangeDialog.currentRole)}</strong> 
+              a <strong>{getRoleLabel(roleChangeDialog.newRole)}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRoleChange}
+              disabled={updateRoleMutation.isPending}
+            >
+              {updateRoleMutation.isPending ? 'Actualizando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
