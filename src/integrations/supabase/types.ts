@@ -462,6 +462,7 @@ export type Database = {
           corporate_phone: string | null
           created_at: string
           education: string | null
+          email: string | null
           experience_summary: string | null
           facebook_url: string | null
           franchise_id: string | null
@@ -483,6 +484,7 @@ export type Database = {
           corporate_phone?: string | null
           created_at?: string
           education?: string | null
+          email?: string | null
           experience_summary?: string | null
           facebook_url?: string | null
           franchise_id?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           corporate_phone?: string | null
           created_at?: string
           education?: string | null
+          email?: string | null
           experience_summary?: string | null
           facebook_url?: string | null
           franchise_id?: string | null
