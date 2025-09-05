@@ -96,15 +96,34 @@ const AdminUserManagement = () => {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: async () => {
-      // First get all profiles
+      // Get all profiles with complete data
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(`
+          id,
+          full_name,
+          identity_card,
+          corporate_phone,
+          email,
+          created_at,
+          updated_at,
+          avatar_url,
+          bio,
+          title,
+          franchise_id,
+          agent_code,
+          is_super_admin
+        `)
         .order("created_at", { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
 
-      // Then get auth users data for each profile
+      console.log('Fetched profiles:', profiles);
+
+      // Then get user roles for each profile
       const usersWithAuth = await Promise.all(
         profiles.map(async (profile) => {
           try {
@@ -115,11 +134,18 @@ const AdminUserManagement = () => {
               .eq("user_id", profile.id)
               .maybeSingle();
 
+            console.log(`User ${profile.id} profile data:`, {
+              email: profile.email,
+              phone: profile.corporate_phone,
+              role: roleData?.role
+            });
+
             return {
               ...profile,
               role: roleData?.role || "client",
             };
           } catch (error) {
+            console.error(`Error getting role for user ${profile.id}:`, error);
             return {
               ...profile,
               role: "client",
@@ -128,6 +154,7 @@ const AdminUserManagement = () => {
         })
       );
 
+      console.log('Final users data:', usersWithAuth);
       return usersWithAuth;
     },
     enabled: !!currentUser && !loading,
@@ -630,9 +657,9 @@ const AdminUserManagement = () => {
                     <TableCell className="font-medium">
                       {user.full_name || t('admin.noName')}
                     </TableCell>
-                    <TableCell>{user.identity_card || t('admin.notAvailable')}</TableCell>
-                    <TableCell>{user.corporate_phone || t('admin.notAvailable')}</TableCell>
-                    <TableCell>{(user as any).email || t('admin.notAvailable')}</TableCell>
+                    <TableCell>{user.identity_card || 'N/A'}</TableCell>
+                    <TableCell>{user.corporate_phone || 'N/A'}</TableCell>
+                    <TableCell>{user.email || 'N/A'}</TableCell>
                     <TableCell>
                       <Select
                         value={user.role}
