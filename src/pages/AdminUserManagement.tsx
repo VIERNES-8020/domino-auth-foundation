@@ -668,7 +668,7 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              Todos los Usuarios
+              Todos los Usuarios ({users.length})
             </Button>
             <Button
               variant={userFilter === 'agents' ? 'default' : 'outline'}
@@ -676,7 +676,7 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              Agente / Staff
+              Agente / Staff ({users.filter(u => agentRoles.includes(u.role)).length})
             </Button>
             <Button
               variant={userFilter === 'clients' ? 'default' : 'outline'}
@@ -684,7 +684,7 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              Cuenta (Cliente)
+              Cuenta (Cliente) ({users.filter(u => clientRoles.includes(u.role)).length})
             </Button>
           </div>
         </CardHeader>
