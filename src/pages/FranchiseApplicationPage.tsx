@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileText, User } from "lucide-react";
 import { useEffect } from "react";
+import { SuccessConfirmationModal } from "@/components/SuccessConfirmationModal";
 
 // SEO Hook
 function usePageSEO(options: { title: string; description: string; canonicalPath: string }) {
@@ -46,6 +47,7 @@ export default function FranchiseApplicationPage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
@@ -130,7 +132,8 @@ export default function FranchiseApplicationPage() {
 
       if (error) throw error;
 
-      toast.success("¡Solicitud enviada exitosamente! Te contactaremos pronto.");
+      // Show success modal instead of toast
+      setShowSuccessModal(true);
       
       // Reset form
       setFormData({
@@ -310,6 +313,14 @@ export default function FranchiseApplicationPage() {
           </Card>
         </div>
       </main>
+
+      <SuccessConfirmationModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        type="message"
+        title="¡Solicitud de Franquicia Enviada!"
+        description="Tu solicitud de franquicia fue enviada exitosamente. Nuestro equipo revisará tu aplicación y te contactará pronto para continuar con el proceso."
+      />
     </div>
   );
 }
