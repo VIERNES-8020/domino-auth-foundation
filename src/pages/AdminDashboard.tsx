@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export default function AdminDashboard() {
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
+  const [selectedFranchiseApplication, setSelectedFranchiseApplication] = useState<any>(null);
   const [listingLeads, setListingLeads] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -856,19 +858,29 @@ export default function AdminDashboard() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {franchiseApplications.slice(0, 4).map((application) => (
-                        <Card key={application.id} className="border-l-4 border-l-orange-500">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-semibold">{application.full_name}</h4>
-                              <Badge variant="outline">{application.status}</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">{application.email}</p>
-                            <p className="text-sm text-muted-foreground">{application.city}, {application.country}</p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {new Date(application.created_at).toLocaleDateString('es-ES')}
-                            </p>
-                          </CardContent>
-                        </Card>
+                         <Card key={application.id} className="border-l-4 border-l-orange-500">
+                           <CardContent className="p-4">
+                             <div className="flex justify-between items-start mb-2">
+                               <h4 className="font-semibold">{application.full_name}</h4>
+                               <div className="flex items-center gap-2">
+                                 <Badge variant="outline">{application.status}</Badge>
+                                 <Button 
+                                   size="sm" 
+                                   variant="outline"
+                                   onClick={() => setSelectedFranchiseApplication(application)}
+                                 >
+                                   <Eye className="h-4 w-4 mr-1" />
+                                   Ver
+                                 </Button>
+                               </div>
+                             </div>
+                             <p className="text-sm text-muted-foreground mb-2">{application.email}</p>
+                             <p className="text-sm text-muted-foreground">{application.city}, {application.country}</p>
+                             <p className="text-xs text-muted-foreground mt-2">
+                               {new Date(application.created_at).toLocaleDateString('es-ES')}
+                             </p>
+                           </CardContent>
+                         </Card>
                       ))}
                     </div>
                   </div>
@@ -1128,6 +1140,146 @@ export default function AdminDashboard() {
           </Tabs>
         </Card>
       </div>
+
+      {/* Modal de Detalles de Solicitud de Franquicia */}
+      <Dialog open={!!selectedFranchiseApplication} onOpenChange={() => setSelectedFranchiseApplication(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalles de Solicitud de Franquicia</DialogTitle>
+          </DialogHeader>
+          {selectedFranchiseApplication && (
+            <div className="space-y-6">
+              {/* Información Personal */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">Información Personal</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Nombre Completo</label>
+                      <p className="text-sm font-medium">{selectedFranchiseApplication.full_name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Correo Electrónico</label>
+                      <p className="text-sm">{selectedFranchiseApplication.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Teléfono</label>
+                      <p className="text-sm">{selectedFranchiseApplication.phone || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">WhatsApp</label>
+                      <p className="text-sm">{selectedFranchiseApplication.whatsapp || 'No especificado'}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">Ubicación</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Ciudad</label>
+                      <p className="text-sm">{selectedFranchiseApplication.city || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">País</label>
+                      <p className="text-sm">{selectedFranchiseApplication.country || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Estado</label>
+                      <Badge variant="outline">{selectedFranchiseApplication.status}</Badge>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Fecha de Solicitud</label>
+                      <p className="text-sm">{new Date(selectedFranchiseApplication.created_at).toLocaleDateString('es-ES', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mensaje */}
+              {selectedFranchiseApplication.message && (
+                <div>
+                  <h3 className="font-semibold text-lg mb-3">Motivación</h3>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{selectedFranchiseApplication.message}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Archivos */}
+              <div>
+                <h3 className="font-semibold text-lg mb-3">Documentos</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Foto del Solicitante
+                    </h4>
+                    {selectedFranchiseApplication.photo_url ? (
+                      <div className="space-y-2">
+                        <img 
+                          src={selectedFranchiseApplication.photo_url} 
+                          alt="Foto del solicitante" 
+                          className="w-full max-w-32 h-32 object-cover rounded-lg"
+                        />
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => window.open(selectedFranchiseApplication.photo_url, '_blank')}
+                        >
+                          Ver Imagen
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No se subió foto</p>
+                    )}
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Curriculum Vitae
+                    </h4>
+                    {selectedFranchiseApplication.cv_url ? (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => window.open(selectedFranchiseApplication.cv_url, '_blank')}
+                      >
+                        Descargar CV
+                      </Button>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No se subió CV</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Acciones */}
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedFranchiseApplication(null)}
+                >
+                  Cerrar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    // Aquí se podría añadir funcionalidad para cambiar el estado
+                    toast.success("Funcionalidad de gestión próximamente");
+                  }}
+                >
+                  Gestionar Solicitud
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
