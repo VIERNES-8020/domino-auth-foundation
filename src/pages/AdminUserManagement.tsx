@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search } from "lucide-react";
 import { 
   Pagination,
   PaginationContent,
@@ -45,6 +45,7 @@ const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const itemsPerPage = 10;
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -322,13 +323,28 @@ const AdminUserManagement = () => {
   const clientRoles = ["client"];
 
   const filteredUsers = users.filter(user => {
+    // Filter by role
+    let roleMatch = true;
     if (userFilter === 'agents') {
-      return agentRoles.includes(user.role);
+      roleMatch = agentRoles.includes(user.role);
+    } else if (userFilter === 'clients') {
+      roleMatch = clientRoles.includes(user.role);
     }
-    if (userFilter === 'clients') {
-      return clientRoles.includes(user.role);
+    
+    // Filter by search query
+    let searchMatch = true;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const fullName = user.full_name?.toLowerCase() || '';
+      const email = user.email?.toLowerCase() || '';
+      const phone = user.corporate_phone?.toLowerCase() || '';
+      
+      searchMatch = fullName.includes(query) || 
+                   email.includes(query) || 
+                   phone.includes(query);
     }
-    return true; // Show all for 'all' filter
+    
+    return roleMatch && searchMatch;
   });
 
   // Pagination calculations
@@ -340,6 +356,12 @@ const AdminUserManagement = () => {
   // Reset to first page when filter changes
   const handleFilterChange = (filter: UserFilter) => {
     setUserFilter(filter);
+    setCurrentPage(1);
+  };
+
+  // Reset to first page when search changes
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
     setCurrentPage(1);
   };
 
@@ -624,6 +646,19 @@ const AdminUserManagement = () => {
           <CardDescription>
             {filteredUsers.length} usuarios registrados en la plataforma
           </CardDescription>
+          
+          {/* Search Bar */}
+          <div className="mt-4">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por nombre, correo o teléfono..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
           
           {/* Filter Buttons */}
           <div className="flex gap-2 mt-4">
