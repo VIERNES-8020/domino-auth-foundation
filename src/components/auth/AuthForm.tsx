@@ -60,6 +60,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const navigate = useNavigate();
   
 
@@ -160,6 +161,7 @@ export default function AuthForm() {
   const onSubmit = async (values: any) => {
     setIsLoading(true);
     setSuccessMessage("");
+    setShowEmailConfirmation(false);
 
     try {
       if (mode === "agent-signup") {
@@ -221,8 +223,10 @@ export default function AuthForm() {
             if (fxError) console.warn('Error al generar código de agente:', fxError);
           }
 
+          // Mostrar mensaje prominente de confirmación por correo
+          setShowEmailConfirmation(true);
           toast.success("Registro exitoso", {
-            description: "Revisa tu correo para verificar la cuenta si es requerido.",
+            description: "Revisa tu correo para verificar la cuenta.",
           });
 
           // Manejar redirección después del registro exitoso
@@ -267,8 +271,10 @@ export default function AuthForm() {
           
           if (roleError) console.warn('Error al guardar rol de cliente:', roleError);
 
+          // Mostrar mensaje prominente de confirmación por correo
+          setShowEmailConfirmation(true);
           toast.success("Registro de cliente exitoso", {
-            description: "Tu cuenta ha sido creada. Ya puedes explorar propiedades.",
+            description: "Revisa tu correo para verificar la cuenta.",
           });
 
           // Show success message - AuthGate will handle navigation
@@ -312,6 +318,17 @@ export default function AuthForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showEmailConfirmation && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50 text-blue-800 p-4">
+            <CheckCircle2 className="h-5 w-5" />
+            <AlertDescription className="text-base font-medium">
+              <div className="mb-2">¡Cuenta creada exitosamente! 📧</div>
+              <div className="text-sm">
+                <strong>Importante:</strong> Revisa tu correo electrónico y confirma tu registro para activar tu cuenta completamente.
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         {successMessage && (
           <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
             <CheckCircle2 className="h-4 w-4" />
