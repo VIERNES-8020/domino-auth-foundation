@@ -121,10 +121,26 @@ const AdminUserManagement = () => {
         throw profilesError;
       }
 
-      console.log('Fetched profiles:', profiles);
+      // Get auth users data to get the email from auth.users table
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        // Don't throw here, continue with profile emails (might be null)
+      }
 
-      // Then get user roles for each profile
-      const usersWithAuth = await Promise.all(
+      // Create a map of user emails by ID from auth.users
+      const emailMap = new Map<string, string>();
+      if (authUsers?.users) {
+        authUsers.users.forEach((user: any) => {
+          if (user.id && user.email) {
+            emailMap.set(user.id, user.email);
+          }
+        });
+      }
+
+      // Then get user roles and combine with auth data
+      const usersWithAuthAndRoles = await Promise.all(
         profiles.map(async (profile) => {
           try {
             // Get user role from user_roles table
@@ -134,28 +150,26 @@ const AdminUserManagement = () => {
               .eq("user_id", profile.id)
               .maybeSingle();
 
-            console.log(`User ${profile.id} profile data:`, {
-              email: profile.email,
-              phone: profile.corporate_phone,
-              role: roleData?.role
-            });
+            // Get email from auth users (priority) or profile (fallback)
+            const email = emailMap.get(profile.id) || profile.email;
 
             return {
               ...profile,
+              email: email, // Use auth email with profile fallback
               role: roleData?.role || "client",
             };
           } catch (error) {
             console.error(`Error getting role for user ${profile.id}:`, error);
             return {
               ...profile,
+              email: emailMap.get(profile.id) || profile.email,
               role: "client",
             };
           }
         })
       );
 
-      console.log('Final users data:', usersWithAuth);
-      return usersWithAuth;
+      return usersWithAuthAndRoles;
     },
     enabled: !!currentUser && !loading,
   });
