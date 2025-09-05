@@ -15,7 +15,12 @@ interface AgentProfile {
   bio?: string | null;
   agent_code?: string | null;
   title?: string | null;
-  corporate_phone?: string | null;
+  experience_summary?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  linkedin_url?: string | null;
+  twitter_url?: string | null;
+  website_url?: string | null;
 }
 
 function usePageSEO(opts: { title: string; description: string; canonicalPath: string }) {
@@ -51,12 +56,8 @@ export default function AgentsPage() {
     let active = true;
     (async () => {
       try {
-        // Get full agent profiles with additional information
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, bio, agent_code, title, corporate_phone")
-          .not("agent_code", "is", null)
-          .order("full_name", { ascending: true });
+        // Get public agent information using the secure function
+        const { data, error } = await supabase.rpc('get_public_agent_info');
         
         if (!active) return;
         setAgents((data as AgentProfile[]) ?? []);

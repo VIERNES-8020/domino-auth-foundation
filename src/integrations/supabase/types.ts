@@ -1412,6 +1412,23 @@ export type Database = {
           rating: number
         }[]
       }
+      get_public_agent_info: {
+        Args: { agent_codes?: string[] }
+        Returns: {
+          agent_code: string
+          avatar_url: string
+          bio: string
+          experience_summary: string
+          facebook_url: string
+          full_name: string
+          id: string
+          instagram_url: string
+          linkedin_url: string
+          title: string
+          twitter_url: string
+          website_url: string
+        }[]
+      }
       gettransactionid: {
         Args: Record<PropertyKey, never>
         Returns: unknown
