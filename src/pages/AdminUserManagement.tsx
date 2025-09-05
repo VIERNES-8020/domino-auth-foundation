@@ -10,6 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye } from "lucide-react";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,6 +44,8 @@ type UserFormValues = z.infer<typeof userFormSchema>;
 const AdminUserManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [userFilter, setUserFilter] = useState<UserFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [roleChangeDialog, setRoleChangeDialog] = useState<{
@@ -321,6 +331,18 @@ const AdminUserManagement = () => {
     return true; // Show all for 'all' filter
   });
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filter changes
+  const handleFilterChange = (filter: UserFilter) => {
+    setUserFilter(filter);
+    setCurrentPage(1);
+  };
+
   const getRoleLabel = (role: string) => {
     return t(`role.${role}`);
   };
@@ -597,37 +619,37 @@ const AdminUserManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t('admin.usersList')}
+            Lista de Usuarios
           </CardTitle>
           <CardDescription>
-            {users.length} {t('admin.usersCount')}
+            {filteredUsers.length} usuarios registrados en la plataforma
           </CardDescription>
           
           {/* Filter Buttons */}
           <div className="flex gap-2 mt-4">
             <Button
               variant={userFilter === 'all' ? 'default' : 'outline'}
-              onClick={() => setUserFilter('all')}
+              onClick={() => handleFilterChange('all')}
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              {t('admin.filterAll')}
+              Todos los Usuarios
             </Button>
             <Button
               variant={userFilter === 'agents' ? 'default' : 'outline'}
-              onClick={() => setUserFilter('agents')}
+              onClick={() => handleFilterChange('agents')}
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              {t('admin.filterAgents')}
+              Agente / Staff
             </Button>
             <Button
               variant={userFilter === 'clients' ? 'default' : 'outline'}
-              onClick={() => setUserFilter('clients')}
+              onClick={() => handleFilterChange('clients')}
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
-              {t('admin.filterClients')}
+              Cuenta (Cliente)
             </Button>
           </div>
         </CardHeader>
@@ -637,76 +659,124 @@ const AdminUserManagement = () => {
               <div className="text-muted-foreground">{t('admin.loadingUsers')}</div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('admin.fullName')}</TableHead>
-                  <TableHead>{t('admin.identityCard')}</TableHead>
-                  <TableHead>{t('admin.corporatePhone')}</TableHead>
-                  <TableHead>{t('admin.email')}</TableHead>
-                  <TableHead>{t('admin.role')}</TableHead>
-                  <TableHead>{t('admin.registrationDate')}</TableHead>
-                  <TableHead>{t('admin.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.full_name || t('admin.noName')}
-                    </TableCell>
-                    <TableCell>{user.identity_card || 'N/A'}</TableCell>
-                    <TableCell>{user.corporate_phone || 'Sin teléfono'}</TableCell>
-                    <TableCell>{user.email || 'Sin email'}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={user.role}
-                        onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
-                        disabled={updateRoleMutation.isPending}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue>
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {getRoleLabel(user.role)}
-                            </Badge>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {getRoleLabel(role)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : t('admin.notAvailable')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
-                          title="Ver asignaciones del rol"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
-                          title="Archivar usuario"
-                        >
-                          <Archive className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre Completo</TableHead>
+                    <TableHead>Carnet de Identidad</TableHead>
+                    <TableHead>Celular Corporativo</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Fecha de Registro</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.full_name || t('admin.noName')}
+                      </TableCell>
+                      <TableCell>{user.identity_card || 'N/A'}</TableCell>
+                      <TableCell>{user.corporate_phone || 'Sin teléfono'}</TableCell>
+                      <TableCell>{user.email || 'Sin email'}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
+                          disabled={updateRoleMutation.isPending}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue>
+                              <Badge variant={getRoleBadgeVariant(user.role)}>
+                                {getRoleLabel(user.role)}
+                              </Badge>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roles.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {getRoleLabel(role)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : t('admin.notAvailable')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
+                            title="Ver asignaciones del rol"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
+                            title="Archivar usuario"
+                          >
+                            <Archive className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) setCurrentPage(currentPage - 1);
+                          }}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(page);
+                            }}
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                          }}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
