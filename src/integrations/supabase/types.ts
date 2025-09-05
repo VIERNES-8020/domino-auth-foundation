@@ -2772,6 +2772,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: number
       }
+      sync_profile_with_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       text: {
         Args: { "": unknown }
         Returns: string

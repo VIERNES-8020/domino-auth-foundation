@@ -656,8 +656,8 @@ const AdminUserManagement = () => {
                       {user.full_name || t('admin.noName')}
                     </TableCell>
                     <TableCell>{user.identity_card || 'N/A'}</TableCell>
-                    <TableCell>{user.corporate_phone || 'N/A'}</TableCell>
-                    <TableCell>{user.email || 'N/A'}</TableCell>
+                    <TableCell>{user.corporate_phone || 'Sin teléfono'}</TableCell>
+                    <TableCell>{user.email || 'Sin email'}</TableCell>
                     <TableCell>
                       <Select
                         value={user.role}
