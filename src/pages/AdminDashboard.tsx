@@ -1213,47 +1213,92 @@ export default function AdminDashboard() {
               {/* Archivos */}
               <div>
                 <h3 className="font-semibold text-lg mb-3">Documentos</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Foto del Solicitante */}
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Foto del Solicitante
                     </h4>
                     {selectedFranchiseApplication.photo_url ? (
-                      <div className="space-y-2">
-                        <img 
-                          src={selectedFranchiseApplication.photo_url} 
-                          alt="Foto del solicitante" 
-                          className="w-full max-w-32 h-32 object-cover rounded-lg"
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => window.open(selectedFranchiseApplication.photo_url, '_blank')}
-                        >
-                          Ver Imagen
-                        </Button>
+                      <div className="space-y-3">
+                        <div className="flex justify-center">
+                          <img 
+                            src={selectedFranchiseApplication.photo_url} 
+                            alt="Foto del solicitante" 
+                            className="w-48 h-48 object-cover rounded-lg border shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.src = "/default-placeholder.jpg";
+                              e.currentTarget.alt = "Error al cargar imagen";
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-center">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => window.open(selectedFranchiseApplication.photo_url, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver en Tamaño Completo
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No se subió foto</p>
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No se subió foto</p>
+                      </div>
                     )}
                   </div>
                   
+                  {/* Curriculum Vitae */}
                   <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Curriculum Vitae
+                      Curriculum Vitae (PDF)
                     </h4>
                     {selectedFranchiseApplication.cv_url ? (
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => window.open(selectedFranchiseApplication.cv_url, '_blank')}
-                      >
-                        Descargar CV
-                      </Button>
+                      <div className="space-y-3">
+                        {/* Preview del PDF si es posible */}
+                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                          <FileText className="h-16 w-16 mx-auto mb-3 text-red-500" />
+                          <p className="text-sm font-medium mb-1">Documento PDF</p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedFranchiseApplication.cv_url.split('/').pop()?.split('?')[0] || 'curriculum.pdf'}
+                          </p>
+                        </div>
+                        <div className="flex justify-center gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => window.open(selectedFranchiseApplication.cv_url, '_blank')}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver PDF
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = selectedFranchiseApplication.cv_url;
+                              link.download = `CV_${selectedFranchiseApplication.full_name.replace(/\s+/g, '_')}.pdf`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Descargar PDF
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">No se subió CV</p>
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No se subió CV</p>
+                      </div>
                     )}
                   </div>
                 </div>
