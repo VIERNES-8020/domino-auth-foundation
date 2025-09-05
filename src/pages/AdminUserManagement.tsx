@@ -732,8 +732,12 @@ const AdminUserManagement = () => {
               </Table>
               
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex justify-center mt-6">
+              <div className="flex justify-between items-center mt-6">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} de {filteredUsers.length} usuarios
+                </div>
+                
+                {totalPages > 0 && (
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
@@ -774,8 +778,8 @@ const AdminUserManagement = () => {
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
         </CardContent>
