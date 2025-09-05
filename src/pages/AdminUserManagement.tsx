@@ -96,6 +96,8 @@ const AdminUserManagement = () => {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ["admin-all-users"],
     queryFn: async () => {
+      console.log('Fetching users with profiles...');
+      
       // Get all profiles with complete data
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -121,26 +123,10 @@ const AdminUserManagement = () => {
         throw profilesError;
       }
 
-      // Get auth users data to get the email from auth.users table
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        // Don't throw here, continue with profile emails (might be null)
-      }
+      console.log('Profiles fetched:', profiles);
 
-      // Create a map of user emails by ID from auth.users
-      const emailMap = new Map<string, string>();
-      if (authUsers?.users) {
-        authUsers.users.forEach((user: any) => {
-          if (user.id && user.email) {
-            emailMap.set(user.id, user.email);
-          }
-        });
-      }
-
-      // Then get user roles and combine with auth data
-      const usersWithAuthAndRoles = await Promise.all(
+      // Get user roles and combine with profile data
+      const usersWithRoles = await Promise.all(
         profiles.map(async (profile) => {
           try {
             // Get user role from user_roles table
@@ -150,26 +136,24 @@ const AdminUserManagement = () => {
               .eq("user_id", profile.id)
               .maybeSingle();
 
-            // Get email from auth users (priority) or profile (fallback)
-            const email = emailMap.get(profile.id) || profile.email;
+            console.log(`Role for user ${profile.id}:`, roleData);
 
             return {
               ...profile,
-              email: email, // Use auth email with profile fallback
               role: roleData?.role || "client",
             };
           } catch (error) {
             console.error(`Error getting role for user ${profile.id}:`, error);
             return {
               ...profile,
-              email: emailMap.get(profile.id) || profile.email,
               role: "client",
             };
           }
         })
       );
 
-      return usersWithAuthAndRoles;
+      console.log('Users with roles:', usersWithRoles);
+      return usersWithRoles;
     },
     enabled: !!currentUser && !loading,
   });
