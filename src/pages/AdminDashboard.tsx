@@ -256,6 +256,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateFranchiseApplicationStatus = async (applicationId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('franchise_applications')
+        .update({ status })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+      
+      await fetchAllData();
+      setSelectedFranchiseApplication(null);
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
   const updatePropertyStatus = async (propertyId: string, status: string) => {
     try {
       const { error } = await supabase
@@ -1349,15 +1365,38 @@ export default function AdminDashboard() {
                 >
                   Cerrar
                 </Button>
-                <Button 
-                  onClick={() => {
-                    // Aquí se podría añadir funcionalidad para cambiar el estado
-                    toast.success("Funcionalidad de gestión próximamente");
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  Gestionar Solicitud
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await updateFranchiseApplicationStatus(selectedFranchiseApplication.id, 'approved');
+                        toast.success("Solicitud aprobada exitosamente");
+                      } catch (error) {
+                        toast.error("Error al aprobar la solicitud");
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprobar
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={async () => {
+                      try {
+                        await updateFranchiseApplicationStatus(selectedFranchiseApplication.id, 'rejected');
+                        toast.success("Solicitud rechazada");
+                      } catch (error) {
+                        toast.error("Error al rechazar la solicitud");
+                      }
+                    }}
+                    className="flex-1"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rechazar
+                  </Button>
+                </div>
               </div>
             </div>
           )}
