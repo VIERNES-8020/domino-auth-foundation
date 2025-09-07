@@ -862,7 +862,7 @@ export default function AdminDashboard() {
                       Solicitudes de Franquicia ({franchiseApplications.length})
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {franchiseApplications.slice(0, 4).map((application) => (
+                      {franchiseApplications.map((application) => (
                          <Card key={application.id} className="border-l-4 border-l-orange-500">
                            <CardContent className="p-4">
                              <div className="flex justify-between items-start mb-2">
