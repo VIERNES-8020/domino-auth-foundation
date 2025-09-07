@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileText, User } from "lucide-react";
 import { useEffect } from "react";
 import { SuccessConfirmationModal } from "@/components/SuccessConfirmationModal";
+import { convertImageToJPG } from "@/utils/imageConverter";
 
 // SEO Hook
 function usePageSEO(options: { title: string; description: string; canonicalPath: string }) {
@@ -65,14 +66,27 @@ export default function FranchiseApplicationPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
+  const uploadFile = async (file: File, folder: string, isImage: boolean = false): Promise<string | null> => {
     try {
-      const fileExt = file.name.split('.').pop();
+      let fileToUpload = file;
+      
+      // Convert image to JPG if it's an image
+      if (isImage && file.type.startsWith('image/')) {
+        try {
+          fileToUpload = await convertImageToJPG(file, 800, 600, 0.85);
+          console.log('Image converted to JPG successfully');
+        } catch (conversionError) {
+          console.error('Failed to convert image, using original:', conversionError);
+          // Continue with original file if conversion fails
+        }
+      }
+      
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `${folder}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('franchise-docs')
-        .upload(fileName, file);
+        .upload(fileName, fileToUpload);
 
       if (uploadError) throw uploadError;
 
@@ -97,7 +111,7 @@ export default function FranchiseApplicationPage() {
 
       // Upload photo if provided
       if (photoFile) {
-        photoUrl = await uploadFile(photoFile, 'photos');
+        photoUrl = await uploadFile(photoFile, 'photos', true);
         if (!photoUrl) {
           toast.error("Error al subir la foto. Inténtalo de nuevo.");
           setLoading(false);
@@ -107,7 +121,7 @@ export default function FranchiseApplicationPage() {
 
       // Upload CV if provided
       if (cvFile) {
-        cvUrl = await uploadFile(cvFile, 'cvs');
+        cvUrl = await uploadFile(cvFile, 'cvs', false);
         if (!cvUrl) {
           toast.error("Error al subir el curriculum. Inténtalo de nuevo.");
           setLoading(false);

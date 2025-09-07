@@ -1229,7 +1229,7 @@ export default function AdminDashboard() {
                       <div className="space-y-3">
                         <div className="flex justify-center">
                           <img 
-                            src={supabase.storage.from('franchise-docs').getPublicUrl(selectedFranchiseApplication.photo_url.split('/').pop()).data.publicUrl} 
+                            src={selectedFranchiseApplication.photo_url} 
                             alt="Foto del solicitante" 
                             className="w-full max-w-[200px] h-[200px] object-cover rounded-lg border shadow-sm"
                             onError={(e) => {
@@ -1243,8 +1243,7 @@ export default function AdminDashboard() {
                             size="sm" 
                             variant="outline" 
                             onClick={() => {
-                              const publicUrl = supabase.storage.from('franchise-docs').getPublicUrl(selectedFranchiseApplication.photo_url.split('/').pop()).data.publicUrl;
-                              setCurrentPhotoUrl(publicUrl);
+                              setCurrentPhotoUrl(selectedFranchiseApplication.photo_url);
                               setShowPhotoModal(true);
                             }}
                             className="w-full sm:w-auto"
@@ -1283,8 +1282,7 @@ export default function AdminDashboard() {
                             size="sm" 
                             variant="outline" 
                             onClick={() => {
-                              const publicUrl = supabase.storage.from('franchise-docs').getPublicUrl(selectedFranchiseApplication.cv_url.split('/').pop()).data.publicUrl;
-                              setCurrentPdfUrl(publicUrl);
+                              setCurrentPdfUrl(selectedFranchiseApplication.cv_url);
                               setShowPdfModal(true);
                             }}
                             className="w-full"
@@ -1297,7 +1295,7 @@ export default function AdminDashboard() {
                             variant="outline" 
                             onClick={() => {
                               const link = document.createElement('a');
-                              link.href = supabase.storage.from('franchise-docs').getPublicUrl(selectedFranchiseApplication.cv_url.split('/').pop()).data.publicUrl;
+                              link.href = selectedFranchiseApplication.cv_url;
                               link.download = `CV_${selectedFranchiseApplication.full_name.replace(/\s+/g, '_')}.pdf`;
                               document.body.appendChild(link);
                               link.click();
