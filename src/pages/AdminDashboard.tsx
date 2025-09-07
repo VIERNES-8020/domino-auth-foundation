@@ -32,7 +32,9 @@ import {
   Home,
   Briefcase,
   MapPin,
-  X
+  X,
+  Download,
+  FileX
 } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
@@ -56,6 +58,9 @@ export default function AdminDashboard() {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string>("");
   const [currentPdfUrl, setCurrentPdfUrl] = useState<string>("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string>("");
+  const [downloadStatus, setDownloadStatus] = useState<string>("");
   const [listingLeads, setListingLeads] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -1278,34 +1283,51 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => {
-                              setCurrentPdfUrl(selectedFranchiseApplication.cv_url);
-                              setShowPdfModal(true);
-                            }}
-                            className="w-full"
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Ver PDF
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = selectedFranchiseApplication.cv_url;
-                              link.download = `CV_${selectedFranchiseApplication.full_name.replace(/\s+/g, '_')}.pdf`;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }}
-                            className="w-full"
-                          >
-                            <FileText className="h-4 w-4 mr-2" />
-                            Descargar PDF
-                          </Button>
+                           <Button 
+                             size="sm" 
+                             variant="outline" 
+                             onClick={() => {
+                               setPdfLoading(true);
+                               setPdfError("");
+                               setCurrentPdfUrl(selectedFranchiseApplication.cv_url);
+                               setShowPdfModal(true);
+                               // Simular carga para feedback
+                               setTimeout(() => setPdfLoading(false), 1000);
+                             }}
+                             className="w-full"
+                           >
+                             <Eye className="h-4 w-4 mr-2" />
+                             Ver PDF
+                           </Button>
+                           <Button 
+                             size="sm" 
+                             variant="outline" 
+                             onClick={async () => {
+                               setDownloadStatus("Descargando...");
+                               try {
+                                 const response = await fetch(selectedFranchiseApplication.cv_url);
+                                 const blob = await response.blob();
+                                 const url = window.URL.createObjectURL(blob);
+                                 const link = document.createElement('a');
+                                 link.href = url;
+                                 link.download = `CV_${selectedFranchiseApplication.full_name.replace(/\s+/g, '_')}.pdf`;
+                                 document.body.appendChild(link);
+                                 link.click();
+                                 document.body.removeChild(link);
+                                 window.URL.revokeObjectURL(url);
+                                 setDownloadStatus("Descarga completada");
+                                 setTimeout(() => setDownloadStatus(""), 3000);
+                               } catch (error) {
+                                 setDownloadStatus("Error en la descarga");
+                                 setTimeout(() => setDownloadStatus(""), 3000);
+                               }
+                             }}
+                             className="w-full"
+                             disabled={downloadStatus === "Descargando..."}
+                           >
+                             <FileText className="h-4 w-4 mr-2" />
+                             {downloadStatus || "Descargar PDF"}
+                           </Button>
                         </div>
                       </div>
                     ) : (
@@ -1372,20 +1394,111 @@ export default function AdminDashboard() {
         <DialogContent className="max-w-5xl max-h-[90vh] p-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Curriculum Vitae</h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowPdfModal(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {downloadStatus && (
+                <Badge variant="secondary" className="text-xs">
+                  {downloadStatus}
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  if (currentPdfUrl) {
+                    setDownloadStatus("Descargando...");
+                    try {
+                      const response = await fetch(currentPdfUrl);
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'curriculum_vitae.pdf';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                      setDownloadStatus("Descarga completada");
+                      setTimeout(() => setDownloadStatus(""), 3000);
+                    } catch (error) {
+                      setDownloadStatus("Error en la descarga");
+                      setTimeout(() => setDownloadStatus(""), 3000);
+                    }
+                  }
+                }}
+                disabled={downloadStatus === "Descargando..."}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Descargar
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setPdfLoading(false);
+                  setPdfError("");
+                  setDownloadStatus("");
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <div className="flex-1 min-h-[70vh]">
-            <iframe
-              src={currentPdfUrl}
-              className="w-full h-full border rounded-lg"
-              title="PDF Viewer"
-            />
+          <div className="flex-1 min-h-[70vh] relative bg-muted/30 rounded-lg overflow-hidden">
+            {pdfLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                  <p className="text-sm text-muted-foreground">Cargando PDF...</p>
+                </div>
+              </div>
+            )}
+            {pdfError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+                <div className="text-center">
+                  <FileX className="h-12 w-12 mx-auto mb-2 text-destructive" />
+                  <p className="text-sm text-destructive mb-2">{pdfError}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setPdfError("");
+                      setPdfLoading(true);
+                      setTimeout(() => setPdfLoading(false), 1000);
+                    }}
+                  >
+                    Reintentar
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="w-full h-full">
+              <iframe
+                src={`${currentPdfUrl}#toolbar=1&navpanes=1&scrollbar=1&page=1&view=FitH`}
+                className="w-full h-full border-0 rounded-lg"
+                title="PDF Viewer"
+                onLoad={() => {
+                  setPdfLoading(false);
+                  setPdfError("");
+                }}
+                onError={() => {
+                  setPdfLoading(false);
+                  setPdfError("No se pudo cargar el PDF. Intente descargarlo.");
+                }}
+              />
+              {!pdfLoading && !pdfError && (
+                <div className="absolute bottom-4 left-4 right-4 bg-background/90 backdrop-blur-sm rounded-lg p-2 border">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Visualizador de PDF</span>
+                    <div className="flex items-center gap-2">
+                      <span>Zoom con Ctrl + rueda del mouse</span>
+                      <span>•</span>
+                      <span>Click derecho para opciones</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
