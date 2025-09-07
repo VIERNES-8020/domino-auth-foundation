@@ -31,7 +31,8 @@ import {
   Shield,
   Home,
   Briefcase,
-  MapPin
+  MapPin,
+  X
 } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
@@ -51,6 +52,10 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
   const [selectedFranchiseApplication, setSelectedFranchiseApplication] = useState<any>(null);
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string>("");
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>("");
   const [listingLeads, setListingLeads] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -1237,11 +1242,14 @@ export default function AdminDashboard() {
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            onClick={() => window.open(selectedFranchiseApplication.photo_url, '_blank')}
+                            onClick={() => {
+                              setCurrentPhotoUrl(selectedFranchiseApplication.photo_url);
+                              setShowPhotoModal(true);
+                            }}
                             className="w-full sm:w-auto"
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            Ver en Tamaño Completo
+                            Ver Foto
                           </Button>
                         </div>
                       </div>
@@ -1273,7 +1281,10 @@ export default function AdminDashboard() {
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            onClick={() => window.open(selectedFranchiseApplication.cv_url, '_blank')}
+                            onClick={() => {
+                              setCurrentPdfUrl(selectedFranchiseApplication.cv_url);
+                              setShowPdfModal(true);
+                            }}
                             className="w-full"
                           >
                             <Eye className="h-4 w-4 mr-2" />
@@ -1328,6 +1339,54 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para Ver Foto */}
+      <Dialog open={showPhotoModal} onOpenChange={setShowPhotoModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] p-0">
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-black/50 text-white hover:bg-black/70"
+              onClick={() => setShowPhotoModal(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <img 
+              src={currentPhotoUrl} 
+              alt="Foto del solicitante" 
+              className="w-full h-auto max-h-[85vh] object-contain"
+              onError={(e) => {
+                e.currentTarget.src = "/default-placeholder.jpg";
+                e.currentTarget.alt = "Error al cargar imagen";
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para Ver PDF */}
+      <Dialog open={showPdfModal} onOpenChange={setShowPdfModal}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Curriculum Vitae</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowPdfModal(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 min-h-[70vh]">
+            <iframe
+              src={currentPdfUrl}
+              className="w-full h-full border rounded-lg"
+              title="PDF Viewer"
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
