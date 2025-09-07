@@ -1143,14 +1143,14 @@ export default function AdminDashboard() {
 
       {/* Modal de Detalles de Solicitud de Franquicia */}
       <Dialog open={!!selectedFranchiseApplication} onOpenChange={() => setSelectedFranchiseApplication(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles de Solicitud de Franquicia</DialogTitle>
           </DialogHeader>
           {selectedFranchiseApplication && (
             <div className="space-y-6">
-              {/* Información Personal */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Información Personal y Ubicación */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-3">Información Personal</h3>
                   <div className="space-y-2">
@@ -1210,10 +1210,10 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Archivos */}
+              {/* Documentos */}
               <div>
                 <h3 className="font-semibold text-lg mb-3">Documentos</h3>
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Foto del Solicitante */}
                   <div className="border rounded-lg p-4">
                     <h4 className="font-medium mb-3 flex items-center gap-2">
@@ -1226,7 +1226,7 @@ export default function AdminDashboard() {
                           <img 
                             src={selectedFranchiseApplication.photo_url} 
                             alt="Foto del solicitante" 
-                            className="w-48 h-48 object-cover rounded-lg border shadow-sm"
+                            className="w-full max-w-[200px] h-[200px] object-cover rounded-lg border shadow-sm"
                             onError={(e) => {
                               e.currentTarget.src = "/default-placeholder.jpg";
                               e.currentTarget.alt = "Error al cargar imagen";
@@ -1238,6 +1238,7 @@ export default function AdminDashboard() {
                             size="sm" 
                             variant="outline" 
                             onClick={() => window.open(selectedFranchiseApplication.photo_url, '_blank')}
+                            className="w-full sm:w-auto"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Ver en Tamaño Completo
@@ -1260,19 +1261,20 @@ export default function AdminDashboard() {
                     </h4>
                     {selectedFranchiseApplication.cv_url ? (
                       <div className="space-y-3">
-                        {/* Preview del PDF si es posible */}
-                        <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        {/* Preview del PDF */}
+                        <div className="bg-gray-50 rounded-lg p-4 text-center min-h-[120px] flex flex-col justify-center">
                           <FileText className="h-16 w-16 mx-auto mb-3 text-red-500" />
                           <p className="text-sm font-medium mb-1">Documento PDF</p>
                           <p className="text-xs text-muted-foreground">
                             {selectedFranchiseApplication.cv_url.split('/').pop()?.split('?')[0] || 'curriculum.pdf'}
                           </p>
                         </div>
-                        <div className="flex justify-center gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Button 
                             size="sm" 
                             variant="outline" 
                             onClick={() => window.open(selectedFranchiseApplication.cv_url, '_blank')}
+                            className="w-full"
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Ver PDF
@@ -1288,6 +1290,7 @@ export default function AdminDashboard() {
                               link.click();
                               document.body.removeChild(link);
                             }}
+                            className="w-full"
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             Descargar PDF
@@ -1295,7 +1298,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
+                      <div className="text-center py-8 text-muted-foreground min-h-[120px] flex flex-col justify-center">
                         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p className="text-sm">No se subió CV</p>
                       </div>
@@ -1305,10 +1308,11 @@ export default function AdminDashboard() {
               </div>
 
               {/* Acciones */}
-              <div className="flex justify-end space-x-2 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
                 <Button 
                   variant="outline" 
                   onClick={() => setSelectedFranchiseApplication(null)}
+                  className="w-full sm:w-auto"
                 >
                   Cerrar
                 </Button>
@@ -1317,6 +1321,7 @@ export default function AdminDashboard() {
                     // Aquí se podría añadir funcionalidad para cambiar el estado
                     toast.success("Funcionalidad de gestión próximamente");
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Gestionar Solicitud
                 </Button>
