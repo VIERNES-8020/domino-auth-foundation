@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail } from "lucide-react";
 import { 
   Pagination,
   PaginationContent,
@@ -82,6 +82,20 @@ const AdminUserManagement = () => {
     userId: '',
     userName: ''
   });
+  const [assignmentDialog, setAssignmentDialog] = useState<{
+    open: boolean;
+    type: 'phone' | 'email' | null;
+    userId: string;
+    userName: string;
+    currentValue: string;
+  }>({
+    open: false,
+    type: null,
+    userId: '',
+    userName: '',
+    currentValue: ''
+  });
+  const [assignmentValue, setAssignmentValue] = useState('');
   const queryClient = useQueryClient();
   const { t } = useLanguage();
 
@@ -125,7 +139,10 @@ const AdminUserManagement = () => {
           title,
           franchise_id,
           agent_code,
-          is_super_admin
+          is_super_admin,
+          assigned_corporate_phone,
+          assigned_corporate_email,
+          assignment_date
         `)
         .order("created_at", { ascending: false });
 
@@ -459,6 +476,51 @@ const AdminUserManagement = () => {
     archiveUserMutation.mutate(archiveDialog.userId);
   };
 
+  const handleAssignment = (type: 'phone' | 'email', userId: string, userName: string, currentValue: string) => {
+    setAssignmentDialog({
+      open: true,
+      type,
+      userId,
+      userName,
+      currentValue
+    });
+    setAssignmentValue(currentValue || '');
+  };
+
+  const assignmentMutation = useMutation({
+    mutationFn: async ({ userId, type, value }: { userId: string; type: 'phone' | 'email'; value: string }) => {
+      const updateData = type === 'phone' 
+        ? { assigned_corporate_phone: value, assignment_date: new Date().toISOString() }
+        : { assigned_corporate_email: value, assignment_date: new Date().toISOString() };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq("id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(`${assignmentDialog.type === 'phone' ? 'Teléfono' : 'Email'} asignado exitosamente`);
+      queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      setAssignmentDialog({ open: false, type: null, userId: '', userName: '', currentValue: '' });
+      setAssignmentValue('');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al asignar ${assignmentDialog.type === 'phone' ? 'teléfono' : 'email'}: ${error.message}`);
+    },
+  });
+
+  const confirmAssignment = () => {
+    if (assignmentDialog.type && assignmentValue.trim()) {
+      assignmentMutation.mutate({
+        userId: assignmentDialog.userId,
+        type: assignmentDialog.type,
+        value: assignmentValue.trim()
+      });
+    }
+  };
+
   const getRoleAssignments = (role: string) => {
     const assignments = {
       super_admin: [
@@ -726,73 +788,126 @@ const AdminUserManagement = () => {
                     <TableHead>Nombre Completo</TableHead>
                     <TableHead>Carnet de Identidad</TableHead>
                     <TableHead>Celular Corporativo</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Email Registrado</TableHead>
+                    <TableHead>Celular Asignado</TableHead>
+                    <TableHead>Email Asignado</TableHead>
+                    <TableHead>Fecha Asignación</TableHead>
                     <TableHead>Rol</TableHead>
-                    <TableHead>Fecha de Registro</TableHead>
                     <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.full_name || t('admin.noName')}
-                      </TableCell>
-                      <TableCell>{user.identity_card || 'N/A'}</TableCell>
-                      <TableCell>
-                        {(() => {
-                          console.log(`User ${user.full_name} corporate_phone:`, user.corporate_phone, typeof user.corporate_phone);
-                          return user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono';
-                        })()}
-                      </TableCell>
-                      <TableCell>{user.email || 'Sin email'}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
-                          disabled={updateRoleMutation.isPending}
-                        >
-                          <SelectTrigger className="w-48">
-                            <SelectValue>
-                              <Badge variant={getRoleBadgeVariant(user.role)}>
-                                {getRoleLabel(user.role)}
-                              </Badge>
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {roles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {getRoleLabel(role)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : t('admin.notAvailable')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
-                            title="Ver asignaciones del rol"
+                  {paginatedUsers.map((user) => {
+                    const isAgentOrStaff = agentRoles.includes(user.role);
+                    
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          {user.full_name || t('admin.noName')}
+                        </TableCell>
+                        <TableCell>{user.identity_card || 'N/A'}</TableCell>
+                        <TableCell>
+                          {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
+                        </TableCell>
+                        <TableCell>{user.email || 'Sin email'}</TableCell>
+                        <TableCell>
+                          {isAgentOrStaff ? (
+                            <div className="border border-border rounded-lg p-2 bg-muted/50">
+                              {user.assigned_corporate_phone ? (
+                                <div className="text-sm">{user.assigned_corporate_phone}</div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Phone className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground text-sm">N/A</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isAgentOrStaff ? (
+                            <div className="border border-border rounded-lg p-2 bg-muted/50">
+                              {user.assigned_corporate_email ? (
+                                <div className="text-sm">{user.assigned_corporate_email}</div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Mail className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground text-sm">N/A</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isAgentOrStaff && user.assignment_date ? (
+                            <div className="text-sm">
+                              {new Date(user.assignment_date).toLocaleDateString()}
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground text-sm">-</div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={user.role}
+                            onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
+                            disabled={updateRoleMutation.isPending}
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
-                            title="Archivar usuario"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            <SelectTrigger className="w-48">
+                              <SelectValue>
+                                <Badge variant={getRoleBadgeVariant(user.role)}>
+                                  {getRoleLabel(user.role)}
+                                </Badge>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {getRoleLabel(role)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
+                              title="Ver asignaciones del rol"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
+                              title="Archivar usuario"
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               
@@ -937,6 +1052,54 @@ const AdminUserManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assignment Dialog */}
+      <Dialog open={assignmentDialog.open} onOpenChange={(open) => setAssignmentDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {assignmentDialog.type === 'phone' ? <Phone className="h-5 w-5" /> : <Mail className="h-5 w-5" />}
+              Asignar {assignmentDialog.type === 'phone' ? 'Teléfono' : 'Email'} Corporativo
+            </DialogTitle>
+            <DialogDescription>
+              Asignar {assignmentDialog.type === 'phone' ? 'número de teléfono' : 'correo electrónico'} corporativo a <strong>{assignmentDialog.userName}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {assignmentDialog.type === 'phone' ? 'Número de Teléfono' : 'Correo Electrónico'}
+              </label>
+              <Input
+                type={assignmentDialog.type === 'phone' ? 'tel' : 'email'}
+                value={assignmentValue}
+                onChange={(e) => setAssignmentValue(e.target.value)}
+                placeholder={assignmentDialog.type === 'phone' ? 'Ej: +591 12345678' : 'Ej: usuario@empresa.com'}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAssignmentDialog({ open: false, type: null, userId: '', userName: '', currentValue: '' });
+                setAssignmentValue('');
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmAssignment}
+              disabled={assignmentMutation.isPending || !assignmentValue.trim()}
+            >
+              {assignmentMutation.isPending ? 'Asignando...' : 'Aceptar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
