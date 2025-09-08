@@ -641,10 +641,35 @@ const AdminUserManagement = () => {
         return "destructive";
       case "franchise_admin":
         return "default";
-      case "agent":
+      case "supervisor":
         return "secondary";
+      case "office_manager":
+        return "secondary";
+      case "agent":
+        return "outline";
+      case "client":
+        return "outline";
       default:
         return "outline";
+    }
+  };
+
+  const getRoleBadgeStyles = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return "bg-gradient-to-r from-red-500 to-red-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+      case "franchise_admin":
+        return "bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+      case "supervisor":
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+      case "office_manager":
+        return "bg-gradient-to-r from-teal-500 to-teal-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+      case "agent":
+        return "bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+      case "client":
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-md font-medium";
+      default:
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-md font-medium";
     }
   };
 
@@ -972,17 +997,19 @@ const AdminUserManagement = () => {
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
                                 disabled={updateRoleMutation.isPending}
                               >
-                                <SelectTrigger className="w-full h-9 text-xs">
+                                <SelectTrigger className="w-full h-10 text-xs border-0 bg-transparent hover:bg-muted/50 transition-colors">
                                   <SelectValue>
-                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-2 py-1 truncate w-full text-center">
+                                    <span className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${getRoleBadgeStyles(user.role)}`}>
                                       {getRoleLabel(user.role)}
-                                    </Badge>
+                                    </span>
                                   </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="z-50 bg-background/95 backdrop-blur-sm border shadow-xl">
                                   {roles.map((role) => (
-                                    <SelectItem key={role} value={role} className="text-xs">
-                                      {getRoleLabel(role)}
+                                    <SelectItem key={role} value={role} className="text-xs hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
+                                      <span className={`inline-flex items-center justify-center rounded-sm px-2 py-1 text-xs font-medium ${getRoleBadgeStyles(role)}`}>
+                                        {getRoleLabel(role)}
+                                      </span>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
