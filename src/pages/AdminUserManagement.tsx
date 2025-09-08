@@ -814,18 +814,26 @@ const AdminUserManagement = () => {
                           {isAgentOrStaff ? (
                             <div className="border border-border rounded-lg p-2 bg-muted/50">
                               {user.assigned_corporate_phone ? (
-                                <div className="text-sm">{user.assigned_corporate_phone}</div>
-                              ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm">{user.assigned_corporate_phone}</span>
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                    className="flex items-center gap-1"
+                                    className="h-6 px-2 text-xs"
                                   >
-                                    <Phone className="h-3 w-3" />
+                                    Editar
                                   </Button>
                                 </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Phone className="h-3 w-3" />
+                                </Button>
                               )}
                             </div>
                           ) : (
@@ -836,18 +844,26 @@ const AdminUserManagement = () => {
                           {isAgentOrStaff ? (
                             <div className="border border-border rounded-lg p-2 bg-muted/50">
                               {user.assigned_corporate_email ? (
-                                <div className="text-sm">{user.assigned_corporate_email}</div>
-                              ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm">{user.assigned_corporate_email}</span>
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                    className="flex items-center gap-1"
+                                    className="h-6 px-2 text-xs"
                                   >
-                                    <Mail className="h-3 w-3" />
+                                    Editar
                                   </Button>
                                 </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Mail className="h-3 w-3" />
+                                </Button>
                               )}
                             </div>
                           ) : (
@@ -895,6 +911,16 @@ const AdminUserManagement = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {isAgentOrStaff && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
+                                title="Ver asignaciones corporativas"
+                              >
+                                <Shield className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -994,7 +1020,11 @@ const AdminUserManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5" />
-              Asignaciones de {assignmentsDialog.userName}
+              {(assignmentsDialog.userRole === 'agent' || assignmentsDialog.userRole === 'super_admin' || 
+                assignmentsDialog.userRole === 'franchise_admin' || assignmentsDialog.userRole === 'office_manager' || 
+                assignmentsDialog.userRole === 'supervisor') ? 
+                `Asignaciones de ${assignmentsDialog.userName}` : 
+                `Perfil de ${assignmentsDialog.userName}`}
             </DialogTitle>
             <DialogDescription>
               Permisos y funcionalidades asignadas al rol: <strong>{getRoleLabel(assignmentsDialog.userRole)}</strong>
@@ -1021,6 +1051,49 @@ const AdminUserManagement = () => {
                 ))}
               </ul>
             </div>
+
+            {/* Corporate assignments section for agents/staff */}
+            {(assignmentsDialog.userRole === 'agent' || assignmentsDialog.userRole === 'super_admin' || 
+              assignmentsDialog.userRole === 'franchise_admin' || assignmentsDialog.userRole === 'office_manager' || 
+              assignmentsDialog.userRole === 'supervisor') && (
+              <div className="space-y-2">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Asignaciones Corporativas:
+                </h4>
+                {(() => {
+                  const currentUser = users.find(u => u.id === assignmentsDialog.userId);
+                  return currentUser ? (
+                    <div className="p-4 border rounded-lg bg-background/50">
+                      {currentUser.assigned_corporate_phone || currentUser.assigned_corporate_email || currentUser.assignment_date ? (
+                        <>
+                          {currentUser.assigned_corporate_phone && (
+                            <div className="mb-2">
+                              <span className="text-sm text-muted-foreground">Teléfono Asignado:</span>
+                              <p className="font-medium">{currentUser.assigned_corporate_phone}</p>
+                            </div>
+                          )}
+                          {currentUser.assigned_corporate_email && (
+                            <div className="mb-2">
+                              <span className="text-sm text-muted-foreground">Email Asignado:</span>
+                              <p className="font-medium">{currentUser.assigned_corporate_email}</p>
+                            </div>
+                          )}
+                          {currentUser.assignment_date && (
+                            <div>
+                              <span className="text-sm text-muted-foreground">Fecha de Asignación:</span>
+                              <p className="font-medium">{new Date(currentUser.assignment_date).toLocaleDateString('es-ES')}</p>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">No hay asignaciones corporativas</p>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end pt-4">
