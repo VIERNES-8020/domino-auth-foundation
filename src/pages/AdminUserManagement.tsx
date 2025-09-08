@@ -452,7 +452,9 @@ const AdminUserManagement = () => {
     });
   };
 
-  const handleViewCorporateAssignments = (userId: string, userName: string, userRole: string) => {
+  const handleViewCorporateAssignments = async (userId: string, userName: string, userRole: string) => {
+    // Force refresh data before opening dialog
+    await queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
     setCorporateAssignmentsDialog({
       open: true,
       userId,
@@ -520,9 +522,10 @@ const AdminUserManagement = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(`${assignmentDialog.type === 'phone' ? 'Teléfono' : 'Email'} asignado exitosamente`);
-      queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      await queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
       setAssignmentDialog({ open: false, type: null, userId: '', userName: '', currentValue: '' });
       setAssignmentValue('');
     },
@@ -853,6 +856,7 @@ const AdminUserManagement = () => {
                                   className="flex items-center gap-1"
                                 >
                                   <Phone className="h-3 w-3" />
+                                  Asignar
                                 </Button>
                               )}
                             </div>
@@ -883,6 +887,7 @@ const AdminUserManagement = () => {
                                   className="flex items-center gap-1"
                                 >
                                   <Mail className="h-3 w-3" />
+                                  Asignar
                                 </Button>
                               )}
                             </div>
