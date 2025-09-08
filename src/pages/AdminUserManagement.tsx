@@ -511,18 +511,33 @@ const AdminUserManagement = () => {
 
   const assignmentMutation = useMutation({
     mutationFn: async ({ userId, type, value }: { userId: string; type: 'phone' | 'email'; value: string }) => {
-      const updateData = type === 'phone' 
-        ? { assigned_corporate_phone: value, assignment_date: new Date().toISOString() }
-        : { assigned_corporate_email: value, assignment_date: new Date().toISOString() };
+      console.log(`Attempting to assign ${type} for user ${userId}:`, value);
+      
+      try {
+        const updateData = type === 'phone' 
+          ? { assigned_corporate_phone: value, assignment_date: new Date().toISOString() }
+          : { assigned_corporate_email: value, assignment_date: new Date().toISOString() };
 
-      const { error } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("id", userId);
+        const { data, error } = await supabase
+          .from("profiles")
+          .update(updateData)
+          .eq("id", userId)
+          .select();
 
-      if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw new Error(error.message || 'Error desconocido en la base de datos');
+        }
+
+        console.log('Assignment successful:', data);
+        return data;
+      } catch (err: any) {
+        console.error('Assignment mutation error:', err);
+        throw new Error(err.message || 'Error inesperado al realizar la asignación');
+      }
     },
     onSuccess: async () => {
+      console.log('Assignment success callback triggered');
       toast.success(`${assignmentDialog.type === 'phone' ? 'Teléfono' : 'Email'} asignado exitosamente`);
       await queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
       await queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
@@ -530,7 +545,12 @@ const AdminUserManagement = () => {
       setAssignmentValue('');
     },
     onError: (error: any) => {
-      toast.error(`Error al asignar ${assignmentDialog.type === 'phone' ? 'teléfono' : 'email'}: ${error.message}`);
+      console.error('Assignment error callback triggered:', error);
+      const errorMessage = error?.message || 'Error desconocido al realizar la asignación';
+      toast.error(`Error al asignar ${assignmentDialog.type === 'phone' ? 'teléfono' : 'email'}: ${errorMessage}`);
+      
+      // También mostrar un alert como respaldo
+      alert(`ERROR: ${errorMessage}`);
     },
   });
 
