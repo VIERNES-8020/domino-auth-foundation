@@ -380,7 +380,16 @@ const AdminUserManagement = () => {
 
   const onSubmit = async (values: UserFormValues) => {
     console.log('Form values being submitted:', values);
-    createUserMutation.mutate(values);
+    
+    // Clean empty string values to null for optional fields
+    const cleanedValues = {
+      ...values,
+      identity_card: values.identity_card?.trim() || null,
+      corporate_phone: values.corporate_phone?.trim() || null,
+    };
+    
+    console.log('Cleaned values:', cleanedValues);
+    createUserMutation.mutate(cleanedValues);
   };
 
   const handleRoleChange = (userId: string, newRole: string, currentRole: string, userName: string) => {
