@@ -184,14 +184,25 @@ const AdminUserManagement = () => {
   // Create new user mutation
   const createUserMutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
+      console.log('Creating user with values:', values);
+      
+      // Clean empty string values to null for optional fields
+      const cleanedValues = {
+        ...values,
+        identity_card: values.identity_card?.trim() || null,
+        corporate_phone: values.corporate_phone?.trim() || null,
+      };
+      
+      console.log('Cleaned values for profile insertion:', cleanedValues);
+      
       // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
+        email: cleanedValues.email,
+        password: cleanedValues.password,
         options: {
           data: {
-            full_name: values.full_name,
-            role: values.role,
+            full_name: cleanedValues.full_name,
+            role: cleanedValues.role,
           },
         },
       });
@@ -199,16 +210,20 @@ const AdminUserManagement = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile
+        // Create profile with cleaned values
+        const profileData = {
+          id: authData.user.id,
+          full_name: cleanedValues.full_name,
+          identity_card: cleanedValues.identity_card,
+          corporate_phone: cleanedValues.corporate_phone,
+          email: cleanedValues.email,
+        };
+        
+        console.log('Inserting profile with data:', profileData);
+        
         const { error: profileError } = await supabase
           .from("profiles")
-          .insert({
-            id: authData.user.id,
-            full_name: values.full_name,
-            identity_card: values.identity_card,
-            corporate_phone: values.corporate_phone,
-            email: values.email,
-          });
+          .insert(profileData);
 
         if (profileError) throw profileError;
 
@@ -380,16 +395,7 @@ const AdminUserManagement = () => {
 
   const onSubmit = async (values: UserFormValues) => {
     console.log('Form values being submitted:', values);
-    
-    // Clean empty string values to null for optional fields
-    const cleanedValues = {
-      ...values,
-      identity_card: values.identity_card?.trim() || null,
-      corporate_phone: values.corporate_phone?.trim() || null,
-    };
-    
-    console.log('Cleaned values:', cleanedValues);
-    createUserMutation.mutate(cleanedValues);
+    createUserMutation.mutate(values);
   };
 
   const handleRoleChange = (userId: string, newRole: string, currentRole: string, userName: string) => {
@@ -733,7 +739,12 @@ const AdminUserManagement = () => {
                         {user.full_name || t('admin.noName')}
                       </TableCell>
                       <TableCell>{user.identity_card || 'N/A'}</TableCell>
-                      <TableCell>{user.corporate_phone || 'Sin teléfono'}</TableCell>
+                      <TableCell>
+                        {(() => {
+                          console.log(`User ${user.full_name} corporate_phone:`, user.corporate_phone, typeof user.corporate_phone);
+                          return user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono';
+                        })()}
+                      </TableCell>
                       <TableCell>{user.email || 'Sin email'}</TableCell>
                       <TableCell>
                         <Select
