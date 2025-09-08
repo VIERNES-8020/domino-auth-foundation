@@ -53,6 +53,7 @@ export default function AdminDashboard() {
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
+  const [franchiseApplicationFilter, setFranchiseApplicationFilter] = useState<string>('all');
   const [selectedFranchiseApplication, setSelectedFranchiseApplication] = useState<any>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [showPdfModal, setShowPdfModal] = useState(false);
@@ -270,6 +271,15 @@ export default function AdminDashboard() {
     } catch (error: any) {
       throw error;
     }
+  };
+
+  const getFilteredFranchiseApplications = () => {
+    if (franchiseApplicationFilter === 'all') return franchiseApplications;
+    return franchiseApplications.filter(app => app.status === franchiseApplicationFilter);
+  };
+
+  const getApplicationCountByStatus = (status: string) => {
+    return franchiseApplications.filter(app => app.status === status).length;
   };
 
   const updatePropertyStatus = async (propertyId: string, status: string) => {
@@ -878,12 +888,40 @@ export default function AdminDashboard() {
                 <CardContent className="space-y-6">
                   {/* Franchise Applications */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Solicitudes de Franquicia ({franchiseApplications.length})
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Solicitudes de Franquicia ({franchiseApplications.length})
+                      </h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={franchiseApplicationFilter === 'all' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFranchiseApplicationFilter('all')}
+                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          Solicitudes ({franchiseApplications.length})
+                        </Button>
+                        <Button
+                          variant={franchiseApplicationFilter === 'approved' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFranchiseApplicationFilter('approved')}
+                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          Aprobados ({getApplicationCountByStatus('approved')})
+                        </Button>
+                        <Button
+                          variant={franchiseApplicationFilter === 'rejected' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setFranchiseApplicationFilter('rejected')}
+                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          Rechazados ({getApplicationCountByStatus('rejected')})
+                        </Button>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {franchiseApplications.map((application) => (
+                      {getFilteredFranchiseApplications().map((application) => (
                          <Card key={application.id} className="border-l-4 border-l-orange-500">
                            <CardContent className="p-4">
                              <div className="flex justify-between items-start mb-2">
