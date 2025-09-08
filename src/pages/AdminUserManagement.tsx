@@ -73,6 +73,17 @@ const AdminUserManagement = () => {
     userName: '',
     userRole: ''
   });
+  const [corporateAssignmentsDialog, setCorporateAssignmentsDialog] = useState<{
+    open: boolean;
+    userId: string;
+    userName: string;
+    userRole: string;
+  }>({
+    open: false,
+    userId: '',
+    userName: '',
+    userRole: ''
+  });
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
     userId: string;
@@ -434,6 +445,15 @@ const AdminUserManagement = () => {
 
   const handleViewAssignments = (userId: string, userName: string, userRole: string) => {
     setAssignmentsDialog({
+      open: true,
+      userId,
+      userName,
+      userRole
+    });
+  };
+
+  const handleViewCorporateAssignments = (userId: string, userName: string, userRole: string) => {
+    setCorporateAssignmentsDialog({
       open: true,
       userId,
       userName,
@@ -915,7 +935,7 @@ const AdminUserManagement = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
+                                onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
                                 title="Ver asignaciones corporativas"
                               >
                                 <Shield className="h-4 w-4" />
@@ -1020,11 +1040,7 @@ const AdminUserManagement = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5" />
-              {(assignmentsDialog.userRole === 'agent' || assignmentsDialog.userRole === 'super_admin' || 
-                assignmentsDialog.userRole === 'franchise_admin' || assignmentsDialog.userRole === 'office_manager' || 
-                assignmentsDialog.userRole === 'supervisor') ? 
-                `Asignaciones de ${assignmentsDialog.userName}` : 
-                `Perfil de ${assignmentsDialog.userName}`}
+              Asignaciones de {assignmentsDialog.userName}
             </DialogTitle>
             <DialogDescription>
               Permisos y funcionalidades asignadas al rol: <strong>{getRoleLabel(assignmentsDialog.userRole)}</strong>
@@ -1051,53 +1067,105 @@ const AdminUserManagement = () => {
                 ))}
               </ul>
             </div>
-
-            {/* Corporate assignments section for agents/staff */}
-            {(assignmentsDialog.userRole === 'agent' || assignmentsDialog.userRole === 'super_admin' || 
-              assignmentsDialog.userRole === 'franchise_admin' || assignmentsDialog.userRole === 'office_manager' || 
-              assignmentsDialog.userRole === 'supervisor') && (
-              <div className="space-y-2">
-                <h4 className="font-semibold flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Asignaciones Corporativas:
-                </h4>
-                {(() => {
-                  const currentUser = users.find(u => u.id === assignmentsDialog.userId);
-                  return currentUser ? (
-                    <div className="p-4 border rounded-lg bg-background/50">
-                      {currentUser.assigned_corporate_phone || currentUser.assigned_corporate_email || currentUser.assignment_date ? (
-                        <>
-                          {currentUser.assigned_corporate_phone && (
-                            <div className="mb-2">
-                              <span className="text-sm text-muted-foreground">Teléfono Asignado:</span>
-                              <p className="font-medium">{currentUser.assigned_corporate_phone}</p>
-                            </div>
-                          )}
-                          {currentUser.assigned_corporate_email && (
-                            <div className="mb-2">
-                              <span className="text-sm text-muted-foreground">Email Asignado:</span>
-                              <p className="font-medium">{currentUser.assigned_corporate_email}</p>
-                            </div>
-                          )}
-                          {currentUser.assignment_date && (
-                            <div>
-                              <span className="text-sm text-muted-foreground">Fecha de Asignación:</span>
-                              <p className="font-medium">{new Date(currentUser.assignment_date).toLocaleDateString('es-ES')}</p>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-muted-foreground">No hay asignaciones corporativas</p>
-                      )}
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end pt-4">
             <Button onClick={() => setAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' })}>
+              Cerrar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Corporate Assignments Dialog */}
+      <Dialog open={corporateAssignmentsDialog.open} onOpenChange={(open) => setCorporateAssignmentsDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Asignaciones de {corporateAssignmentsDialog.userName}
+            </DialogTitle>
+            <DialogDescription>
+              Permisos y funcionalidades asignadas al rol: <strong>Agente Inmobiliario</strong>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <UserCheck className="h-5 w-5 text-primary" />
+              <span className="font-medium">Rol Actual: Agente Inmobiliario</span>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                Funcionalidades Asignadas:
+              </h4>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 p-2 bg-background border rounded">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  Gestión de propiedades
+                </li>
+                <li className="flex items-center gap-2 p-2 bg-background border rounded">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  Atención a clientes
+                </li>
+                <li className="flex items-center gap-2 p-2 bg-background border rounded">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  Programación de visitas
+                </li>
+                <li className="flex items-center gap-2 p-2 bg-background border rounded">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  Gestión de leads
+                </li>
+                <li className="flex items-center gap-2 p-2 bg-background border rounded">
+                  <div className="w-2 h-2 bg-primary rounded-full" />
+                  Panel de agente
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Asignaciones Corporativas:
+              </h4>
+              {(() => {
+                const currentUser = users.find(u => u.id === corporateAssignmentsDialog.userId);
+                return currentUser ? (
+                  <div className="p-4 border rounded-lg bg-background/50">
+                    {currentUser.assigned_corporate_phone || currentUser.assigned_corporate_email || currentUser.assignment_date ? (
+                      <>
+                        {currentUser.assigned_corporate_phone && (
+                          <div className="mb-2">
+                            <span className="text-sm text-muted-foreground">Teléfono Asignado:</span>
+                            <p className="font-medium">{currentUser.assigned_corporate_phone}</p>
+                          </div>
+                        )}
+                        {currentUser.assigned_corporate_email && (
+                          <div className="mb-2">
+                            <span className="text-sm text-muted-foreground">Email Asignado:</span>
+                            <p className="font-medium">{currentUser.assigned_corporate_email}</p>
+                          </div>
+                        )}
+                        {currentUser.assignment_date && (
+                          <div>
+                            <span className="text-sm text-muted-foreground">Fecha de Asignación:</span>
+                            <p className="font-medium">{new Date(currentUser.assignment_date).toLocaleDateString('es-ES')}</p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">No hay asignaciones corporativas</p>
+                    )}
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setCorporateAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' })}>
               Cerrar
             </Button>
           </div>
