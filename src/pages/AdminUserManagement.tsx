@@ -825,70 +825,69 @@ const AdminUserManagement = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="w-full">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b">
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Nombre Completo</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Carnet</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden lg:table-cell">Celular Corporativo</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Email Registrado</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Celular Asignado</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Email Asignado</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden xl:table-cell">Fecha Asignación</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Rol</TableHead>
-                      <TableHead className="h-12 px-4 text-left align-middle font-medium text-center">Acciones</TableHead>
+                      <TableHead className="px-2 py-3 text-left font-medium">Nombre</TableHead>
+                      <TableHead className="px-2 py-3 text-left font-medium hidden md:table-cell">Carnet</TableHead>
+                      <TableHead className="px-2 py-3 text-left font-medium">Email</TableHead>
+                      <TableHead className="px-2 py-3 text-center font-medium">Celular Asignado</TableHead>
+                      <TableHead className="px-2 py-3 text-center font-medium">Email Asignado</TableHead>
+                      <TableHead className="px-2 py-3 text-center font-medium">Fecha</TableHead>
+                      <TableHead className="px-2 py-3 text-center font-medium">Rol</TableHead>
+                      <TableHead className="px-2 py-3 text-center font-medium">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedUsers.map((user) => {
                       const isAgentOrStaff = agentRoles.includes(user.role);
+                      const hasPhoneAssignment = user.assigned_corporate_phone && user.assigned_corporate_phone.trim() !== '';
+                      const hasEmailAssignment = user.assigned_corporate_email && user.assigned_corporate_email.trim() !== '';
                       
                       return (
                         <TableRow key={user.id} className="border-b hover:bg-muted/50">
-                          <TableCell className="h-16 px-4 align-middle">
-                            <div className="font-medium truncate max-w-[200px]">
+                          <TableCell className="px-2 py-4">
+                            <div className="font-medium text-sm max-w-[120px] truncate">
                               {user.full_name || t('admin.noName')}
                             </div>
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle hidden md:table-cell">
-                            <span className="text-sm text-muted-foreground">
+                          <TableCell className="px-2 py-4 hidden md:table-cell">
+                            <span className="text-xs text-muted-foreground">
                               {user.identity_card || 'N/A'}
                             </span>
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle hidden lg:table-cell">
-                            <span className="text-sm">
-                              {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="h-16 px-4 align-middle">
-                            <div className="text-sm truncate max-w-[200px]" title={user.email}>
+                          <TableCell className="px-2 py-4">
+                            <div className="text-xs max-w-[140px] truncate" title={user.email}>
                               {user.email || 'Sin email'}
                             </div>
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle">
+                          <TableCell className="px-2 py-4 text-center">
                             {isAgentOrStaff ? (
-                              <div className="w-[140px]">
-                                {user.assigned_corporate_phone ? (
-                                  <div className="space-y-2 p-2 border rounded-lg bg-green-50 border-green-200">
-                                    <div className="text-xs font-medium text-green-800 truncate">
+                              <div className="flex flex-col items-center gap-1">
+                                {hasPhoneAssignment ? (
+                                  <>
+                                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold border border-green-300">
+                                      ASIGNADO
+                                    </div>
+                                    <div className="text-xs text-green-700 truncate max-w-[80px]" title={user.assigned_corporate_phone}>
                                       {user.assigned_corporate_phone}
                                     </div>
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                      className="h-7 px-3 text-xs w-full border-green-300 text-green-700 hover:bg-green-100"
+                                      className="h-6 px-2 text-xs bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
                                     >
                                       Editar
                                     </Button>
-                                  </div>
+                                  </>
                                 ) : (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                    className="h-8 px-3 text-xs w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                                    className="h-8 px-3 text-xs bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100"
                                   >
                                     <Phone className="h-3 w-3 mr-1" />
                                     Asignar
@@ -896,32 +895,35 @@ const AdminUserManagement = () => {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">N/A</span>
+                              <span className="text-xs text-muted-foreground">N/A</span>
                             )}
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle">
+                          <TableCell className="px-2 py-4 text-center">
                             {isAgentOrStaff ? (
-                              <div className="w-[160px]">
-                                {user.assigned_corporate_email ? (
-                                  <div className="space-y-2 p-2 border rounded-lg bg-green-50 border-green-200">
-                                    <div className="text-xs font-medium text-green-800 truncate" title={user.assigned_corporate_email}>
+                              <div className="flex flex-col items-center gap-1">
+                                {hasEmailAssignment ? (
+                                  <>
+                                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold border border-green-300">
+                                      ASIGNADO
+                                    </div>
+                                    <div className="text-xs text-green-700 truncate max-w-[100px]" title={user.assigned_corporate_email}>
                                       {user.assigned_corporate_email}
                                     </div>
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                      className="h-7 px-3 text-xs w-full border-green-300 text-green-700 hover:bg-green-100"
+                                      className="h-6 px-2 text-xs bg-green-50 border-green-300 text-green-700 hover:bg-green-100"
                                     >
                                       Editar
                                     </Button>
-                                  </div>
+                                  </>
                                 ) : (
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                    className="h-8 px-3 text-xs w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                                    className="h-8 px-3 text-xs bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100"
                                   >
                                     <Mail className="h-3 w-3 mr-1" />
                                     Asignar
@@ -929,72 +931,66 @@ const AdminUserManagement = () => {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-sm text-muted-foreground">N/A</span>
+                              <span className="text-xs text-muted-foreground">N/A</span>
                             )}
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle hidden xl:table-cell">
-                            {isAgentOrStaff && user.assignment_date ? (
-                              <div className="text-xs font-medium">
-                                {new Date(user.assignment_date).toLocaleDateString('es-ES')}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
+                          <TableCell className="px-2 py-4 text-center">
+                            <span className="text-xs text-muted-foreground">
+                              {user.assignment_date ? new Date(user.assignment_date).toLocaleDateString('es-ES') : '-'}
+                            </span>
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle">
-                            <div className="w-[140px]">
-                              <Select
-                                value={user.role}
-                                onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
-                                disabled={updateRoleMutation.isPending}
-                              >
-                                <SelectTrigger className="h-8 text-xs">
-                                  <SelectValue>
-                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-2 py-1">
-                                      {getRoleLabel(user.role)}
-                                    </Badge>
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {roles.map((role) => (
-                                    <SelectItem key={role} value={role} className="text-xs">
-                                      {getRoleLabel(role)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <TableCell className="px-2 py-4 text-center">
+                            <Select
+                              value={user.role}
+                              onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
+                              disabled={updateRoleMutation.isPending}
+                            >
+                              <SelectTrigger className="w-[100px] h-8">
+                                <SelectValue>
+                                  <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-1 py-0.5">
+                                    {getRoleLabel(user.role)}
+                                  </Badge>
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {roles.map((role) => (
+                                  <SelectItem key={role} value={role} className="text-xs">
+                                    {getRoleLabel(role)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
-                          <TableCell className="h-16 px-4 align-middle">
-                            <div className="flex justify-center gap-1">
+                          <TableCell className="px-2 py-4 text-center">
+                            <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                className="h-8 w-8 p-0 hover:bg-blue-100"
+                                className="h-7 w-7 p-0 hover:bg-primary/10"
                                 title="Ver asignaciones de rol"
                               >
-                                <Eye className="h-4 w-4 text-blue-600" />
+                                <Eye className="h-3 w-3 text-primary" />
                               </Button>
                               {(user.role === 'agent' || agentRoles.includes(user.role)) && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                  className="h-8 w-8 p-0 hover:bg-green-100"
+                                  className="h-7 w-7 p-0 hover:bg-blue-100"
                                   title="Ver asignaciones corporativas"
                                 >
-                                  <Shield className="h-4 w-4 text-green-600" />
+                                  <Building className="h-3 w-3 text-blue-600" />
                                 </Button>
                               )}
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
-                                className="h-8 w-8 p-0 hover:bg-red-100"
+                                className="h-7 w-7 p-0 hover:bg-red-100"
                                 title="Archivar usuario"
                               >
-                                <Archive className="h-4 w-4 text-red-600" />
+                                <Archive className="h-3 w-3 text-red-600" />
                               </Button>
                             </div>
                           </TableCell>
