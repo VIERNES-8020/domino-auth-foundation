@@ -232,7 +232,16 @@ const AdminUserManagement = () => {
       form.reset();
     },
     onError: (error: any) => {
-      toast.error(error.message || t('unexpectedError') || 'Error inesperado');
+      console.error('Error creating user:', error);
+      
+      // Handle specific email validation errors
+      if (error.message?.includes('Email address') && error.message?.includes('is invalid')) {
+        toast.error('El email ingresado no es válido. Por favor usa un dominio de email válido (ej: @gmail.com, @yahoo.com, etc.)');
+      } else if (error.message?.includes('User already registered')) {
+        toast.error('Ya existe un usuario registrado con este email.');
+      } else {
+        toast.error(error.message || t('unexpectedError') || 'Error inesperado al crear el usuario');
+      }
     },
   });
 
