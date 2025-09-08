@@ -818,194 +818,195 @@ const AdminUserManagement = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {usersLoading ? (
             <div className="flex justify-center py-8">
               <div className="text-muted-foreground">{t('admin.loadingUsers')}</div>
             </div>
           ) : (
             <>
-              {/* Tabla con scroll horizontal responsive */}
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[1200px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[180px]">Nombre Completo</TableHead>
-                        <TableHead className="min-w-[120px] hidden md:table-cell">Carnet de Identidad</TableHead>
-                        <TableHead className="min-w-[140px] hidden lg:table-cell">Celular Corporativo</TableHead>
-                        <TableHead className="min-w-[200px]">Email Registrado</TableHead>
-                        <TableHead className="min-w-[160px]">Celular Asignado</TableHead>
-                        <TableHead className="min-w-[180px]">Email Asignado</TableHead>
-                        <TableHead className="min-w-[120px] hidden xl:table-cell">Fecha Asignación</TableHead>
-                        <TableHead className="min-w-[160px]">Rol</TableHead>
-                        <TableHead className="min-w-[120px]">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedUsers.map((user) => {
-                        const isAgentOrStaff = agentRoles.includes(user.role);
-                        
-                        return (
-                          <TableRow key={user.id}>
-                            <TableCell className="font-medium min-w-[180px]">
-                              <div className="truncate">
-                                {user.full_name || t('admin.noName')}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div className="truncate text-sm">
-                                {user.identity_card || 'N/A'}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="truncate text-sm">
-                                {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="truncate text-sm max-w-[180px]">
-                                {user.email || 'Sin email'}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {isAgentOrStaff ? (
-                                <div className="border border-border rounded-lg p-2 bg-muted/50 min-w-[140px]">
-                                  {user.assigned_corporate_phone ? (
-                                    <div className="space-y-1">
-                                      <div className="text-xs truncate">{user.assigned_corporate_phone}</div>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                        className="h-6 px-2 text-xs w-full"
-                                      >
-                                        Editar
-                                      </Button>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b">
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Nombre Completo</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden md:table-cell">Carnet</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden lg:table-cell">Celular Corporativo</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Email Registrado</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Celular Asignado</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Email Asignado</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium hidden xl:table-cell">Fecha Asignación</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium">Rol</TableHead>
+                      <TableHead className="h-12 px-4 text-left align-middle font-medium text-center">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map((user) => {
+                      const isAgentOrStaff = agentRoles.includes(user.role);
+                      
+                      return (
+                        <TableRow key={user.id} className="border-b hover:bg-muted/50">
+                          <TableCell className="h-16 px-4 align-middle">
+                            <div className="font-medium truncate max-w-[200px]">
+                              {user.full_name || t('admin.noName')}
+                            </div>
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle hidden md:table-cell">
+                            <span className="text-sm text-muted-foreground">
+                              {user.identity_card || 'N/A'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle hidden lg:table-cell">
+                            <span className="text-sm">
+                              {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle">
+                            <div className="text-sm truncate max-w-[200px]" title={user.email}>
+                              {user.email || 'Sin email'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle">
+                            {isAgentOrStaff ? (
+                              <div className="w-[140px]">
+                                {user.assigned_corporate_phone ? (
+                                  <div className="space-y-2 p-2 border rounded-lg bg-green-50 border-green-200">
+                                    <div className="text-xs font-medium text-green-800 truncate">
+                                      {user.assigned_corporate_phone}
                                     </div>
-                                  ) : (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                      className="flex items-center gap-1 w-full text-xs"
+                                      className="h-7 px-3 text-xs w-full border-green-300 text-green-700 hover:bg-green-100"
                                     >
-                                      <Phone className="h-3 w-3" />
-                                      Asignar
+                                      Editar
                                     </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-muted-foreground text-sm">N/A</div>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {isAgentOrStaff ? (
-                                <div className="border border-border rounded-lg p-2 bg-muted/50 min-w-[160px]">
-                                  {user.assigned_corporate_email ? (
-                                    <div className="space-y-1">
-                                      <div className="text-xs truncate" title={user.assigned_corporate_email}>
-                                        {user.assigned_corporate_email}
-                                      </div>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                        className="h-6 px-2 text-xs w-full"
-                                      >
-                                        Editar
-                                      </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
+                                    className="h-8 px-3 text-xs w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Asignar
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">N/A</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle">
+                            {isAgentOrStaff ? (
+                              <div className="w-[160px]">
+                                {user.assigned_corporate_email ? (
+                                  <div className="space-y-2 p-2 border rounded-lg bg-green-50 border-green-200">
+                                    <div className="text-xs font-medium text-green-800 truncate" title={user.assigned_corporate_email}>
+                                      {user.assigned_corporate_email}
                                     </div>
-                                  ) : (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                      className="flex items-center gap-1 w-full text-xs"
+                                      className="h-7 px-3 text-xs w-full border-green-300 text-green-700 hover:bg-green-100"
                                     >
-                                      <Mail className="h-3 w-3" />
-                                      Asignar
+                                      Editar
                                     </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-muted-foreground text-sm">N/A</div>
-                              )}
-                            </TableCell>
-                            <TableCell className="hidden xl:table-cell">
-                              {isAgentOrStaff && user.assignment_date ? (
-                                <div className="text-xs">
-                                  {new Date(user.assignment_date).toLocaleDateString()}
-                                </div>
-                              ) : (
-                                <div className="text-muted-foreground text-xs">-</div>
-                              )}
-                            </TableCell>
-                            <TableCell>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
+                                    className="h-8 px-3 text-xs w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                                  >
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Asignar
+                                  </Button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">N/A</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle hidden xl:table-cell">
+                            {isAgentOrStaff && user.assignment_date ? (
+                              <div className="text-xs font-medium">
+                                {new Date(user.assignment_date).toLocaleDateString('es-ES')}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle">
+                            <div className="w-[140px]">
                               <Select
                                 value={user.role}
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
                                 disabled={updateRoleMutation.isPending}
                               >
-                                <SelectTrigger className="w-36">
+                                <SelectTrigger className="h-8 text-xs">
                                   <SelectValue>
-                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-2 py-1">
                                       {getRoleLabel(user.role)}
                                     </Badge>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {roles.map((role) => (
-                                    <SelectItem key={role} value={role}>
+                                    <SelectItem key={role} value={role} className="text-xs">
                                       {getRoleLabel(role)}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
+                            </div>
+                          </TableCell>
+                          <TableCell className="h-16 px-4 align-middle">
+                            <div className="flex justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                className="h-8 w-8 p-0 hover:bg-blue-100"
+                                title="Ver asignaciones de rol"
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                              </Button>
+                              {(user.role === 'agent' || agentRoles.includes(user.role)) && (
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                  className="h-8 w-8"
-                                  title="Ver asignaciones de rol"
+                                  size="sm"
+                                  onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                  className="h-8 w-8 p-0 hover:bg-green-100"
+                                  title="Ver asignaciones corporativas"
                                 >
-                                  <Eye className="h-4 w-4" />
+                                  <Shield className="h-4 w-4 text-green-600" />
                                 </Button>
-                                {(user.role === 'agent' || agentRoles.includes(user.role)) && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                    className="h-8 w-8"
-                                    title="Ver asignaciones corporativas"
-                                  >
-                                    <Shield className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
-                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  title="Archivar usuario"
-                                >
-                                  <Archive className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
+                                className="h-8 w-8 p-0 hover:bg-red-100"
+                                title="Archivar usuario"
+                              >
+                                <Archive className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
               
               {/* Pagination Controls */}
-              <div className="flex justify-between items-center mt-6">
+              <div className="flex justify-between items-center p-4 border-t bg-muted/20">
                 <div className="text-sm text-muted-foreground">
                   Mostrando {startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} de {filteredUsers.length} usuarios
                 </div>
