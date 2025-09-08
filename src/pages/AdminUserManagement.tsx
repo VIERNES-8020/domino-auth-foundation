@@ -851,18 +851,18 @@ const AdminUserManagement = () => {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <Table className="w-full min-w-[1200px]">
+              <div className="w-full">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow className="border-b bg-muted/20">
-                      <TableHead className="px-6 py-4 text-left font-semibold text-sm">Nombre Completo</TableHead>
-                      <TableHead className="px-6 py-4 text-left font-semibold text-sm hidden md:table-cell">Carnet</TableHead>
-                      <TableHead className="px-6 py-4 text-left font-semibold text-sm">Email Registrado</TableHead>
-                      <TableHead className="px-6 py-4 text-center font-semibold text-sm">Celular Asignado</TableHead>
-                      <TableHead className="px-6 py-4 text-center font-semibold text-sm">Email Asignado</TableHead>
-                      <TableHead className="px-6 py-4 text-center font-semibold text-sm hidden lg:table-cell">Fecha Asignación</TableHead>
-                      <TableHead className="px-6 py-4 text-center font-semibold text-sm">Rol</TableHead>
-                      <TableHead className="px-6 py-4 text-center font-semibold text-sm">Acciones</TableHead>
+                      <TableHead className="px-4 py-4 text-left font-semibold text-sm">Nombre Completo</TableHead>
+                      <TableHead className="px-4 py-4 text-left font-semibold text-sm hidden md:table-cell">Carnet</TableHead>
+                      <TableHead className="px-4 py-4 text-left font-semibold text-sm">Email Registrado</TableHead>
+                      <TableHead className="px-4 py-4 text-center font-semibold text-sm">Celular Asignado</TableHead>
+                      <TableHead className="px-4 py-4 text-center font-semibold text-sm">Email Asignado</TableHead>
+                      <TableHead className="px-4 py-4 text-center font-semibold text-sm hidden lg:table-cell">Fecha Asignación</TableHead>
+                      <TableHead className="px-4 py-4 text-center font-semibold text-sm">Rol</TableHead>
+                      <TableHead className="px-4 py-4 text-center font-semibold text-sm">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -873,37 +873,37 @@ const AdminUserManagement = () => {
                       
                       return (
                         <TableRow key={user.id} className="border-b hover:bg-muted/30 transition-colors">
-                          <TableCell className="px-6 py-5">
-                            <div className="font-medium text-sm max-w-[180px] truncate" title={user.full_name}>
+                          <TableCell className="px-4 py-5">
+                            <div className="font-medium text-sm max-w-[120px] lg:max-w-none truncate" title={user.full_name}>
                               {user.full_name || 'Sin nombre'}
                             </div>
                           </TableCell>
-                          <TableCell className="px-6 py-5 hidden md:table-cell">
+                          <TableCell className="px-4 py-5 hidden md:table-cell">
                             <span className="text-sm text-muted-foreground">
                               {user.identity_card || 'N/A'}
                             </span>
                           </TableCell>
-                          <TableCell className="px-6 py-5">
-                            <div className="text-sm max-w-[200px] truncate" title={user.email}>
+                          <TableCell className="px-4 py-5">
+                            <div className="text-sm max-w-[140px] lg:max-w-none truncate" title={user.email}>
                               {user.email || 'Sin email'}
                             </div>
                           </TableCell>
-                          <TableCell className="px-6 py-5 text-center">
+                          <TableCell className="px-4 py-5 text-center">
                             {isAgentOrStaff ? (
-                              <div className="flex flex-col items-center gap-3 min-w-[160px]">
+                              <div className="flex flex-col items-center gap-2 w-full">
                                 {hasPhoneAssignment ? (
                                   <>
-                                    <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-bold border border-green-300 shadow-sm w-full max-w-[140px] flex items-center justify-center gap-2">
+                                    <div className="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold border border-green-300 shadow-sm w-full max-w-[120px] flex items-center justify-center gap-1">
                                       <span className="text-green-600">✓</span> ASIGNADO
                                     </div>
-                                    <div className="text-sm text-green-700 font-semibold truncate max-w-[140px] bg-green-50 px-3 py-1 rounded border" title={user.assigned_corporate_phone}>
+                                    <div className="text-xs text-green-700 font-semibold truncate max-w-[120px] bg-green-50 px-2 py-1 rounded border" title={user.assigned_corporate_phone}>
                                       {user.assigned_corporate_phone}
                                     </div>
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                      className="h-8 px-4 text-sm bg-green-50 border-green-300 text-green-700 hover:bg-green-100 w-full max-w-[140px]"
+                                      className="h-7 px-3 text-xs bg-green-50 border-green-300 text-green-700 hover:bg-green-100 w-full max-w-[120px]"
                                     >
                                       Editar
                                     </Button>
@@ -913,9 +913,9 @@ const AdminUserManagement = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                    className="h-10 px-4 text-sm bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100 w-full max-w-[140px] flex items-center justify-center gap-2"
+                                    className="h-9 px-3 text-xs bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100 w-full max-w-[120px] flex items-center justify-center gap-1"
                                   >
-                                    <Phone className="h-4 w-4" />
+                                    <Phone className="h-3 w-3" />
                                     Asignar
                                   </Button>
                                 )}
@@ -924,22 +924,22 @@ const AdminUserManagement = () => {
                               <span className="text-sm text-muted-foreground">N/A</span>
                             )}
                           </TableCell>
-                          <TableCell className="px-6 py-5 text-center">
+                          <TableCell className="px-4 py-5 text-center">
                             {isAgentOrStaff ? (
-                              <div className="flex flex-col items-center gap-3 min-w-[160px]">
+                              <div className="flex flex-col items-center gap-2 w-full">
                                 {hasEmailAssignment ? (
                                   <>
-                                    <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-bold border border-green-300 shadow-sm w-full max-w-[140px] flex items-center justify-center gap-2">
+                                    <div className="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-xs font-bold border border-green-300 shadow-sm w-full max-w-[120px] flex items-center justify-center gap-1">
                                       <span className="text-green-600">✓</span> ASIGNADO
                                     </div>
-                                    <div className="text-sm text-green-700 font-semibold truncate max-w-[140px] bg-green-50 px-3 py-1 rounded border" title={user.assigned_corporate_email}>
+                                    <div className="text-xs text-green-700 font-semibold truncate max-w-[120px] bg-green-50 px-2 py-1 rounded border" title={user.assigned_corporate_email}>
                                       {user.assigned_corporate_email}
                                     </div>
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                      className="h-8 px-4 text-sm bg-green-50 border-green-300 text-green-700 hover:bg-green-100 w-full max-w-[140px]"
+                                      className="h-7 px-3 text-xs bg-green-50 border-green-300 text-green-700 hover:bg-green-100 w-full max-w-[120px]"
                                     >
                                       Editar
                                     </Button>
@@ -949,9 +949,9 @@ const AdminUserManagement = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                    className="h-10 px-4 text-sm bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100 w-full max-w-[140px] flex items-center justify-center gap-2"
+                                    className="h-9 px-3 text-xs bg-orange-50 border-orange-300 text-orange-600 hover:bg-orange-100 w-full max-w-[120px] flex items-center justify-center gap-1"
                                   >
-                                    <Mail className="h-4 w-4" />
+                                    <Mail className="h-3 w-3" />
                                     Asignar
                                   </Button>
                                 )}
@@ -960,28 +960,28 @@ const AdminUserManagement = () => {
                               <span className="text-sm text-muted-foreground">N/A</span>
                             )}
                           </TableCell>
-                          <TableCell className="px-6 py-5 text-center hidden lg:table-cell">
+                          <TableCell className="px-4 py-5 text-center hidden lg:table-cell">
                             <span className="text-sm text-muted-foreground font-medium">
                               {user.assignment_date ? new Date(user.assignment_date).toLocaleDateString('es-ES') : '-'}
                             </span>
                           </TableCell>
-                          <TableCell className="px-6 py-5 text-center">
-                            <div className="min-w-[140px]">
+                          <TableCell className="px-4 py-5 text-center">
+                            <div className="w-full max-w-[100px] mx-auto">
                               <Select
                                 value={user.role}
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
                                 disabled={updateRoleMutation.isPending}
                               >
-                                <SelectTrigger className="w-full h-10 text-sm">
+                                <SelectTrigger className="w-full h-9 text-xs">
                                   <SelectValue>
-                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-sm px-3 py-1 truncate w-full text-center">
+                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-2 py-1 truncate w-full text-center">
                                       {getRoleLabel(user.role)}
                                     </Badge>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   {roles.map((role) => (
-                                    <SelectItem key={role} value={role} className="text-sm">
+                                    <SelectItem key={role} value={role} className="text-xs">
                                       {getRoleLabel(role)}
                                     </SelectItem>
                                   ))}
@@ -989,36 +989,36 @@ const AdminUserManagement = () => {
                               </Select>
                             </div>
                           </TableCell>
-                          <TableCell className="px-6 py-5 text-center">
-                            <div className="flex items-center justify-center gap-2 min-w-[140px]">
+                          <TableCell className="px-4 py-5 text-center">
+                            <div className="flex items-center justify-center gap-1 w-full">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                className="h-10 w-10 p-0 hover:bg-primary/10 rounded-lg flex items-center justify-center border border-transparent hover:border-primary/20"
+                                className="h-8 w-8 p-0 hover:bg-primary/10 rounded-lg flex items-center justify-center"
                                 title="Ver asignaciones de rol"
                               >
-                                <Eye className="h-5 w-5 text-primary" />
+                                <Eye className="h-4 w-4 text-primary" />
                               </Button>
                               {(user.role === 'agent' || agentRoles.includes(user.role)) && (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                  className="h-10 w-10 p-0 hover:bg-blue-100 rounded-lg flex items-center justify-center border border-transparent hover:border-blue-200"
+                                  className="h-8 w-8 p-0 hover:bg-blue-100 rounded-lg flex items-center justify-center"
                                   title="Ver asignaciones corporativas"
                                 >
-                                  <Building className="h-5 w-5 text-blue-600" />
+                                  <Building className="h-4 w-4 text-blue-600" />
                                 </Button>
                               )}
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
-                                className="h-10 w-10 p-0 hover:bg-red-100 rounded-lg flex items-center justify-center border border-transparent hover:border-red-200"
+                                className="h-8 w-8 p-0 hover:bg-red-100 rounded-lg flex items-center justify-center"
                                 title="Archivar usuario"
                               >
-                                <Archive className="h-5 w-5 text-red-600" />
+                                <Archive className="h-4 w-4 text-red-600" />
                               </Button>
                             </div>
                           </TableCell>
