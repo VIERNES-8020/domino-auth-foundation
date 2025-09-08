@@ -32,8 +32,8 @@ type UserFilter = 'all' | 'agents' | 'clients';
 
 const userFormSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  identity_card: z.string().min(5, "El carnet debe tener al menos 5 caracteres"),
-  corporate_phone: z.string().min(8, "El teléfono debe tener al menos 8 dígitos"),
+  identity_card: z.string().optional(),
+  corporate_phone: z.string().optional(),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   role: z.enum(["super_admin", "agent", "franchise_admin", "office_manager", "supervisor", "client"]),
@@ -379,6 +379,7 @@ const AdminUserManagement = () => {
   };
 
   const onSubmit = async (values: UserFormValues) => {
+    console.log('Form values being submitted:', values);
     createUserMutation.mutate(values);
   };
 
