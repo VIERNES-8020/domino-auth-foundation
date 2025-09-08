@@ -274,11 +274,12 @@ export default function AdminDashboard() {
   };
 
   const getFilteredFranchiseApplications = () => {
-    if (franchiseApplicationFilter === 'all') return franchiseApplications;
+    if (franchiseApplicationFilter === 'all') return franchiseApplications.filter(app => app.status === 'pending');
     return franchiseApplications.filter(app => app.status === franchiseApplicationFilter);
   };
 
   const getApplicationCountByStatus = (status: string) => {
+    if (status === 'all') return franchiseApplications.filter(app => app.status === 'pending').length;
     return franchiseApplications.filter(app => app.status === status).length;
   };
 
@@ -889,24 +890,32 @@ export default function AdminDashboard() {
                   {/* Franchise Applications */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Solicitudes de Franquicia ({franchiseApplications.length})
-                      </h3>
+                       <h3 className="text-lg font-semibold flex items-center gap-2">
+                         <FileText className="h-5 w-5" />
+                         Solicitudes de Franquicia ({getApplicationCountByStatus('all')})
+                       </h3>
                       <div className="flex gap-2">
                         <Button
                           variant={franchiseApplicationFilter === 'all' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setFranchiseApplicationFilter('all')}
-                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                          className={`border border-red-300 ${
+                            franchiseApplicationFilter === 'all' 
+                              ? 'bg-red-500 text-white hover:bg-red-600' 
+                              : 'text-red-600 hover:bg-red-50'
+                          }`}
                         >
-                          Solicitudes ({franchiseApplications.length})
+                          Solicitudes ({getApplicationCountByStatus('all')})
                         </Button>
                         <Button
                           variant={franchiseApplicationFilter === 'approved' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setFranchiseApplicationFilter('approved')}
-                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                          className={`border border-red-300 ${
+                            franchiseApplicationFilter === 'approved' 
+                              ? 'bg-red-500 text-white hover:bg-red-600' 
+                              : 'text-red-600 hover:bg-red-50'
+                          }`}
                         >
                           Aprobados ({getApplicationCountByStatus('approved')})
                         </Button>
@@ -914,7 +923,11 @@ export default function AdminDashboard() {
                           variant={franchiseApplicationFilter === 'rejected' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setFranchiseApplicationFilter('rejected')}
-                          className="border border-red-300 text-red-600 hover:bg-red-50"
+                          className={`border border-red-300 ${
+                            franchiseApplicationFilter === 'rejected' 
+                              ? 'bg-red-500 text-white hover:bg-red-600' 
+                              : 'text-red-600 hover:bg-red-50'
+                          }`}
                         >
                           Rechazados ({getApplicationCountByStatus('rejected')})
                         </Button>
