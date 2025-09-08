@@ -825,162 +825,184 @@ const AdminUserManagement = () => {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre Completo</TableHead>
-                    <TableHead>Carnet de Identidad</TableHead>
-                    <TableHead>Celular Corporativo</TableHead>
-                    <TableHead>Email Registrado</TableHead>
-                    <TableHead>Celular Asignado</TableHead>
-                    <TableHead>Email Asignado</TableHead>
-                    <TableHead>Fecha Asignación</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedUsers.map((user) => {
-                    const isAgentOrStaff = agentRoles.includes(user.role);
-                    
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          {user.full_name || t('admin.noName')}
-                        </TableCell>
-                        <TableCell>{user.identity_card || 'N/A'}</TableCell>
-                        <TableCell>
-                          {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
-                        </TableCell>
-                        <TableCell>{user.email || 'Sin email'}</TableCell>
-                        <TableCell>
-                          {isAgentOrStaff ? (
-                            <div className="border border-border rounded-lg p-2 bg-muted/50">
-                              {user.assigned_corporate_phone ? (
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-sm">{user.assigned_corporate_phone}</span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    Editar
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
-                                  className="flex items-center gap-1"
-                                >
-                                  <Phone className="h-3 w-3" />
-                                  Asignar
-                                </Button>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground text-sm">N/A</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isAgentOrStaff ? (
-                            <div className="border border-border rounded-lg p-2 bg-muted/50">
-                              {user.assigned_corporate_email ? (
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-sm">{user.assigned_corporate_email}</span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    Editar
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
-                                  className="flex items-center gap-1"
-                                >
-                                  <Mail className="h-3 w-3" />
-                                  Asignar
-                                </Button>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground text-sm">N/A</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isAgentOrStaff && user.assignment_date ? (
-                            <div className="text-sm">
-                              {new Date(user.assignment_date).toLocaleDateString()}
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground text-sm">-</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={user.role}
-                            onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
-                            disabled={updateRoleMutation.isPending}
-                          >
-                            <SelectTrigger className="w-48">
-                              <SelectValue>
-                                <Badge variant={getRoleBadgeVariant(user.role)}>
-                                  {getRoleLabel(user.role)}
-                                </Badge>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {roles.map((role) => (
-                                <SelectItem key={role} value={role}>
-                                  {getRoleLabel(role)}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
-                              title="Ver asignaciones del rol"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {isAgentOrStaff && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario sin nombre', user.role)}
-                                title="Ver asignaciones corporativas"
-                              >
-                                <Shield className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario sin nombre')}
-                              title="Archivar usuario"
-                            >
-                              <Archive className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+              {/* Tabla con scroll horizontal responsive */}
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[1200px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[180px]">Nombre Completo</TableHead>
+                        <TableHead className="min-w-[120px] hidden md:table-cell">Carnet de Identidad</TableHead>
+                        <TableHead className="min-w-[140px] hidden lg:table-cell">Celular Corporativo</TableHead>
+                        <TableHead className="min-w-[200px]">Email Registrado</TableHead>
+                        <TableHead className="min-w-[160px]">Celular Asignado</TableHead>
+                        <TableHead className="min-w-[180px]">Email Asignado</TableHead>
+                        <TableHead className="min-w-[120px] hidden xl:table-cell">Fecha Asignación</TableHead>
+                        <TableHead className="min-w-[160px]">Rol</TableHead>
+                        <TableHead className="min-w-[120px]">Acciones</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedUsers.map((user) => {
+                        const isAgentOrStaff = agentRoles.includes(user.role);
+                        
+                        return (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium min-w-[180px]">
+                              <div className="truncate">
+                                {user.full_name || t('admin.noName')}
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              <div className="truncate text-sm">
+                                {user.identity_card || 'N/A'}
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <div className="truncate text-sm">
+                                {user.corporate_phone && user.corporate_phone.trim() !== '' ? user.corporate_phone : 'Sin teléfono'}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="truncate text-sm max-w-[180px]">
+                                {user.email || 'Sin email'}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {isAgentOrStaff ? (
+                                <div className="border border-border rounded-lg p-2 bg-muted/50 min-w-[140px]">
+                                  {user.assigned_corporate_phone ? (
+                                    <div className="space-y-1">
+                                      <div className="text-xs truncate">{user.assigned_corporate_phone}</div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
+                                        className="h-6 px-2 text-xs w-full"
+                                      >
+                                        Editar
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleAssignment('phone', user.id, user.full_name || 'Usuario', user.assigned_corporate_phone || '')}
+                                      className="flex items-center gap-1 w-full text-xs"
+                                    >
+                                      <Phone className="h-3 w-3" />
+                                      Asignar
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-muted-foreground text-sm">N/A</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {isAgentOrStaff ? (
+                                <div className="border border-border rounded-lg p-2 bg-muted/50 min-w-[160px]">
+                                  {user.assigned_corporate_email ? (
+                                    <div className="space-y-1">
+                                      <div className="text-xs truncate" title={user.assigned_corporate_email}>
+                                        {user.assigned_corporate_email}
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
+                                        className="h-6 px-2 text-xs w-full"
+                                      >
+                                        Editar
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleAssignment('email', user.id, user.full_name || 'Usuario', user.assigned_corporate_email || '')}
+                                      className="flex items-center gap-1 w-full text-xs"
+                                    >
+                                      <Mail className="h-3 w-3" />
+                                      Asignar
+                                    </Button>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-muted-foreground text-sm">N/A</div>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden xl:table-cell">
+                              {isAgentOrStaff && user.assignment_date ? (
+                                <div className="text-xs">
+                                  {new Date(user.assignment_date).toLocaleDateString()}
+                                </div>
+                              ) : (
+                                <div className="text-muted-foreground text-xs">-</div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={user.role}
+                                onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
+                                disabled={updateRoleMutation.isPending}
+                              >
+                                <SelectTrigger className="w-36">
+                                  <SelectValue>
+                                    <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                                      {getRoleLabel(user.role)}
+                                    </Badge>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {roles.map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      {getRoleLabel(role)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                  className="h-8 w-8"
+                                  title="Ver asignaciones de rol"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                {(user.role === 'agent' || agentRoles.includes(user.role)) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                    className="h-8 w-8"
+                                    title="Ver asignaciones corporativas"
+                                  >
+                                    <Shield className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  title="Archivar usuario"
+                                >
+                                  <Archive className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
               
               {/* Pagination Controls */}
               <div className="flex justify-between items-center mt-6">
