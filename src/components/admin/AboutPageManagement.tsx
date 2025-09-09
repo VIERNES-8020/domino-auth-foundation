@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ export default function AboutPageManagement() {
   const [content, setContent] = useState<AboutContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchContent();
@@ -72,6 +74,64 @@ export default function AboutPageManagement() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor selecciona un archivo de imagen válido');
+      return;
+    }
+
+    // Validar tamaño (máximo 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('El archivo debe ser menor a 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `ceo-image-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('property-images')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(fileName);
+
+      updateContent('ceo_section', 'image_url', publicUrl);
+      toast.success('Imagen subida exitosamente');
+    } catch (error: any) {
+      toast.error('Error al subir la imagen: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
   const sectionNames = {
@@ -138,18 +198,76 @@ export default function AboutPageManagement() {
             
             {item.section_key === 'ceo_section' && (
               <div>
-                <label className="text-sm font-medium flex items-center gap-2">
+                <label className="text-sm font-medium flex items-center gap-2 mb-3">
                   <Image className="h-4 w-4" />
-                  URL de Imagen (CEO)
+                  Imagen del CEO
                 </label>
-                <Input
-                  value={item.image_url || ""}
-                  onChange={(e) => updateContent(item.section_key, 'image_url', e.target.value)}
-                  placeholder="https://ejemplo.com/foto-ceo.jpg"
+                
+                {/* Mostrar imagen actual si existe */}
+                {item.image_url && (
+                  <div className="mb-4 p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-center justify-center w-20 h-20 mx-auto mb-2 rounded-full bg-primary/10">
+                      <img 
+                        src={item.image_url} 
+                        alt="CEO" 
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          target.style.display = 'none';
+                          if (fallback) fallback.style.display = 'block';
+                        }}
+                      />
+                      <div className="hidden text-primary font-bold text-2xl">
+                        D
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium">Liderazgo</div>
+                      <div className="text-xs text-muted-foreground">DOMINIO Inmobiliaria</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Área de carga de archivos */}
+                <div 
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Selecciona un archivo de imagen (PNG, JPG, máx. 2MB)
+                  </p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={uploading}
+                    className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    {uploading ? 'Subiendo...' : 'Seleccionar archivo'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    O pega la URL de una imagen
+                  </p>
+                  <Input
+                    value={item.image_url || ""}
+                    onChange={(e) => updateContent(item.section_key, 'image_url', e.target.value)}
+                    placeholder="https://ejemplo.com/logo.png"
+                    className="mt-2"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Sube la imagen a Supabase Storage o usa una URL externa
-                </p>
               </div>
             )}
           </CardContent>
