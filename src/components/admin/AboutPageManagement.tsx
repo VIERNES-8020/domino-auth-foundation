@@ -107,7 +107,26 @@ export default function AboutPageManagement() {
         .getPublicUrl(fileName);
 
       updateContent('ceo_section', 'image_url', publicUrl);
-      toast.success('Imagen subida exitosamente');
+      
+      // Save to database immediately after upload
+      const updatedContent = content.map(item => 
+        item.section_key === 'ceo_section' 
+          ? { ...item, image_url: publicUrl }
+          : item
+      );
+      
+      try {
+        const { error } = await supabase
+          .from('about_page_content')
+          .update({ image_url: publicUrl })
+          .eq('section_key', 'ceo_section');
+        
+        if (error) throw error;
+        setContent(updatedContent);
+        toast.success('Imagen subida y guardada exitosamente');
+      } catch (dbError: any) {
+        toast.error('Imagen subida pero error al guardar: ' + dbError.message);
+      }
     } catch (error: any) {
       toast.error('Error al subir la imagen: ' + error.message);
     } finally {
@@ -206,19 +225,19 @@ export default function AboutPageManagement() {
                 {/* Mostrar imagen actual si existe */}
                 {item.image_url && (
                   <div className="mb-4 p-4 border rounded-lg bg-muted/30">
-                    <div className="flex items-center justify-center w-20 h-20 mx-auto mb-2 rounded-full bg-primary/10">
+                    <div className="relative w-full h-48 mx-auto mb-2 rounded-lg overflow-hidden bg-primary/10">
                       <img 
                         src={item.image_url} 
                         alt="CEO" 
-                        className="w-full h-full object-cover rounded-full"
+                        className="w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.currentTarget;
                           const fallback = target.nextElementSibling as HTMLElement;
                           target.style.display = 'none';
-                          if (fallback) fallback.style.display = 'block';
+                          if (fallback) fallback.style.display = 'flex';
                         }}
                       />
-                      <div className="hidden text-primary font-bold text-2xl">
+                      <div className="hidden absolute inset-0 items-center justify-center text-primary font-bold text-4xl bg-primary/10">
                         D
                       </div>
                     </div>
