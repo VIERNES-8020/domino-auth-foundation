@@ -53,10 +53,13 @@ Saludos cordiales,
 ${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
 Asistente Inmobiliario`;
 
+      const agentEmail = agentProfile?.assigned_corporate_email || agentProfile?.email;
+      
       console.log('Sending email with agent data:', {
         agentName: agentProfile?.full_name,
         corporateEmail: agentProfile?.assigned_corporate_email,
-        regularEmail: agentProfile?.email
+        regularEmail: agentProfile?.email,
+        finalEmail: agentEmail
       });
 
       const { data, error } = await supabase.functions.invoke('send-response-email', {
@@ -67,14 +70,15 @@ Asistente Inmobiliario`;
           message: messageWithSignature,
           notificationId: notification.id,
           agentName: agentProfile?.full_name,
-          agentEmail: agentProfile?.assigned_corporate_email || agentProfile?.email
+          agentEmail
         }
       });
 
       if (error) throw error;
 
       console.log('Email sent successfully:', data);
-      toast.success(`📧 Respuesta enviada exitosamente desde ${agentProfile?.assigned_corporate_email || agentProfile?.email}`);
+      const fromEmail = agentProfile?.assigned_corporate_email || agentProfile?.email;
+      toast.success(`📧 Correo enviado exitosamente desde: ${fromEmail}`);
       setSubject("");
       setMessage("");
       onClose();

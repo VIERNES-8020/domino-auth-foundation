@@ -28,13 +28,15 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, clientName, subject, message, notificationId, agentName, agentEmail }: EmailRequest = await req.json();
 
     console.log("Sending response email to:", to);
+    console.log("Agent email received:", agentEmail);
+    console.log("Agent name received:", agentName);
 
     // Send email using Resend - Always use agent email when available
     const fromEmail = agentEmail && agentEmail.trim() 
       ? `${agentName || 'Dominio Inmobiliario'} <${agentEmail}>` 
       : "Dominio Inmobiliario <onboarding@resend.dev>";
       
-    console.log("Using from email:", fromEmail);
+    console.log("Final from email:", fromEmail);
     
     const emailResponse = await resend.emails.send({
       from: fromEmail,
