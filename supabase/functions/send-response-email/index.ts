@@ -19,24 +19,43 @@ interface EmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log('🚀 === FUNCIÓN SEND-RESPONSE-EMAIL INICIADA ===');
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { to, clientName, subject, message, notificationId, agentName, agentEmail }: EmailRequest = await req.json();
+    const requestBody = await req.json();
+    console.log('📦 Request body recibido:', requestBody);
+    
+    const { to, clientName, subject, message, notificationId, agentName, agentEmail }: EmailRequest = requestBody;
 
-    console.log("Sending response email to:", to);
-    console.log("Agent email received:", agentEmail);
-    console.log("Agent name received:", agentName);
+    // Validaciones
+    if (!to) {
+      throw new Error('Email destinatario es requerido');
+    }
+    if (!subject) {
+      throw new Error('Asunto del email es requerido');
+    }
+    if (!message) {
+      throw new Error('Mensaje del email es requerido');
+    }
+    if (!agentEmail) {
+      throw new Error('Email del agente es requerido');
+    }
+
+    console.log("📧 Enviando correo a:", to);
+    console.log("👤 Email del agente:", agentEmail);
+    console.log("📝 Nombre del agente:", agentName);
 
     // Send email using Resend - Always use agent email when available
     const fromEmail = agentEmail && agentEmail.trim() 
       ? `${agentName || 'Dominio Inmobiliario'} <${agentEmail}>` 
       : "Dominio Inmobiliario <onboarding@resend.dev>";
       
-    console.log("Final from email:", fromEmail);
+    console.log("✉️ Email desde:", fromEmail);
     
     const emailResponse = await resend.emails.send({
       from: fromEmail,
@@ -72,14 +91,19 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("✅ Respuesta de Resend:", emailResponse);
 
-    // Create notification for client (if user system exists)
-    // This would require client notification system implementation
+    if (emailResponse.error) {
+      console.error("❌ Error de Resend:", emailResponse.error);
+      throw new Error(`Error de Resend: ${emailResponse.error}`);
+    }
+
+    console.log("🎉 EMAIL ENVIADO EXITOSAMENTE!");
 
     return new Response(JSON.stringify({ 
       success: true, 
-      emailId: emailResponse.data?.id 
+      emailId: emailResponse.data?.id,
+      message: 'Email enviado correctamente'
     }), {
       status: 200,
       headers: {
@@ -89,9 +113,15 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error("Error in send-response-email function:", error);
+    console.error("💥 ERROR COMPLETO en send-response-email:", error);
+    console.error("💥 Stack trace:", error.stack);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false,
+        details: error.stack 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

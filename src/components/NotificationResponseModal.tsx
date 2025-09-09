@@ -35,17 +35,41 @@ export default function NotificationResponseModal({
   const [activeTab, setActiveTab] = useState("email");
 
   const handleSendEmail = async () => {
-    if (!subject.trim() || !message.trim() || !clientInfo.email) {
-      toast.error("Por favor completa todos los campos");
+    console.log('=== INICIANDO ENVÍO DE CORREO ===');
+    console.log('Subject:', subject);
+    console.log('Message:', message);
+    console.log('ClientInfo:', clientInfo);
+    console.log('AgentProfile:', agentProfile);
+
+    // Validaciones más específicas
+    if (!subject.trim()) {
+      toast.error("El asunto del correo es obligatorio");
       return;
     }
 
-    if (!agentProfile?.assigned_corporate_email && !agentProfile?.email) {
-      toast.error("No hay email corporativo asignado para este agente");
+    if (!message.trim()) {
+      toast.error("El mensaje del correo es obligatorio");
+      return;
+    }
+
+    if (!clientInfo?.email) {
+      toast.error("No se encontró el email del cliente en la notificación");
+      return;
+    }
+
+    if (!agentProfile) {
+      toast.error("No se encontró información del agente");
+      return;
+    }
+
+    const agentEmail = agentProfile.assigned_corporate_email || agentProfile.email;
+    if (!agentEmail) {
+      toast.error("El agente no tiene email asignado");
       return;
     }
 
     setIsLoading(true);
+    
     try {
       const messageWithSignature = `${message}
 
@@ -53,38 +77,51 @@ Saludos cordiales,
 ${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
 Asistente Inmobiliario`;
 
-      const agentEmail = agentProfile?.assigned_corporate_email || agentProfile?.email;
-      
-      console.log('Sending email with agent data:', {
-        agentName: agentProfile?.full_name,
-        corporateEmail: agentProfile?.assigned_corporate_email,
-        regularEmail: agentProfile?.email,
-        finalEmail: agentEmail
-      });
+      console.log('=== DATOS PARA ENVÍO ===');
+      console.log('To:', clientInfo.email);
+      console.log('Agent Email:', agentEmail);
+      console.log('Agent Name:', agentProfile.full_name);
 
       const { data, error } = await supabase.functions.invoke('send-response-email', {
         body: {
           to: clientInfo.email,
           clientName: clientInfo.name || 'Cliente',
-          subject,
+          subject: subject.trim(),
           message: messageWithSignature,
           notificationId: notification.id,
-          agentName: agentProfile?.full_name,
-          agentEmail
+          agentName: agentProfile.full_name || 'Agente',
+          agentEmail: agentEmail
         }
       });
 
-      if (error) throw error;
+      console.log('=== RESPUESTA DE LA FUNCIÓN ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
 
-      console.log('Email sent successfully:', data);
-      const fromEmail = agentProfile?.assigned_corporate_email || agentProfile?.email;
-      toast.success(`📧 Correo enviado exitosamente desde: ${fromEmail}`);
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw new Error(error.message || 'Error en la función de envío');
+      }
+
+      if (!data || !data.success) {
+        throw new Error('La función no retornó éxito');
+      }
+
+      console.log('✅ CORREO ENVIADO EXITOSAMENTE');
+      toast.success(`📧 ¡Correo enviado exitosamente desde: ${agentEmail}!`, {
+        duration: 5000,
+      });
+      
       setSubject("");
       setMessage("");
       onClose();
+      
     } catch (error: any) {
-      console.error('Error sending email:', error);
-      toast.error("Error al enviar correo: " + (error.message || 'Error desconocido'));
+      console.error('❌ ERROR COMPLETO:', error);
+      const errorMessage = error.message || error.toString() || 'Error desconocido';
+      toast.error(`❌ Error al enviar correo: ${errorMessage}`, {
+        duration: 7000,
+      });
     } finally {
       setIsLoading(false);
     }
