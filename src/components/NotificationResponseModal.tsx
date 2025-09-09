@@ -35,39 +35,52 @@ export default function NotificationResponseModal({
   const [activeTab, setActiveTab] = useState("email");
 
   const handleSendEmail = async () => {
-    console.log('=== INICIANDO ENVÍO DE CORREO ===');
-    console.log('Subject:', subject);
-    console.log('Message:', message);
-    console.log('ClientInfo:', clientInfo);
-    console.log('AgentProfile:', agentProfile);
+    console.log('🔥 === FUNCIÓN HANDLESENDEMAIL INICIADA ===');
+    console.log('🔥 Subject:', subject);
+    console.log('🔥 Message:', message);
+    console.log('🔥 ClientInfo:', clientInfo);
+    console.log('🔥 AgentProfile:', agentProfile);
+    console.log('🔥 Tab activo:', activeTab);
+
+    // Verificar que estamos en el tab correcto
+    if (activeTab !== 'email') {
+      console.log('❌ No estamos en el tab de email');
+      return;
+    }
 
     // Validaciones más específicas
-    if (!subject.trim()) {
+    if (!subject || !subject.trim()) {
+      console.log('❌ Subject vacío');
       toast.error("El asunto del correo es obligatorio");
       return;
     }
 
-    if (!message.trim()) {
+    if (!message || !message.trim()) {
+      console.log('❌ Message vacío');
       toast.error("El mensaje del correo es obligatorio");
       return;
     }
 
-    if (!clientInfo?.email) {
+    if (!clientInfo || !clientInfo.email) {
+      console.log('❌ ClientInfo o email no disponible:', clientInfo);
       toast.error("No se encontró el email del cliente en la notificación");
       return;
     }
 
     if (!agentProfile) {
+      console.log('❌ AgentProfile no disponible');
       toast.error("No se encontró información del agente");
       return;
     }
 
     const agentEmail = agentProfile.assigned_corporate_email || agentProfile.email;
     if (!agentEmail) {
+      console.log('❌ Agente sin email:', agentProfile);
       toast.error("El agente no tiene email asignado");
       return;
     }
 
+    console.log('✅ Todas las validaciones pasadas, procediendo a enviar...');
     setIsLoading(true);
     
     try {
@@ -77,11 +90,14 @@ Saludos cordiales,
 ${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
 Asistente Inmobiliario`;
 
-      console.log('=== DATOS PARA ENVÍO ===');
-      console.log('To:', clientInfo.email);
-      console.log('Agent Email:', agentEmail);
-      console.log('Agent Name:', agentProfile.full_name);
+      console.log('📧 === PREPARANDO DATOS PARA ENVÍO ===');
+      console.log('📧 To:', clientInfo.email);
+      console.log('📧 Agent Email:', agentEmail);
+      console.log('📧 Agent Name:', agentProfile.full_name);
+      console.log('📧 Subject:', subject.trim());
+      console.log('📧 NotificationId:', notification.id);
 
+      console.log('🚀 === LLAMANDO A SUPABASE FUNCTION ===');
       const { data, error } = await supabase.functions.invoke('send-response-email', {
         body: {
           to: clientInfo.email,
@@ -94,21 +110,27 @@ Asistente Inmobiliario`;
         }
       });
 
-      console.log('=== RESPUESTA DE LA FUNCIÓN ===');
-      console.log('Data:', data);
-      console.log('Error:', error);
+      console.log('📨 === RESPUESTA RECIBIDA ===');
+      console.log('📨 Data:', data);
+      console.log('📨 Error:', error);
 
       if (error) {
-        console.error('Error from edge function:', error);
+        console.error('❌ Error from edge function:', error);
         throw new Error(error.message || 'Error en la función de envío');
       }
 
-      if (!data || !data.success) {
-        throw new Error('La función no retornó éxito');
+      if (!data) {
+        console.error('❌ No data returned from function');
+        throw new Error('La función no retornó datos');
       }
 
-      console.log('✅ CORREO ENVIADO EXITOSAMENTE');
-      toast.success(`📧 ¡Correo enviado exitosamente desde: ${agentEmail}!`, {
+      if (!data.success) {
+        console.error('❌ Function returned success: false');
+        throw new Error(data.error || 'La función no retornó éxito');
+      }
+
+      console.log('🎉 ✅ CORREO ENVIADO EXITOSAMENTE');
+      toast.success(`🎉 ¡Correo enviado exitosamente desde: ${agentEmail}!`, {
         duration: 5000,
       });
       
@@ -117,12 +139,14 @@ Asistente Inmobiliario`;
       onClose();
       
     } catch (error: any) {
-      console.error('❌ ERROR COMPLETO:', error);
+      console.error('💥 ❌ ERROR COMPLETO EN HANDLESENDEMAIL:', error);
+      console.error('💥 Error stack:', error.stack);
       const errorMessage = error.message || error.toString() || 'Error desconocido';
-      toast.error(`❌ Error al enviar correo: ${errorMessage}`, {
-        duration: 7000,
+      toast.error(`💥 Error al enviar correo: ${errorMessage}`, {
+        duration: 10000,
       });
     } finally {
+      console.log('🏁 Finalizando handleSendEmail, setting loading to false');
       setIsLoading(false);
     }
   };
