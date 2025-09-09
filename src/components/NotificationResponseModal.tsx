@@ -29,10 +29,14 @@ export default function NotificationResponseModal({
   clientPhone,
   agentProfile
 }: NotificationResponseModalProps) {
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState("Respuesta a tu consulta inmobiliaria");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("email");
+  const [systemStatus, setSystemStatus] = useState<{
+    type: 'info' | 'warning' | 'error' | 'success' | null;
+    message: string;
+  }>({ type: null, message: '' });
 
   const handleSendEmail = async () => {
     console.log('🔥 === FUNCIÓN HANDLESENDEMAIL INICIADA ===');
@@ -42,33 +46,34 @@ export default function NotificationResponseModal({
     console.log('🔥 AgentProfile:', agentProfile);
     console.log('🔥 Tab activo:', activeTab);
 
-    // Verificar que estamos en el tab correcto
-    if (activeTab !== 'email') {
-      console.log('❌ No estamos en el tab de email');
-      return;
-    }
+    // Mostrar indicador de sistema
+    setSystemStatus({ type: 'info', message: '🔄 Iniciando envío de correo...' });
 
     // Validaciones más específicas
     if (!subject || !subject.trim()) {
-      console.log('❌ Subject vacío');
+      console.log('❌ Subject vacío:', `"${subject}"`);
+      setSystemStatus({ type: 'error', message: '❌ ERROR: El asunto del correo está vacío' });
       toast.error("El asunto del correo es obligatorio");
       return;
     }
 
     if (!message || !message.trim()) {
       console.log('❌ Message vacío');
+      setSystemStatus({ type: 'error', message: '❌ ERROR: El mensaje está vacío' });
       toast.error("El mensaje del correo es obligatorio");
       return;
     }
 
     if (!clientInfo || !clientInfo.email) {
       console.log('❌ ClientInfo o email no disponible:', clientInfo);
+      setSystemStatus({ type: 'error', message: '❌ ERROR: No se encontró email del cliente' });
       toast.error("No se encontró el email del cliente en la notificación");
       return;
     }
 
     if (!agentProfile) {
       console.log('❌ AgentProfile no disponible');
+      setSystemStatus({ type: 'error', message: '❌ ERROR: No hay información del agente' });
       toast.error("No se encontró información del agente");
       return;
     }
@@ -76,11 +81,13 @@ export default function NotificationResponseModal({
     const agentEmail = agentProfile.assigned_corporate_email || agentProfile.email;
     if (!agentEmail) {
       console.log('❌ Agente sin email:', agentProfile);
+      setSystemStatus({ type: 'error', message: '❌ ERROR: Agente sin email configurado' });
       toast.error("El agente no tiene email asignado");
       return;
     }
 
     console.log('✅ Todas las validaciones pasadas, procediendo a enviar...');
+    setSystemStatus({ type: 'info', message: '✅ Validaciones OK - Preparando envío...' });
     setIsLoading(true);
     
     try {
@@ -98,6 +105,8 @@ Asistente Inmobiliario`;
       console.log('📧 NotificationId:', notification.id);
 
       console.log('🚀 === LLAMANDO A SUPABASE FUNCTION ===');
+      setSystemStatus({ type: 'info', message: '🚀 Enviando correo a Supabase...' });
+      
       const { data, error } = await supabase.functions.invoke('send-response-email', {
         body: {
           to: clientInfo.email,
@@ -116,20 +125,24 @@ Asistente Inmobiliario`;
 
       if (error) {
         console.error('❌ Error from edge function:', error);
+        setSystemStatus({ type: 'error', message: `❌ ERROR Supabase: ${error.message}` });
         throw new Error(error.message || 'Error en la función de envío');
       }
 
       if (!data) {
         console.error('❌ No data returned from function');
+        setSystemStatus({ type: 'error', message: '❌ ERROR: Función no retornó datos' });
         throw new Error('La función no retornó datos');
       }
 
       if (!data.success) {
         console.error('❌ Function returned success: false');
+        setSystemStatus({ type: 'error', message: `❌ ERROR: ${data.error || 'Función falló'}` });
         throw new Error(data.error || 'La función no retornó éxito');
       }
 
       console.log('🎉 ✅ CORREO ENVIADO EXITOSAMENTE');
+      setSystemStatus({ type: 'success', message: '🎉 ✅ CORREO ENVIADO EXITOSAMENTE' });
       toast.success(`🎉 ¡Correo enviado exitosamente desde: ${agentEmail}!`, {
         duration: 5000,
       });
@@ -142,12 +155,17 @@ Asistente Inmobiliario`;
       console.error('💥 ❌ ERROR COMPLETO EN HANDLESENDEMAIL:', error);
       console.error('💥 Error stack:', error.stack);
       const errorMessage = error.message || error.toString() || 'Error desconocido';
+      setSystemStatus({ type: 'error', message: `💥 ERROR CRÍTICO: ${errorMessage}` });
       toast.error(`💥 Error al enviar correo: ${errorMessage}`, {
         duration: 10000,
       });
     } finally {
       console.log('🏁 Finalizando handleSendEmail, setting loading to false');
       setIsLoading(false);
+      // Limpiar status después de 10 segundos si es éxito
+      if (systemStatus.type === 'success') {
+        setTimeout(() => setSystemStatus({ type: null, message: '' }), 10000);
+      }
     }
   };
 
@@ -222,6 +240,26 @@ Asistente Inmobiliario`;
           </DialogDescription>
         </DialogHeader>
 
+        {/* Indicador de Estado del Sistema */}
+        {systemStatus.type && (
+          <div className={`p-3 rounded-lg border ${
+            systemStatus.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
+            systemStatus.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+            systemStatus.type === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+            'bg-blue-50 border-blue-200 text-blue-800'
+          }`}>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${
+                systemStatus.type === 'success' ? 'bg-green-500' :
+                systemStatus.type === 'error' ? 'bg-red-500' :
+                systemStatus.type === 'warning' ? 'bg-yellow-500' :
+                'bg-blue-500 animate-pulse'
+              }`} />
+              <span className="text-sm font-mono">{systemStatus.message}</span>
+            </div>
+          </div>
+        )}
+
         {/* Información del cliente */}
         <div className="bg-muted/30 p-4 rounded-lg space-y-2">
           <h4 className="font-medium text-sm">Información del Cliente:</h4>
@@ -289,13 +327,16 @@ Asistente Inmobiliario`;
             </p>
             </div>
             
-            <Button 
+                <Button 
               onClick={handleSendEmail} 
-              disabled={isLoading || !clientInfo.email}
+              disabled={isLoading || !clientInfo.email || !subject.trim()}
               className="w-full"
             >
               {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
               ) : (
                 <Send className="mr-2 h-4 w-4" />
               )}
