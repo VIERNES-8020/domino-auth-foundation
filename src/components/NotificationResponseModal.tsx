@@ -125,8 +125,20 @@ Asistente Inmobiliario`;
 
       if (error) {
         console.error('❌ Error from edge function:', error);
-        setSystemStatus({ type: 'error', message: `❌ ERROR Supabase: ${error.message}` });
-        throw new Error(error.message || 'Error en la función de envío');
+        
+        // Extraer mensaje de error más específico
+        let errorMsg = error.message || error.toString();
+        
+        if (errorMsg.includes('non-2xx status code')) {
+          errorMsg = "❌ Error del servidor: Revisa configuración de Resend";
+        } else if (errorMsg.includes('API key')) {
+          errorMsg = "❌ Error: API key de Resend no configurado";
+        } else if (errorMsg.includes('domain')) {
+          errorMsg = "❌ Error: Dominio de email no verificado";
+        }
+        
+        setSystemStatus({ type: 'error', message: `❌ ERROR: ${errorMsg}` });
+        throw new Error(errorMsg);
       }
 
       if (!data) {

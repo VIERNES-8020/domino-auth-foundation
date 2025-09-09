@@ -50,17 +50,21 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("👤 Email del agente:", agentEmail);
     console.log("📝 Nombre del agente:", agentName);
 
-    // Send email using Resend - Always use agent email when available
-    const fromEmail = agentEmail && agentEmail.trim() 
-      ? `${agentName || 'Dominio Inmobiliario'} <${agentEmail}>` 
-      : "Dominio Inmobiliario <onboarding@resend.dev>";
+    // CRÍTICO: Resend requiere usar un dominio verificado para el campo "from"
+    // No podemos usar emails aleatorios de agentes que no estén verificados
+    const fromEmail = "Dominio Inmobiliario <onboarding@resend.dev>";
+    
+    // Incluir la información del agente en el reply-to si está disponible
+    const replyTo = agentEmail && agentEmail.includes('@') ? agentEmail : undefined;
       
-    console.log("✉️ Email desde:", fromEmail);
+    console.log("✉️ Email desde (verificado):", fromEmail);
+    console.log("✉️ Reply-to (agente):", replyTo || "No configurado");
     
     const emailResponse = await resend.emails.send({
       from: fromEmail,
       to: [to],
       subject: subject,
+      replyTo: replyTo,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
@@ -77,8 +81,17 @@ const handler = async (req: Request): Promise<Response> => {
               ${message.replace(/\n/g, '<br>')}
             </div>
             
+            ${agentName && agentEmail ? `
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p style="color: #666; font-size: 14px; margin: 0;">
+                <strong>Tu agente:</strong> ${agentName}<br>
+                <strong>Email:</strong> <a href="mailto:${agentEmail}" style="color: #667eea;">${agentEmail}</a>
+              </p>
+            </div>
+            ` : ''}
+            
             <p style="color: #666; font-size: 14px; margin-top: 30px;">
-              Si tienes más preguntas, no dudes en contactarnos.
+              Si tienes más preguntas, puedes responder directamente a este correo.
             </p>
             
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -95,7 +108,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("❌ Error de Resend:", emailResponse.error);
-      throw new Error(`Error de Resend: ${emailResponse.error}`);
+      
+      // Errores comunes de Resend con mensajes más claros
+      let errorMessage = emailResponse.error.message || emailResponse.error;
+      
+      if (errorMessage.includes('domain')) {
+        errorMessage = "❌ Error: Dominio de email no verificado en Resend";
+      } else if (errorMessage.includes('API key')) {
+        errorMessage = "❌ Error: API key de Resend inválido o no configurado";
+      } else if (errorMessage.includes('rate limit')) {
+        errorMessage = "❌ Error: Límite de emails alcanzado, intenta más tarde";
+      }
+      
+      throw new Error(errorMessage);
     }
 
     console.log("🎉 EMAIL ENVIADO EXITOSAMENTE!");
