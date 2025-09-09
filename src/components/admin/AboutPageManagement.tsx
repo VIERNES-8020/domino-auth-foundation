@@ -229,37 +229,85 @@ export default function AboutPageManagement() {
                   </div>
                 )}
 
-                {/* Área de carga de archivos */}
-                <div 
-                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Selecciona un archivo de imagen (PNG, JPG, máx. 2MB)
-                  </p>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    disabled={uploading}
-                    className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                {/* Área de carga de archivos o mensaje de éxito */}
+                {uploading ? (
+                  <div className="border-2 border-primary rounded-lg p-6 bg-primary/5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Upload className="h-5 w-5 text-primary animate-pulse" />
+                      <span className="text-sm font-medium text-primary">Subiendo imagen...</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Imagen CEO</span>
+                        <span>Procesando...</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full animate-pulse" style={{width: "60%"}}></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : item.image_url ? (
+                  <div className="border-2 border-green-500/25 rounded-lg p-6 bg-green-50 dark:bg-green-950/20">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center">
+                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium text-green-700 dark:text-green-400">¡Imagen subida con éxito!</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs text-green-600 dark:text-green-400">
+                        <span>Imagen CEO</span>
+                        <span>100%</span>
+                      </div>
+                      <div className="w-full bg-green-200 dark:bg-green-800 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full" style={{width: "100%"}}></div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                      >
+                        Cambiar imagen
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    {uploading ? 'Subiendo...' : 'Seleccionar archivo'}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    O pega la URL de una imagen
-                  </p>
-                  <Input
-                    value={item.image_url || ""}
-                    onChange={(e) => updateContent(item.section_key, 'image_url', e.target.value)}
-                    placeholder="https://ejemplo.com/logo.png"
-                    className="mt-2"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
+                    <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Selecciona un archivo de imagen (PNG, JPG, máx. 2MB)
+                    </p>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      className="text-primary border-primary hover:bg-primary hover:text-primary-foreground"
+                    >
+                      Seleccionar archivo
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      O pega la URL de una imagen
+                    </p>
+                    <Input
+                      value={item.image_url || ""}
+                      onChange={(e) => updateContent(item.section_key, 'image_url', e.target.value)}
+                      placeholder="https://ejemplo.com/logo.png"
+                      className="mt-2"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
 
                 <input
                   ref={fileInputRef}
