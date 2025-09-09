@@ -1010,26 +1010,26 @@ const AdminUserManagement = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-5 text-center">
-                            <div className="w-full max-w-[100px] mx-auto">
+                            <div className="w-full max-w-[140px] mx-auto">
                               <Select
                                 value={user.role}
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
                                 disabled={updateRoleMutation.isPending}
                               >
-                                <SelectTrigger className="w-full h-10 text-xs border-0 bg-transparent hover:bg-muted/50 transition-colors">
+                                <SelectTrigger className="w-full h-auto text-xs border-0 bg-transparent hover:bg-muted/50 transition-colors p-1">
                                   <SelectValue>
-                                     <span className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${getRoleBadgeStyles(user.role)}`}>
+                                     <span className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-200 whitespace-nowrap min-w-fit ${getRoleBadgeStyles(user.role)}`}>
                                        {getRoleIcon(user.role)}
-                                       {getRoleLabel(user.role)}
+                                       <span className="truncate">{getRoleLabel(user.role)}</span>
                                      </span>
                                   </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent className="z-50 bg-background/95 backdrop-blur-sm border shadow-xl">
+                                <SelectContent className="z-50 bg-background/95 backdrop-blur-sm border shadow-xl min-w-[180px]">
                                   {roles.map((role) => (
-                                    <SelectItem key={role} value={role} className="text-xs hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
-                                       <span className={`inline-flex items-center justify-center rounded-sm px-2 py-1 text-xs font-medium ${getRoleBadgeStyles(role)}`}>
+                                    <SelectItem key={role} value={role} className="text-xs hover:bg-muted/50 focus:bg-muted/50 cursor-pointer p-2">
+                                       <span className={`inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-xs font-medium whitespace-nowrap min-w-fit ${getRoleBadgeStyles(role)}`}>
                                          {getRoleIcon(role)}
-                                         {getRoleLabel(role)}
+                                         <span className="ml-1">{getRoleLabel(role)}</span>
                                        </span>
                                     </SelectItem>
                                   ))}
