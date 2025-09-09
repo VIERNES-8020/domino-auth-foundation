@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home } from "lucide-react";
 import { 
   Pagination,
   PaginationContent,
@@ -657,19 +657,38 @@ const AdminUserManagement = () => {
   const getRoleBadgeStyles = (role: string) => {
     switch (role) {
       case "super_admin":
-        return "bg-gradient-to-r from-red-500 to-red-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+        return "bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white border-0 shadow-[0_4px_14px_0_rgba(239,68,68,0.35)] hover:shadow-[0_6px_20px_0_rgba(239,68,68,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "franchise_admin":
-        return "bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+        return "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white border-0 shadow-[0_4px_14px_0_rgba(147,51,234,0.35)] hover:shadow-[0_6px_20px_0_rgba(147,51,234,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "supervisor":
-        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+        return "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-[0_4px_14px_0_rgba(59,130,246,0.35)] hover:shadow-[0_6px_20px_0_rgba(59,130,246,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "office_manager":
-        return "bg-gradient-to-r from-teal-500 to-teal-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+        return "bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700 text-white border-0 shadow-[0_4px_14px_0_rgba(20,184,166,0.35)] hover:shadow-[0_6px_20px_0_rgba(20,184,166,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "agent":
-        return "bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl font-semibold";
+        return "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 text-white border-0 shadow-[0_4px_14px_0_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_0_rgba(16,185,129,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "client":
-        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-md font-medium";
+        return "bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600 text-white border-0 shadow-[0_4px_14px_0_rgba(100,116,139,0.25)] hover:shadow-[0_6px_20px_0_rgba(100,116,139,0.35)] hover:scale-105 font-semibold tracking-wide transition-all duration-300 backdrop-blur-sm";
       default:
-        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-md font-medium";
+        return "bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 text-white border-0 shadow-[0_4px_14px_0_rgba(107,114,128,0.25)] hover:shadow-[0_6px_20px_0_rgba(107,114,128,0.35)] hover:scale-105 font-semibold tracking-wide transition-all duration-300 backdrop-blur-sm";
+    }
+  };
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return <Crown className="h-3 w-3 mr-1.5" />;
+      case "franchise_admin":
+        return <Shield className="h-3 w-3 mr-1.5" />;
+      case "supervisor":
+        return <UserCheck className="h-3 w-3 mr-1.5" />;
+      case "office_manager":
+        return <Building2 className="h-3 w-3 mr-1.5" />;
+      case "agent":
+        return <Home className="h-3 w-3 mr-1.5" />;
+      case "client":
+        return <Users className="h-3 w-3 mr-1.5" />;
+      default:
+        return <Users className="h-3 w-3 mr-1.5" />;
     }
   };
 
@@ -999,17 +1018,19 @@ const AdminUserManagement = () => {
                               >
                                 <SelectTrigger className="w-full h-10 text-xs border-0 bg-transparent hover:bg-muted/50 transition-colors">
                                   <SelectValue>
-                                    <span className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${getRoleBadgeStyles(user.role)}`}>
-                                      {getRoleLabel(user.role)}
-                                    </span>
+                                     <span className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${getRoleBadgeStyles(user.role)}`}>
+                                       {getRoleIcon(user.role)}
+                                       {getRoleLabel(user.role)}
+                                     </span>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="z-50 bg-background/95 backdrop-blur-sm border shadow-xl">
                                   {roles.map((role) => (
                                     <SelectItem key={role} value={role} className="text-xs hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
-                                      <span className={`inline-flex items-center justify-center rounded-sm px-2 py-1 text-xs font-medium ${getRoleBadgeStyles(role)}`}>
-                                        {getRoleLabel(role)}
-                                      </span>
+                                       <span className={`inline-flex items-center justify-center rounded-sm px-2 py-1 text-xs font-medium ${getRoleBadgeStyles(role)}`}>
+                                         {getRoleIcon(role)}
+                                         {getRoleLabel(role)}
+                                       </span>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
