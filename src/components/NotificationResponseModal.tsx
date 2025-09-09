@@ -56,7 +56,7 @@ Asistente Inmobiliario`;
           message: messageWithSignature,
           notificationId: notification.id,
           agentName: agentProfile?.full_name,
-          agentEmail: agentProfile?.email
+          agentEmail: agentProfile?.corporate_email || agentProfile?.email
         }
       });
 
