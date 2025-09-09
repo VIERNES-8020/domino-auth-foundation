@@ -35,8 +35,13 @@ export default function NotificationResponseModal({
   const [activeTab, setActiveTab] = useState("email");
 
   const handleSendEmail = async () => {
-    if (!subject.trim() || !message.trim() || !clientEmail) {
+    if (!subject.trim() || !message.trim() || !clientInfo.email) {
       toast.error("Por favor completa todos los campos");
+      return;
+    }
+
+    if (!agentProfile?.assigned_corporate_email && !agentProfile?.email) {
+      toast.error("No hay email corporativo asignado para este agente");
       return;
     }
 
@@ -48,27 +53,34 @@ Saludos cordiales,
 ${agentProfile?.full_name || 'Tu Agente Inmobiliario'}
 Asistente Inmobiliario`;
 
-      const { error } = await supabase.functions.invoke('send-response-email', {
+      console.log('Sending email with agent data:', {
+        agentName: agentProfile?.full_name,
+        corporateEmail: agentProfile?.assigned_corporate_email,
+        regularEmail: agentProfile?.email
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-response-email', {
         body: {
-          to: clientEmail,
-          clientName: clientName || 'Cliente',
+          to: clientInfo.email,
+          clientName: clientInfo.name || 'Cliente',
           subject,
           message: messageWithSignature,
           notificationId: notification.id,
           agentName: agentProfile?.full_name,
-          agentEmail: agentProfile?.corporate_email || agentProfile?.email
+          agentEmail: agentProfile?.assigned_corporate_email || agentProfile?.email
         }
       });
 
       if (error) throw error;
 
-      toast.success("📧 Respuesta enviada exitosamente por correo");
+      console.log('Email sent successfully:', data);
+      toast.success(`📧 Respuesta enviada exitosamente desde ${agentProfile?.assigned_corporate_email || agentProfile?.email}`);
       setSubject("");
       setMessage("");
       onClose();
     } catch (error: any) {
       console.error('Error sending email:', error);
-      toast.error("Error al enviar correo: " + error.message);
+      toast.error("Error al enviar correo: " + (error.message || 'Error desconocido'));
     } finally {
       setIsLoading(false);
     }

@@ -989,6 +989,7 @@ export default function AgentDashboard() {
           notification={respondingNotification}
           isOpen={!!respondingNotification}
           onClose={() => setRespondingNotification(null)}
+          agentProfile={profile}
         />
       )}
     </div>
