@@ -25,6 +25,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Database } from "@/integrations/supabase/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { useFormErrorHandler, useApiErrorHandler } from "@/hooks/useErrorHandler";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -109,6 +110,8 @@ const AdminUserManagement = () => {
   const [assignmentValue, setAssignmentValue] = useState('');
   const queryClient = useQueryClient();
   const { t } = useLanguage();
+  const { handleError } = useFormErrorHandler('AdminUserManagement');
+  const { handleAsyncError } = useApiErrorHandler('/auth/users');
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -219,7 +222,7 @@ const AdminUserManagement = () => {
       if (!emailRegex.test(values.email)) {
         throw new Error('Por favor ingresa un email válido (ejemplo: usuario@dominio.com)');
       }
-      
+    
       // Clean empty string values to null for optional fields
       const cleanedValues = {
         ...values,
@@ -303,6 +306,7 @@ const AdminUserManagement = () => {
       form.reset();
     },
     onError: (error: any) => {
+      // El sistema de errores ya manejó el logging detallado
       console.error('Error creating user:', error);
       
       // Handle specific email validation errors with helpful messages
@@ -313,7 +317,10 @@ const AdminUserManagement = () => {
       } else if (error.message?.includes('rate limit')) {
         toast.error('Has hecho muchos intentos. Espera unos minutos antes de intentar de nuevo.');
       } else {
-        toast.error(error.message || t('unexpectedError') || 'Error inesperado al crear el usuario');
+        // Solo mostrar el toast si el error no fue manejado por el sistema de errores
+        if (!error.errorId) {
+          toast.error(error.message || t('unexpectedError') || 'Error inesperado al crear el usuario');
+        }
       }
     },
   });
