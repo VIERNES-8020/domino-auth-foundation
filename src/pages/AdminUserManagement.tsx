@@ -260,31 +260,17 @@ const AdminUserManagement = () => {
       if (authData.user) {
         console.log('User created successfully, creating profile...');
         
-        // Create profile with error handling
-        const profileData = {
-          id: authData.user.id,
-          full_name: cleanedValues.full_name,
-          identity_card: cleanedValues.identity_card,
-          corporate_phone: cleanedValues.corporate_phone,
-          email: cleanedValues.email,
-        };
-        
-        console.log('Inserting profile with data:', profileData);
-        
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert(profileData);
+        // Create profile using the secure function
+        const { error: profileError } = await supabase.rpc('create_user_profile', {
+          p_user_id: authData.user.id,
+          p_full_name: cleanedValues.full_name,
+          p_identity_card: cleanedValues.identity_card,
+          p_corporate_phone: cleanedValues.corporate_phone,
+          p_email: cleanedValues.email,
+        });
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
-          
-          // Try to clean up the created user if profile fails
-          try {
-            await supabase.auth.admin.deleteUser(authData.user.id);
-          } catch (cleanupError) {
-            console.error('Error cleaning up user after profile failure:', cleanupError);
-          }
-          
           throw new Error(`Error al crear perfil: ${profileError.message}`);
         }
 

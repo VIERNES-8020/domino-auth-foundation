@@ -1089,6 +1089,16 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
+      create_user_profile: {
+        Args: {
+          p_corporate_phone?: string
+          p_email?: string
+          p_full_name: string
+          p_identity_card?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
