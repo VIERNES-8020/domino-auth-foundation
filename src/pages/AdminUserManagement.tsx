@@ -214,10 +214,10 @@ const AdminUserManagement = () => {
     mutationFn: async (values: UserFormValues) => {
       console.log('Form values being submitted:', values);
       
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Validate email format - more permissive validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
       if (!emailRegex.test(values.email)) {
-        throw new Error('Por favor ingresa un email válido');
+        throw new Error('Por favor ingresa un email válido (ejemplo: usuario@dominio.com)');
       }
       
       // Clean empty string values to null for optional fields
@@ -247,7 +247,7 @@ const AdminUserManagement = () => {
         
         // Handle specific email errors
         if (authError.message?.includes('Email address') && authError.message?.includes('is invalid')) {
-          throw new Error('El email ingresado no es válido. Verifica que tenga un formato correcto.');
+          throw new Error('El email ingresado tiene un formato incorrecto. Revisa si hay errores de escritura (ejemplo: gmail.com, not gamil.com)');
         } else if (authError.message?.includes('rate limit')) {
           throw new Error('Has hecho muchos intentos. Espera unos minutos antes de intentar de nuevo.');
         } else if (authError.message?.includes('User already registered')) {
@@ -275,6 +275,7 @@ const AdminUserManagement = () => {
         }
 
         console.log('Profile created, creating user role...');
+        console.log('Creating role:', cleanedValues.role, 'for user:', authData.user.id);
         
         // Create user role
         const { error: roleError } = await supabase
@@ -286,7 +287,8 @@ const AdminUserManagement = () => {
 
         if (roleError) {
           console.error('Role creation error:', roleError);
-          throw new Error(`Error al asignar rol: ${roleError.message}`);
+          console.error('Attempted role value:', cleanedValues.role);
+          throw new Error(`Error al asignar rol "${cleanedValues.role}": ${roleError.message}`);
         }
         
         console.log('User creation completed successfully');
@@ -303,11 +305,13 @@ const AdminUserManagement = () => {
     onError: (error: any) => {
       console.error('Error creating user:', error);
       
-      // Handle specific email validation errors
+      // Handle specific email validation errors with helpful messages
       if (error.message?.includes('Email address') && error.message?.includes('is invalid')) {
-        toast.error('El email ingresado no es válido. Por favor usa un dominio de email válido (ej: @gmail.com, @yahoo.com, etc.)');
+        toast.error('Email inválido. Revisa si hay errores como "gamil.com" (debería ser "gmail.com"), "yahooo.com", etc.');
       } else if (error.message?.includes('User already registered')) {
         toast.error('Ya existe un usuario registrado con este email.');
+      } else if (error.message?.includes('rate limit')) {
+        toast.error('Has hecho muchos intentos. Espera unos minutos antes de intentar de nuevo.');
       } else {
         toast.error(error.message || t('unexpectedError') || 'Error inesperado al crear el usuario');
       }
