@@ -212,7 +212,13 @@ const AdminUserManagement = () => {
   // Create new user mutation
   const createUserMutation = useMutation({
     mutationFn: async (values: UserFormValues) => {
-      console.log('Creating user with values:', values);
+      console.log('Form values being submitted:', values);
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(values.email)) {
+        throw new Error('Por favor ingresa un email válido');
+      }
       
       // Clean empty string values to null for optional fields
       const cleanedValues = {
@@ -221,13 +227,14 @@ const AdminUserManagement = () => {
         corporate_phone: values.corporate_phone?.trim() || null,
       };
       
-      console.log('Cleaned values for profile insertion:', cleanedValues);
+      console.log('Creating user with values:', cleanedValues);
       
-      // Create user account
+      // Create user account with email confirmation disabled
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanedValues.email,
         password: cleanedValues.password,
         options: {
+          emailRedirectTo: undefined, // Disable email confirmation
           data: {
             full_name: cleanedValues.full_name,
             role: cleanedValues.role,
@@ -235,10 +242,25 @@ const AdminUserManagement = () => {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        
+        // Handle specific email errors
+        if (authError.message?.includes('Email address') && authError.message?.includes('is invalid')) {
+          throw new Error('El email ingresado no es válido. Verifica que tenga un formato correcto.');
+        } else if (authError.message?.includes('rate limit')) {
+          throw new Error('Has hecho muchos intentos. Espera unos minutos antes de intentar de nuevo.');
+        } else if (authError.message?.includes('User already registered')) {
+          throw new Error('Ya existe un usuario registrado con este email.');
+        }
+        
+        throw authError;
+      }
 
       if (authData.user) {
-        // Create profile with cleaned values
+        console.log('User created successfully, creating profile...');
+        
+        // Create profile with error handling
         const profileData = {
           id: authData.user.id,
           full_name: cleanedValues.full_name,
@@ -253,17 +275,35 @@ const AdminUserManagement = () => {
           .from("profiles")
           .insert(profileData);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          
+          // Try to clean up the created user if profile fails
+          try {
+            await supabase.auth.admin.deleteUser(authData.user.id);
+          } catch (cleanupError) {
+            console.error('Error cleaning up user after profile failure:', cleanupError);
+          }
+          
+          throw new Error(`Error al crear perfil: ${profileError.message}`);
+        }
 
+        console.log('Profile created, creating user role...');
+        
         // Create user role
         const { error: roleError } = await supabase
           .from("user_roles")
           .insert([{
             user_id: authData.user.id,
-            role: values.role as any, // Using any to bypass type checking until types are regenerated
+            role: cleanedValues.role as any,
           }]);
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('Role creation error:', roleError);
+          throw new Error(`Error al asignar rol: ${roleError.message}`);
+        }
+        
+        console.log('User creation completed successfully');
       }
 
       return authData;
