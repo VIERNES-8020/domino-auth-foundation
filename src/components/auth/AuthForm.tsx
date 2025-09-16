@@ -30,8 +30,8 @@ const agentRoles = [
   "Supervisor",
 ] as const;
 
-// Roles permitidos durante el registro público (solo Agente Inmobiliario)
-const allowedSignupRoles = ["Agente Inmobiliario"] as const;
+// Roles permitidos durante el registro público 
+const allowedSignupRoles = ["Agente Inmobiliario", "Staff"] as const;
 
 
 const baseSchema = z.object({
@@ -200,7 +200,7 @@ export default function AuthForm() {
           }
 
           // Insertar rol específico en user_roles
-          const roleValue = 'agent'; // Durante el registro público, todos los usuarios son agentes
+          const roleValue = role === 'Agente Inmobiliario' ? 'agent' : 'staff';
           
           console.log(`Guardando rol "${roleValue}" para usuario ${data.user.id}`);
           
@@ -215,11 +215,13 @@ export default function AuthForm() {
             console.log(`Rol "${roleValue}" guardado correctamente`);
           }
 
-          // Generar código de agente (siempre se ejecuta para registros de agente/staff)
-          const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
-            body: { full_name, identity_card },
-          });
-          if (fxError) console.warn('Error al generar código de agente:', fxError);
+          // Generar código de agente solo para Agentes Inmobiliarios
+          if (role === 'Agente Inmobiliario') {
+            const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
+              body: { full_name, identity_card },
+            });
+            if (fxError) console.warn('Error al generar código de agente:', fxError);
+          }
 
           // Mostrar mensaje prominente de confirmación por correo
           setShowEmailConfirmation(true);
