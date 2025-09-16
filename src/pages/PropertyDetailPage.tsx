@@ -554,17 +554,17 @@ export default function PropertyDetailPage() {
                   {property.plans_url.map((planUrl, index) => (
                     <Card key={index} className="p-4">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium">Plano {index + 1}</h3>
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={planUrl} target="_blank" rel="noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              Ver
-                            </a>
-                          </Button>
-                        </div>
                         {/\.(jpg|jpeg|png|gif|webp)$/i.test(planUrl) ? (
                           <Dialog>
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-medium">Plano {index + 1}</h3>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <ExternalLink className="h-4 w-4 mr-2" />
+                                  Ver
+                                </Button>
+                              </DialogTrigger>
+                            </div>
                             <DialogTrigger asChild>
                               <div className="cursor-pointer group">
                                 <AspectRatio ratio={4 / 3} className="rounded-lg overflow-hidden border">
@@ -588,9 +588,20 @@ export default function PropertyDetailPage() {
                             </DialogContent>
                           </Dialog>
                         ) : (
-                          <div className="p-8 text-center border rounded-lg bg-muted/30">
-                            <p className="text-muted-foreground">Vista previa no disponible</p>
-                          </div>
+                          <>
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-medium">Plano {index + 1}</h3>
+                              <Button variant="outline" size="sm" asChild>
+                                <a href={planUrl} target="_blank" rel="noreferrer">
+                                  <ExternalLink className="h-4 w-4 mr-2" />
+                                  Ver
+                                </a>
+                              </Button>
+                            </div>
+                            <div className="p-8 text-center border rounded-lg bg-muted/30">
+                              <p className="text-muted-foreground">Vista previa no disponible</p>
+                            </div>
+                          </>
                         )}
                       </div>
                     </Card>
