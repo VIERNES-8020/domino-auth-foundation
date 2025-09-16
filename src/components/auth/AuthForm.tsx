@@ -30,6 +30,9 @@ const agentRoles = [
   "Supervisor",
 ] as const;
 
+// Roles permitidos durante el registro público (solo Agente Inmobiliario)
+const allowedSignupRoles = ["Agente Inmobiliario"] as const;
+
 
 const baseSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -45,7 +48,7 @@ const clientSchema = baseSchema.extend({
 
 const agentSignupSchema = baseSchema.extend({
   full_name: z.string().min(2, { message: "Ingresa tu nombre" }),
-  role: z.enum(agentRoles, { required_error: "Selecciona un rol" }),
+  role: z.enum(allowedSignupRoles, { required_error: "Selecciona un rol" }),
   identity_card: z.string().min(5, { message: "Ingresa tu CI" }),
   corporate_phone: z.string().min(6, { message: "Ingresa tu celular corporativo" }),
 });
@@ -197,10 +200,7 @@ export default function AuthForm() {
           }
 
           // Insertar rol específico en user_roles
-          const roleValue = role === 'Super Administrador' ? 'super_admin' : 
-                           role === 'Administrador de Franquicia' ? 'franchise_admin' :
-                           role === 'Gerente de Oficina' ? 'office_manager' :
-                           role === 'Supervisor' ? 'supervisor' : 'agent';
+          const roleValue = 'agent'; // Durante el registro público, todos los usuarios son agentes
           
           console.log(`Guardando rol "${roleValue}" para usuario ${data.user.id}`);
           
@@ -215,13 +215,11 @@ export default function AuthForm() {
             console.log(`Rol "${roleValue}" guardado correctamente`);
           }
 
-          // Generar código de agente si es necesario
-          if (role === 'Agente Inmobiliario') {
-            const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
-              body: { full_name, identity_card },
-            });
-            if (fxError) console.warn('Error al generar código de agente:', fxError);
-          }
+          // Generar código de agente (siempre se ejecuta para registros de agente/staff)
+          const { error: fxError } = await supabase.functions.invoke('generate-agent-code', {
+            body: { full_name, identity_card },
+          });
+          if (fxError) console.warn('Error al generar código de agente:', fxError);
 
           // Mostrar mensaje prominente de confirmación por correo
           setShowEmailConfirmation(true);
@@ -423,7 +421,7 @@ export default function AuthForm() {
                   <SelectValue placeholder="Selecciona un rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  {agentRoles.map((r) => (
+                  {allowedSignupRoles.map((r) => (
                     <SelectItem key={r} value={r}>
                       {r}
                     </SelectItem>
