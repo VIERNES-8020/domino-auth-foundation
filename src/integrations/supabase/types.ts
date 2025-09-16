@@ -473,6 +473,7 @@ export type Database = {
           id: string
           identity_card: string | null
           instagram_url: string | null
+          is_archived: boolean | null
           is_super_admin: boolean | null
           linkedin_url: string | null
           title: string | null
@@ -498,6 +499,7 @@ export type Database = {
           id: string
           identity_card?: string | null
           instagram_url?: string | null
+          is_archived?: boolean | null
           is_super_admin?: boolean | null
           linkedin_url?: string | null
           title?: string | null
@@ -523,6 +525,7 @@ export type Database = {
           id?: string
           identity_card?: string | null
           instagram_url?: string | null
+          is_archived?: boolean | null
           is_super_admin?: boolean | null
           linkedin_url?: string | null
           title?: string | null

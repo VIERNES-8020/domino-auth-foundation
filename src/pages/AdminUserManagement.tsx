@@ -29,7 +29,7 @@ import { useFormErrorHandler, useApiErrorHandler } from "@/hooks/useErrorHandler
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
-type UserFilter = 'all' | 'agents' | 'clients';
+type UserFilter = 'all' | 'agents' | 'clients' | 'archived';
 
 const userFormSchema = z.object({
   full_name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -156,7 +156,8 @@ const AdminUserManagement = () => {
           is_super_admin,
           assigned_corporate_phone,
           assigned_corporate_email,
-          assignment_date
+          assignment_date,
+          is_archived
         `)
         .order("created_at", { ascending: false });
 
@@ -412,12 +413,21 @@ const AdminUserManagement = () => {
   const clientRoles = ["client"];
 
   const filteredUsers = users.filter(user => {
-    // Filter by role
+    // Filter by role and archived status
     let roleMatch = true;
-    if (userFilter === 'agents') {
-      roleMatch = agentRoles.includes(user.role);
-    } else if (userFilter === 'clients') {
-      roleMatch = clientRoles.includes(user.role);
+    
+    if (userFilter === 'archived') {
+      // Only show archived users
+      roleMatch = user.is_archived === true;
+    } else {
+      // Only show non-archived users for other filters
+      if (user.is_archived === true) return false;
+      
+      if (userFilter === 'agents') {
+        roleMatch = agentRoles.includes(user.role);
+      } else if (userFilter === 'clients') {
+        roleMatch = clientRoles.includes(user.role);
+      }
     }
     
     // Filter by search query
@@ -510,12 +520,11 @@ const AdminUserManagement = () => {
 
   const archiveUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      // Update user profile to mark as archived
       const { error } = await supabase
         .from("profiles")
         .update({ 
           updated_at: new Date().toISOString(),
-          // You can add an is_archived field to profiles table if needed
+          is_archived: true
         })
         .eq("id", userId);
 
@@ -531,8 +540,36 @@ const AdminUserManagement = () => {
     },
   });
 
+  const unarchiveUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Update user profile to mark as unarchived
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          updated_at: new Date().toISOString(),
+          is_archived: false
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Usuario desarchivado exitosamente");
+      queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+      setArchiveDialog({ open: false, userId: '', userName: '' });
+    },
+    onError: (error: any) => {
+      toast.error(`Error al desarchivar usuario: ${error.message}`);
+    },
+  });
+
   const confirmArchiveUser = () => {
-    archiveUserMutation.mutate(archiveDialog.userId);
+    const user = users.find(u => u.id === archiveDialog.userId);
+    if (user?.is_archived) {
+      unarchiveUserMutation.mutate(archiveDialog.userId);
+    } else {
+      archiveUserMutation.mutate(archiveDialog.userId);
+    }
   };
 
   const handleAssignment = (type: 'phone' | 'email', userId: string, userName: string, currentValue: string) => {
@@ -905,7 +942,7 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2 text-xs lg:text-sm"
             >
               <Filter className="h-4 w-4" />
-              Todos ({users.length})
+              Todos ({users.filter(u => !u.is_archived).length})
             </Button>
             <Button
               variant={userFilter === 'agents' ? 'default' : 'outline'}
@@ -913,7 +950,7 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2 text-xs lg:text-sm"
             >
               <Users className="h-4 w-4" />
-              Agente/Staff ({users.filter(u => agentRoles.includes(u.role)).length})
+              Agente/Staff ({users.filter(u => agentRoles.includes(u.role) && !u.is_archived).length})
             </Button>
             <Button
               variant={userFilter === 'clients' ? 'default' : 'outline'}
@@ -921,7 +958,15 @@ const AdminUserManagement = () => {
               className="flex items-center gap-2 text-xs lg:text-sm"
             >
               <Users className="h-4 w-4" />
-              Cliente ({users.filter(u => clientRoles.includes(u.role)).length})
+              Cliente ({users.filter(u => clientRoles.includes(u.role) && !u.is_archived).length})
+            </Button>
+            <Button
+              variant={userFilter === 'archived' ? 'default' : 'outline'}
+              onClick={() => handleFilterChange('archived')}
+              className="flex items-center gap-2 text-xs lg:text-sm"
+            >
+              <Archive className="h-4 w-4" />
+              Archivados ({users.filter(u => u.is_archived).length})
             </Button>
           </div>
         </CardHeader>
@@ -1100,10 +1145,18 @@ const AdminUserManagement = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleArchiveUser(user.id, user.full_name || 'Usuario')}
-                                className="h-8 w-8 p-0 hover:bg-red-100 rounded-lg flex items-center justify-center"
-                                title="Archivar usuario"
+                                className={`h-8 w-8 p-0 rounded-lg flex items-center justify-center ${
+                                  user.is_archived 
+                                    ? "hover:bg-green-100" 
+                                    : "hover:bg-red-100"
+                                }`}
+                                title={user.is_archived ? "Desarchivar usuario" : "Archivar usuario"}
                               >
-                                <Archive className="h-4 w-4 text-red-600" />
+                                {user.is_archived ? (
+                                  <Archive className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <Archive className="h-4 w-4 text-red-600" />
+                                )}
                               </Button>
                             </div>
                           </TableCell>
@@ -1333,19 +1386,38 @@ const AdminUserManagement = () => {
       <AlertDialog open={archiveDialog.open} onOpenChange={(open) => setArchiveDialog(prev => ({ ...prev, open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Archivado de Usuario</AlertDialogTitle>
+            <AlertDialogTitle>
+              {users.find(u => u.id === archiveDialog.userId)?.is_archived 
+                ? "Confirmar Desarchivado de Usuario" 
+                : "Confirmar Archivado de Usuario"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Está seguro que desea archivar al usuario <strong>{archiveDialog.userName}</strong>?
-              Esta acción desactivará temporalmente la cuenta del usuario.
+              {users.find(u => u.id === archiveDialog.userId)?.is_archived 
+                ? (
+                  <>
+                    ¿Está seguro que desea desarchivar al usuario <strong>{archiveDialog.userName}</strong>?
+                    Esta acción reactivará la cuenta del usuario.
+                  </>
+                ) : (
+                  <>
+                    ¿Está seguro que desea archivar al usuario <strong>{archiveDialog.userName}</strong>?
+                    Esta acción desactivará temporalmente la cuenta del usuario.
+                  </>
+                )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmArchiveUser}
-              disabled={archiveUserMutation.isPending}
+              disabled={archiveUserMutation.isPending || unarchiveUserMutation.isPending}
             >
-              {archiveUserMutation.isPending ? 'Archivando...' : 'Archivar Usuario'}
+              {(archiveUserMutation.isPending || unarchiveUserMutation.isPending) 
+                ? 'Procesando...' 
+                : users.find(u => u.id === archiveDialog.userId)?.is_archived 
+                  ? 'Desarchivar' 
+                  : 'Archivar'
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
