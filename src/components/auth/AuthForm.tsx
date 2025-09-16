@@ -199,7 +199,7 @@ export default function AuthForm() {
             console.log("Perfil de agente actualizado correctamente");
           }
 
-          // Insertar rol específico en user_roles
+          // Insertar rol específico en user_roles (agent o staff)
           const roleValue = role === 'Agente Inmobiliario' ? 'agent' : 'staff';
           
           console.log(`Guardando rol "${roleValue}" para usuario ${data.user.id}`);

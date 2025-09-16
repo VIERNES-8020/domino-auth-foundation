@@ -2823,6 +2823,7 @@ export type Database = {
         | "franchise_admin"
         | "office_manager"
         | "supervisor"
+        | "staff"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -2966,6 +2967,7 @@ export const Constants = {
         "franchise_admin",
         "office_manager",
         "supervisor",
+        "staff",
       ],
     },
   },
