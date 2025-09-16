@@ -457,6 +457,7 @@ export type Database = {
       profiles: {
         Row: {
           agent_code: string | null
+          archive_reason: string | null
           assigned_corporate_email: string | null
           assigned_corporate_phone: string | null
           assignment_date: string | null
@@ -483,6 +484,7 @@ export type Database = {
         }
         Insert: {
           agent_code?: string | null
+          archive_reason?: string | null
           assigned_corporate_email?: string | null
           assigned_corporate_phone?: string | null
           assignment_date?: string | null
@@ -509,6 +511,7 @@ export type Database = {
         }
         Update: {
           agent_code?: string | null
+          archive_reason?: string | null
           assigned_corporate_email?: string | null
           assigned_corporate_phone?: string | null
           assignment_date?: string | null

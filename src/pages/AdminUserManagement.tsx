@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home } from "lucide-react";
@@ -94,6 +95,7 @@ const AdminUserManagement = () => {
     userId: '',
     userName: ''
   });
+  const [archiveReason, setArchiveReason] = useState('');
   const [assignmentDialog, setAssignmentDialog] = useState<{
     open: boolean;
     type: 'phone' | 'email' | null;
@@ -157,7 +159,8 @@ const AdminUserManagement = () => {
           assigned_corporate_phone,
           assigned_corporate_email,
           assignment_date,
-          is_archived
+          is_archived,
+          archive_reason
         `)
         .order("created_at", { ascending: false });
 
@@ -516,15 +519,17 @@ const AdminUserManagement = () => {
       userId,
       userName
     });
+    setArchiveReason('');
   };
 
   const archiveUserMutation = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({ userId, reason }: { userId: string; reason?: string }) => {
       const { error } = await supabase
         .from("profiles")
         .update({ 
           updated_at: new Date().toISOString(),
-          is_archived: true
+          is_archived: true,
+          archive_reason: reason || null
         })
         .eq("id", userId);
 
@@ -534,6 +539,7 @@ const AdminUserManagement = () => {
       toast.success("Usuario archivado exitosamente");
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
       setArchiveDialog({ open: false, userId: '', userName: '' });
+      setArchiveReason('');
     },
     onError: (error: any) => {
       toast.error(`Error al archivar usuario: ${error.message}`);
@@ -547,7 +553,8 @@ const AdminUserManagement = () => {
         .from("profiles")
         .update({ 
           updated_at: new Date().toISOString(),
-          is_archived: false
+          is_archived: false,
+          archive_reason: null
         })
         .eq("id", userId);
 
@@ -568,7 +575,12 @@ const AdminUserManagement = () => {
     if (user?.is_archived) {
       unarchiveUserMutation.mutate(archiveDialog.userId);
     } else {
-      archiveUserMutation.mutate(archiveDialog.userId);
+      // Validate reason is provided when archiving
+      if (!archiveReason.trim()) {
+        toast.error("Por favor ingresa el motivo del archivado");
+        return;
+      }
+      archiveUserMutation.mutate({ userId: archiveDialog.userId, reason: archiveReason.trim() });
     }
   };
 
@@ -1384,7 +1396,7 @@ const AdminUserManagement = () => {
 
       {/* Archive User Confirmation Dialog */}
       <AlertDialog open={archiveDialog.open} onOpenChange={(open) => setArchiveDialog(prev => ({ ...prev, open }))}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {users.find(u => u.id === archiveDialog.userId)?.is_archived 
@@ -1406,8 +1418,30 @@ const AdminUserManagement = () => {
                 )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {/* Only show reason input when archiving (not unarchiving) */}
+          {!users.find(u => u.id === archiveDialog.userId)?.is_archived && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Motivo del archivado <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Ingresa el motivo por el cual se archiva este usuario..."
+                value={archiveReason}
+                onChange={(e) => setArchiveReason(e.target.value)}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                {archiveReason.length}/500 caracteres
+              </p>
+            </div>
+          )}
+          
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setArchiveReason('')}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmArchiveUser}
               disabled={archiveUserMutation.isPending || unarchiveUserMutation.isPending}
