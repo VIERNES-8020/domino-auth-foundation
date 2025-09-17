@@ -34,7 +34,8 @@ import {
   MapPin,
   X,
   Download,
-  FileX
+  FileX,
+  ArrowRightLeft
 } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
@@ -71,6 +72,10 @@ export default function AdminDashboard() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [dateRange, setDateRange] = useState("30");
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
+  const [selectedAgentForView, setSelectedAgentForView] = useState<any>(null);
+  const [isAgentViewModalOpen, setIsAgentViewModalOpen] = useState(false);
+  const [agentProperties, setAgentProperties] = useState<any[]>([]);
+  const [agentAssignments, setAgentAssignments] = useState<any[]>([]);
 
   useEffect(() => {
     checkUserPermissions();
@@ -357,6 +362,41 @@ export default function AdminDashboard() {
       toast.success(`Usuario ${isSuperAdmin ? 'promovido a' : 'removido de'} Super Administrador`);
     } catch (error: any) {
       toast.error('Error actualizando Super Admin: ' + error.message);
+    }
+  };
+
+  const viewAgentDetails = async (agent: any) => {
+    try {
+      setSelectedAgentForView(agent);
+      
+      // Fetch agent's properties
+      const { data: properties, error: propertiesError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('agent_id', agent.id)
+        .order('created_at', { ascending: false });
+      
+      if (propertiesError) throw propertiesError;
+      setAgentProperties(properties || []);
+      
+      // Fetch agent's property assignments
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('property_assignments')
+        .select(`
+          *,
+          properties:property_id(title, address),
+          from_agent:from_agent_id(full_name),
+          to_agent:to_agent_id(full_name)
+        `)
+        .or(`from_agent_id.eq.${agent.id},to_agent_id.eq.${agent.id}`)
+        .order('created_at', { ascending: false });
+      
+      if (assignmentsError) throw assignmentsError;
+      setAgentAssignments(assignments || []);
+      
+      setIsAgentViewModalOpen(true);
+    } catch (error: any) {
+      toast.error('Error cargando detalles del agente: ' + error.message);
     }
   };
 
@@ -1015,11 +1055,15 @@ export default function AdminDashboard() {
                                       Activo
                                     </Badge>
                                   </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center space-x-2">
-                                      <Button variant="outline" size="sm">
-                                        <Eye className="h-4 w-4" />
-                                      </Button>
+                                   <TableCell>
+                                     <div className="flex items-center space-x-2">
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm"
+                                         onClick={() => viewAgentDetails(user)}
+                                       >
+                                         <Eye className="h-4 w-4" />
+                                       </Button>
                                       {isSuperAdmin && (
                                         <Button
                                           variant="outline"
@@ -1769,6 +1813,148 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Agent Details Modal */}
+      <Dialog open={isAgentViewModalOpen} onOpenChange={setIsAgentViewModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Detalles del Agente: {selectedAgentForView?.full_name || selectedAgentForView?.email}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Agent Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Información del Agente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nombre</p>
+                    <p className="font-medium">{selectedAgentForView?.full_name || 'Sin nombre'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{selectedAgentForView?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Código de Agente</p>
+                    <p className="font-medium">{selectedAgentForView?.agent_code || 'No asignado'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Rol</p>
+                    <Badge variant={selectedAgentForView?.is_super_admin ? 'default' : 'secondary'}>
+                      {selectedAgentForView?.is_super_admin ? 'Super Admin' : 'Agente'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Properties Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Home className="h-5 w-5" />
+                  Mis Propiedades ({agentProperties.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentProperties.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Home className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene propiedades registradas</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {agentProperties.slice(0, 5).map((property) => (
+                      <div key={property.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{property.title}</h4>
+                            <p className="text-sm text-muted-foreground">{property.address}</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <Badge variant="outline">{property.property_type}</Badge>
+                              <Badge variant="outline">{property.transaction_type}</Badge>
+                              <span className="text-sm font-medium">
+                                ${property.price?.toLocaleString()} {property.price_currency}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
+                            {property.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {agentProperties.length > 5 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Y {agentProperties.length - 5} propiedades más...
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Assignments Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5" />
+                  Asignación Propiedad ({agentAssignments.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentAssignments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene asignaciones de propiedades</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {agentAssignments.slice(0, 5).map((assignment) => (
+                      <div key={assignment.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{assignment.properties?.title || 'Propiedad'}</h4>
+                            <p className="text-sm text-muted-foreground">{assignment.properties?.address}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-sm">
+                                De: <Badge variant="outline">{assignment.from_agent?.full_name}</Badge>
+                              </span>
+                              <ArrowRightLeft className="h-4 w-4" />
+                              <span className="text-sm">
+                                Para: <Badge variant="outline">{assignment.to_agent?.full_name}</Badge>
+                              </span>
+                            </div>
+                            {assignment.reason && (
+                              <p className="text-sm text-muted-foreground mt-2">
+                                Razón: {assignment.reason}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(assignment.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {agentAssignments.length > 5 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Y {agentAssignments.length - 5} asignaciones más...
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </DialogContent>
       </Dialog>
