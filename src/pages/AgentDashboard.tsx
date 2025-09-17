@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X, UserPlus } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X, UserPlus, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
@@ -12,6 +12,7 @@ import ProfileForm from "@/components/ProfileForm";
 import PropertyViewModal from "@/components/PropertyViewModal";
 import DeletePropertyModal from "@/components/DeletePropertyModal";
 import ArchivePropertyModal from "@/components/ArchivePropertyModal";
+import AssignPropertyModal from "@/components/AssignPropertyModal";
 import NotificationResponseModal from "@/components/NotificationResponseModal";
 import PropertyTypeStats from "@/components/PropertyTypeStats";
 import SalesProcessStats from "@/components/SalesProcessStats";
@@ -25,6 +26,7 @@ export default function AgentDashboard() {
   const [viewingProperty, setViewingProperty] = useState<any>(null);
   const [deletingProperty, setDeletingProperty] = useState<any>(null);
   const [archivingProperty, setArchivingProperty] = useState<any>(null);
+  const [assigningProperty, setAssigningProperty] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
@@ -398,6 +400,77 @@ export default function AgentDashboard() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleAssignProperty = async (agentCode: string, reason: string) => {
+    if (!user || !assigningProperty) return;
+    
+    try {
+      // First, find the agent by their agent_code
+      const { data: targetAgent, error: agentError } = await supabase
+        .from('profiles')
+        .select('id, full_name, agent_code')
+        .eq('agent_code', agentCode)
+        .single();
+
+      if (agentError || !targetAgent) {
+        toast.error(`No se encontró un agente con el código: ${agentCode}`);
+        return;
+      }
+
+      if (targetAgent.id === user.id) {
+        toast.error('No puedes asignar una propiedad a ti mismo');
+        return;
+      }
+
+      // Update the property to assign it to the new agent
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ 
+          agent_id: targetAgent.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', assigningProperty.id)
+        .eq('agent_id', user.id); // Make sure only the current owner can assign
+
+      if (updateError) {
+        console.error('Error assigning property:', updateError);
+        toast.error('Error al asignar la propiedad');
+        return;
+      }
+
+      // Create assignment record for tracking
+      const { error: assignmentError } = await supabase
+        .from('property_assignments')
+        .insert({
+          property_id: assigningProperty.id,
+          from_agent_id: user.id,
+          to_agent_id: targetAgent.id,
+          reason: reason,
+          assignment_date: new Date().toISOString()
+        });
+
+      if (assignmentError) {
+        console.error('Error creating assignment record:', assignmentError);
+        // Don't show error to user as the main assignment succeeded
+      }
+
+      toast.success(
+        `Propiedad asignada exitosamente a ${targetAgent.full_name} (${agentCode})`,
+        {
+          description: `ID: ${assigningProperty.property_code || assigningProperty.id}`,
+          duration: 5000
+        }
+      );
+      
+      // Refresh properties list
+      await fetchProperties(user.id);
+      setAssigningProperty(null);
+      
+    } catch (error: any) {
+      console.error('Error in handleAssignProperty:', error);
+      toast.error('Error al asignar la propiedad: ' + error.message);
+    }
   };
 
   const handlePropertyTypeFilter = (type: string, status: 'all' | 'active' | 'concluded') => {
@@ -800,14 +873,18 @@ export default function AgentDashboard() {
                                               <Archive className="mr-2 h-4 w-4" />
                                               Archivar
                                             </DropdownMenuItem>
-                                          )}
-                                          <DropdownMenuItem
-                                            onClick={() => setDeletingProperty(property)}
-                                            className="text-destructive focus:text-destructive"
-                                          >
-                                            <Trash className="mr-2 h-4 w-4" />
-                                            Eliminar
-                                          </DropdownMenuItem>
+                                           )}
+                                           <DropdownMenuItem onClick={() => setAssigningProperty(property)}>
+                                             <UserCheck className="mr-2 h-4 w-4" />
+                                             Asignar
+                                           </DropdownMenuItem>
+                                           <DropdownMenuItem
+                                             onClick={() => setDeletingProperty(property)}
+                                             className="text-destructive focus:text-destructive"
+                                           >
+                                             <Trash className="mr-2 h-4 w-4" />
+                                             Eliminar
+                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
                                     </div>
