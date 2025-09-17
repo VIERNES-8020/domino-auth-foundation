@@ -364,6 +364,7 @@ export default function AgentDashboard() {
       // Add cancellation reason if cancelling
       if (newStatus === 'cancelled' && reason) {
         updateData.visit_result = reason;
+        updateData.message = reason;
       }
 
       const { error } = await supabase
@@ -1206,13 +1207,13 @@ export default function AgentDashboard() {
                                  </div>
                                )}
                                
-                               {/* Mostrar motivo de cancelación cuando está en filtro de canceladas */}
-                               {appointmentFilter === 'cancelled' && visit.message && (
-                                 <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
-                                   <div className="text-sm font-medium text-orange-800 mb-1">Motivo de la Cancelación:</div>
-                                   <div className="text-sm text-orange-700">{visit.message}</div>
-                                 </div>
-                               )}
+                                {/* Mostrar motivo de cancelación cuando está en filtro de canceladas */}
+                                {appointmentFilter === 'cancelled' && visit.visit_result && (
+                                  <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                                    <div className="text-sm font-medium text-orange-800 mb-1">Motivo de la Cancelación:</div>
+                                    <div className="text-sm text-orange-700">{visit.visit_result}</div>
+                                  </div>
+                                )}
                                
                                {/* Mostrar información de venta cuando está en filtro de propiedades efectivas */}
                                {appointmentFilter === 'effective' && visit.sale_amount && (
