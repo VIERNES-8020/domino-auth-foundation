@@ -474,10 +474,7 @@ export default function AdminDashboard() {
       // Fetch agent's property visits (citas programadas)
       const { data: visits, error: visitsError } = await supabase
         .from('property_visits')
-        .select(`
-          *,
-          properties:property_id(title, address, property_type)
-        `)
+        .select('*')
         .eq('agent_id', agent.id)
         .order('scheduled_at', { ascending: false });
 
@@ -486,18 +483,30 @@ export default function AdminDashboard() {
         // Don't throw error, just log it and continue
         setAgentVisits([]);
       } else {
-        console.log(`Encontradas ${visits?.length || 0} citas programadas para el agente`);
-        setAgentVisits(visits || []);
+        // Fetch property details for each visit
+        const enrichedVisits = [];
+        if (visits && visits.length > 0) {
+          for (const visit of visits) {
+            const { data: propertyData } = await supabase
+              .from('properties')
+              .select('title, address, property_type')
+              .eq('id', visit.property_id)
+              .single();
+            
+            enrichedVisits.push({
+              ...visit,
+              properties: propertyData
+            });
+          }
+        }
+        console.log(`Encontradas ${enrichedVisits?.length || 0} citas programadas para el agente`);
+        setAgentVisits(enrichedVisits || []);
       }
 
       // Fetch agent's notifications
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('agent_notifications')
-        .select(`
-          *,
-          properties:property_id(title, address),
-          from_agent:from_agent_id(full_name, email)
-        `)
+        .select('*')
         .eq('to_agent_id', agent.id)
         .order('created_at', { ascending: false });
 
@@ -506,8 +515,33 @@ export default function AdminDashboard() {
         // Don't throw error, just log it and continue
         setAgentNotifications([]);
       } else {
-        console.log(`Encontradas ${notificationsData?.length || 0} notificaciones para el agente`);
-        setAgentNotifications(notificationsData || []);
+        // Fetch related data for each notification
+        const enrichedNotifications = [];
+        if (notificationsData && notificationsData.length > 0) {
+          for (const notification of notificationsData) {
+            // Get property details
+            const { data: propertyData } = await supabase
+              .from('properties')
+              .select('title, address')
+              .eq('id', notification.property_id)
+              .single();
+
+            // Get from_agent details
+            const { data: fromAgentData } = await supabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', notification.from_agent_id)
+              .single();
+
+            enrichedNotifications.push({
+              ...notification,
+              properties: propertyData,
+              from_agent: fromAgentData
+            });
+          }
+        }
+        console.log(`Encontradas ${enrichedNotifications?.length || 0} notificaciones para el agente`);
+        setAgentNotifications(enrichedNotifications || []);
       }
       
       toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${enrichedAssignments?.length || 0} asignaciones, ${visits?.length || 0} citas, ${notificationsData?.length || 0} notificaciones`);
@@ -547,10 +581,7 @@ export default function AdminDashboard() {
       // Fetch agent's property visits (citas programadas)
       const { data: visits, error: visitsError } = await supabase
         .from('property_visits')
-        .select(`
-          *,
-          properties:property_id(title, address, property_type)
-        `)
+        .select('*')
         .eq('agent_id', agent.id)
         .order('scheduled_at', { ascending: false });
 
@@ -558,18 +589,30 @@ export default function AdminDashboard() {
         console.error('Error fetching visits:', visitsError);
         setAgentVisits([]);
       } else {
-        console.log(`Encontradas ${visits?.length || 0} citas programadas para el agente`);
-        setAgentVisits(visits || []);
+        // Fetch property details for each visit
+        const enrichedVisits = [];
+        if (visits && visits.length > 0) {
+          for (const visit of visits) {
+            const { data: propertyData } = await supabase
+              .from('properties')
+              .select('title, address, property_type')
+              .eq('id', visit.property_id)
+              .single();
+            
+            enrichedVisits.push({
+              ...visit,
+              properties: propertyData
+            });
+          }
+        }
+        console.log(`Encontradas ${enrichedVisits?.length || 0} citas programadas para el agente`);
+        setAgentVisits(enrichedVisits || []);
       }
 
       // Fetch agent's notifications
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('agent_notifications')
-        .select(`
-          *,
-          properties:property_id(title, address),
-          from_agent:from_agent_id(full_name, email)
-        `)
+        .select('*')
         .eq('to_agent_id', agent.id)
         .order('created_at', { ascending: false });
 
@@ -577,8 +620,33 @@ export default function AdminDashboard() {
         console.error('Error fetching notifications:', notificationsError);
         setAgentNotifications([]);
       } else {
-        console.log(`Encontradas ${notificationsData?.length || 0} notificaciones para el agente`);
-        setAgentNotifications(notificationsData || []);
+        // Fetch related data for each notification
+        const enrichedNotifications = [];
+        if (notificationsData && notificationsData.length > 0) {
+          for (const notification of notificationsData) {
+            // Get property details
+            const { data: propertyData } = await supabase
+              .from('properties')
+              .select('title, address')
+              .eq('id', notification.property_id)
+              .single();
+
+            // Get from_agent details
+            const { data: fromAgentData } = await supabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', notification.from_agent_id)
+              .single();
+
+            enrichedNotifications.push({
+              ...notification,
+              properties: propertyData,
+              from_agent: fromAgentData
+            });
+          }
+        }
+        console.log(`Encontradas ${enrichedNotifications?.length || 0} notificaciones para el agente`);
+        setAgentNotifications(enrichedNotifications || []);
       }
       
       toast.success(`Cargadas ${visits?.length || 0} citas y ${notificationsData?.length || 0} notificaciones`);
