@@ -49,6 +49,7 @@ export default function AgentDashboard() {
   const [cancellationReason, setCancellationReason] = useState('');
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
   const [newScheduledDate, setNewScheduledDate] = useState<Date>();
+  const [reschedulingReason, setReschedulingReason] = useState('');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
@@ -384,11 +385,17 @@ export default function AgentDashboard() {
   const handleRescheduleVisit = (visit: any) => {
     setReschedulingVisit(visit);
     setNewScheduledDate(new Date(visit.scheduled_at));
+    setReschedulingReason('');
   };
 
   const confirmRescheduleVisit = async () => {
     if (!reschedulingVisit || !newScheduledDate) {
       toast.error('Por favor, selecciona una nueva fecha');
+      return;
+    }
+    
+    if (!reschedulingReason.trim()) {
+      toast.error('Por favor, proporciona un motivo para la reprogramación');
       return;
     }
 
@@ -397,6 +404,7 @@ export default function AgentDashboard() {
         .from('property_visits')
         .update({ 
           scheduled_at: newScheduledDate.toISOString(),
+          visit_result: reschedulingReason,
           updated_at: new Date().toISOString()
         })
         .eq('id', reschedulingVisit.id)
@@ -409,6 +417,7 @@ export default function AgentDashboard() {
       await fetchPropertyVisits(user.id);
       setReschedulingVisit(null);
       setNewScheduledDate(undefined);
+      setReschedulingReason('');
     } catch (error: any) {
       console.error('Error rescheduling visit:', error);
       toast.error('Error al reprogramar la cita');
@@ -1135,7 +1144,7 @@ export default function AgentDashboard() {
 
         {/* Reschedule Visit Modal */}
         <Dialog open={!!reschedulingVisit} onOpenChange={() => setReschedulingVisit(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Reprogramar Cita</DialogTitle>
               <DialogDescription>
@@ -1201,6 +1210,17 @@ export default function AgentDashboard() {
                   </PopoverContent>
                 </Popover>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rescheduling-reason">Motivo de la reprogramación</Label>
+                <Textarea
+                  id="rescheduling-reason"
+                  value={reschedulingReason}
+                  onChange={(e) => setReschedulingReason(e.target.value)}
+                  placeholder="Explica por qué se reprograma la cita..."
+                  required
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setReschedulingVisit(null)}>
@@ -1208,7 +1228,7 @@ export default function AgentDashboard() {
               </Button>
               <Button 
                 onClick={confirmRescheduleVisit}
-                disabled={!newScheduledDate}
+                disabled={!newScheduledDate || !reschedulingReason.trim()}
               >
                 Reprogramar Cita
               </Button>
