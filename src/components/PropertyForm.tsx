@@ -493,34 +493,70 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     }));
   };
 
-  // Enhanced form validation - ARCHIVOS OPCIONALES
+  // Comprehensive form validation - ALL TABS REQUIRED
   const validateForm = () => {
     const errors: string[] = [];
     const missingFields: string[] = [];
     
+    // GENERAL TAB - Required fields
     if (!formData.title) {
       errors.push("El título es obligatorio");
-      missingFields.push("Título de la propiedad");
+      missingFields.push("Título de la propiedad (General)");
     }
     if (!formData.property_type) {
       errors.push("El tipo de propiedad es obligatorio");
-      missingFields.push("Tipo de propiedad");
+      missingFields.push("Tipo de propiedad (General)");
     }
     if (!formData.transaction_type) {
       errors.push("El tipo de transacción es obligatorio");
-      missingFields.push("Tipo de transacción");
+      missingFields.push("Tipo de transacción (General)");
     }
     if (!formData.price) {
       errors.push("El precio es obligatorio");
-      missingFields.push("Precio");
+      missingFields.push("Precio (General)");
+    }
+    if (!formData.bedrooms) {
+      errors.push("El número de dormitorios es obligatorio");
+      missingFields.push("Dormitorios (General)");
+    }
+    if (!formData.bathrooms) {
+      errors.push("El número de baños es obligatorio");
+      missingFields.push("Baños (General)");
+    }
+    if (!formData.area) {
+      errors.push("El área total es obligatoria");
+      missingFields.push("Área Total (General)");
+    }
+    if (!formData.constructed_area_m2) {
+      errors.push("Los m2 construidos son obligatorios");
+      missingFields.push("M2 Construidos (General)");
     }
     if (!formData.description) {
-      errors.push("La descripción es obligatoria para una mejor presentación");
-      missingFields.push("Descripción");
+      errors.push("La descripción es obligatoria");
+      missingFields.push("Descripción (General)");
     }
     
-    // CAMBIO: Las imágenes y planos son ahora OPCIONALES
-    // No se requieren archivos para guardar la propiedad
+    // CARACTERÍSTICAS TAB - At least one feature required
+    if (!formData.features || formData.features.length === 0) {
+      errors.push("Debe seleccionar al menos una característica");
+      missingFields.push("Características de la propiedad (Características)");
+    }
+    
+    // UBICACIÓN TAB - Complete location required
+    if (!formData.address) {
+      errors.push("La dirección es obligatoria");
+      missingFields.push("Dirección completa (Ubicación)");
+    }
+    if (!formData.latitude || !formData.longitude) {
+      errors.push("Debe seleccionar la ubicación en el mapa");
+      missingFields.push("Ubicación en el mapa (Ubicación)");
+    }
+    
+    // MULTIMEDIA TAB - At least one image required
+    if (!formData.image_urls || formData.image_urls.length === 0) {
+      errors.push("Debe subir al menos una imagen de la propiedad");
+      missingFields.push("Fotografías de la propiedad (Multimedia)");
+    }
     
     setValidationErrors(errors);
     return {
@@ -1511,36 +1547,27 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <p>
-                  Faltan datos importantes para completar la propiedad. La propiedad no será asignada a la plataforma hasta que esté completa.
+                <p className="font-medium text-red-700">
+                  No se puede guardar la propiedad hasta completar todas las secciones requeridas.
                 </p>
-                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                  <p className="font-medium text-amber-800 mb-2">Campos faltantes:</p>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-amber-700">
+                <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                  <p className="font-medium text-red-800 mb-2">Complete los siguientes datos:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
                     {incompleteFields.map((field, index) => (
                       <li key={index}>{field}</li>
                     ))}
                   </ul>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  ¿Desea guardar la propiedad como borrador o cancelar para completar los datos?
+                <p className="text-sm font-medium text-red-600">
+                  Debe completar General, Características, Ubicación y Multimedia para guardar la propiedad.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              Cancelar
+              Completar Datos
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                setShowIncompleteDialog(false);
-                submitForm();
-              }}
-              className="bg-amber-600 hover:bg-amber-700"
-            >
-              Guardar como Borrador
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
