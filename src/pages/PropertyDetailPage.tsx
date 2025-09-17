@@ -39,6 +39,7 @@ interface PropertyRow {
   agent_id: string;
   concluded_status: string | null;
   concluded_at: string | null;
+  property_code?: string | null;
 }
 
 interface Amenity { id: string; name: string; icon_svg?: string | null }

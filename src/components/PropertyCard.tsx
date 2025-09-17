@@ -20,6 +20,7 @@ export interface PropertyCardProps {
     constructed_area_m2?: number | null;
     transaction_type?: string | null;
     concluded_status?: string | null;
+    property_code?: string | null;
   };
   isFavorited?: boolean;
   onToggleFavorite?: (id: string, next: boolean) => void;
@@ -115,6 +116,13 @@ return (
       </AspectRatio>
       <CardContent className="p-4">
         <h3 className="font-semibold line-clamp-1">{property.title}</h3>
+        {property.property_code && (
+          <div className="mt-1">
+            <Badge variant="outline" className="text-xs font-mono bg-primary/5 border-primary/20 text-primary">
+              ID: {property.property_code}
+            </Badge>
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <BedDouble className="h-4 w-4" aria-hidden="true" />

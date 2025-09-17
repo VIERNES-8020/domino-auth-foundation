@@ -261,7 +261,20 @@ export default function AgentDashboard() {
         }
         
         console.log("Propiedad creada exitosamente:", data);
-        toast.success('Propiedad creada exitosamente');
+        
+        // Display property code if available
+        const newProperty = data?.[0];
+        if (newProperty?.property_code) {
+          toast.success(
+            `🎉 Propiedad creada exitosamente!\n📋 ID: ${newProperty.property_code}`,
+            {
+              duration: 6000,
+              description: `Tu nueva propiedad tiene el código: ${newProperty.property_code}`,
+            }
+          );
+        } else {
+          toast.success('Propiedad creada exitosamente');
+        }
       }
       
       console.log("Refrescando lista de propiedades...");
@@ -722,12 +735,19 @@ export default function AgentDashboard() {
                                 </div>
                                 <CardContent className="p-4">
                                   <div className="space-y-3">
-                                    <div>
-                                      <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-                                        {property.title}
-                                      </h3>
-                                      <p className="text-sm text-muted-foreground line-clamp-1">{property.address}</p>
-                                    </div>
+                                     <div>
+                                       <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+                                         {property.title}
+                                       </h3>
+                                       <p className="text-sm text-muted-foreground line-clamp-1">{property.address}</p>
+                                       {property.property_code && (
+                                         <div className="flex items-center gap-1 mt-1">
+                                           <Badge variant="outline" className="text-xs font-mono bg-primary/5 border-primary/20 text-primary">
+                                             ID: {property.property_code}
+                                           </Badge>
+                                         </div>
+                                       )}
+                                     </div>
                                     
                                     <div className="flex items-center justify-between">
                                       <div className="font-bold text-primary text-lg">

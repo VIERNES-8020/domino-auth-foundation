@@ -35,6 +35,7 @@ interface PropertyFormData {
   image_urls: string[];
   video_url: string;
   plans_url: string[];
+  property_code?: string;
 }
 
 interface PropertyFormProps {
