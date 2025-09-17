@@ -82,6 +82,8 @@ export default function AdminDashboard() {
   const [agentAssignments, setAgentAssignments] = useState<any[]>([]);
   const [agentVisits, setAgentVisits] = useState<any[]>([]);
   const [agentNotifications, setAgentNotifications] = useState<any[]>([]);
+  const [selectedAgentForNotifications, setSelectedAgentForNotifications] = useState<any>(null);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
 
   useEffect(() => {
     checkUserPermissions();
@@ -519,6 +521,75 @@ export default function AdminDashboard() {
       setSelectedAgentForView(null);
       setIsAgentViewModalOpen(false);
       toast.error('Error cargando detalles del agente: ' + (error.message || 'Error desconocido'));
+    }
+  };
+
+  const viewAgentNotificationsAndVisits = async (agent: any) => {
+    try {
+      // Reset previous data
+      setAgentVisits([]);
+      setAgentNotifications([]);
+      setSelectedAgentForNotifications(null);
+      
+      if (!agent || !agent.id) {
+        toast.error('Información del agente no válida');
+        return;
+      }
+
+      // Set the selected agent
+      setSelectedAgentForNotifications(agent);
+      
+      // Show loading state
+      setIsNotificationsModalOpen(true);
+      
+      console.log('Cargando notificaciones y citas para agente:', agent.full_name || agent.email);
+      
+      // Fetch agent's property visits (citas programadas)
+      const { data: visits, error: visitsError } = await supabase
+        .from('property_visits')
+        .select(`
+          *,
+          properties:property_id(title, address, property_type)
+        `)
+        .eq('agent_id', agent.id)
+        .order('scheduled_at', { ascending: false });
+
+      if (visitsError) {
+        console.error('Error fetching visits:', visitsError);
+        setAgentVisits([]);
+      } else {
+        console.log(`Encontradas ${visits?.length || 0} citas programadas para el agente`);
+        setAgentVisits(visits || []);
+      }
+
+      // Fetch agent's notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
+        .from('agent_notifications')
+        .select(`
+          *,
+          properties:property_id(title, address),
+          from_agent:from_agent_id(full_name, email)
+        `)
+        .eq('to_agent_id', agent.id)
+        .order('created_at', { ascending: false });
+
+      if (notificationsError) {
+        console.error('Error fetching notifications:', notificationsError);
+        setAgentNotifications([]);
+      } else {
+        console.log(`Encontradas ${notificationsData?.length || 0} notificaciones para el agente`);
+        setAgentNotifications(notificationsData || []);
+      }
+      
+      toast.success(`Cargadas ${visits?.length || 0} citas y ${notificationsData?.length || 0} notificaciones`);
+      
+    } catch (error: any) {
+      console.error('Error cargando notificaciones y citas:', error);
+      setAgentVisits([]);
+      setAgentNotifications([]);
+      setSelectedAgentForNotifications(null);
+      setIsNotificationsModalOpen(false);
+      toast.error('Error cargando notificaciones y citas: ' + (error.message || 'Error desconocido'));
     }
   };
 
@@ -1182,26 +1253,34 @@ export default function AdminDashboard() {
                                   </TableCell>
                                    <TableCell>
                                      <div className="flex items-center space-x-2">
-                                       <Button 
-                                         variant="outline" 
-                                         size="sm"
-                                         onClick={() => viewAgentDetails(user)}
-                                       >
-                                         <Eye className="h-4 w-4" />
-                                       </Button>
-                                      {isSuperAdmin && (
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => viewAgentDetails(user)}
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
+                                          onClick={() => viewAgentNotificationsAndVisits(user)}
+                                          title="Ver notificaciones y citas"
                                         >
-                                          {user.is_super_admin ? (
-                                            <UserX className="h-4 w-4" />
-                                          ) : (
-                                            <Crown className="h-4 w-4" />
-                                          )}
+                                          <Bell className="h-4 w-4" />
                                         </Button>
-                                      )}
+                                       {isSuperAdmin && (
+                                         <Button
+                                           variant="outline"
+                                           size="sm"
+                                           onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
+                                         >
+                                           {user.is_super_admin ? (
+                                             <UserX className="h-4 w-4" />
+                                           ) : (
+                                             <Crown className="h-4 w-4" />
+                                           )}
+                                         </Button>
+                                       )}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -2193,6 +2272,127 @@ export default function AdminDashboard() {
                         Y {agentNotifications.length - 5} notificaciones más...
                       </p>
                     )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Agent Notifications and Visits Modal */}
+      <Dialog open={isNotificationsModalOpen} onOpenChange={setIsNotificationsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notificaciones y Citas: {selectedAgentForNotifications?.full_name || selectedAgentForNotifications?.email}
+            </DialogTitle>
+            <div className="text-sm text-muted-foreground">
+              Citas programadas y notificaciones del agente
+            </div>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Property Visits Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Citas Programadas ({agentVisits.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentVisits.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene citas programadas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {agentVisits.map((visit) => (
+                      <div key={visit.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{visit.properties?.title || 'Propiedad'}</h4>
+                            <p className="text-sm text-muted-foreground">{visit.properties?.address}</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <Badge variant="outline">{visit.status}</Badge>
+                              <div className="flex items-center gap-1 text-sm">
+                                <Clock className="h-4 w-4" />
+                                {new Date(visit.scheduled_at).toLocaleString()}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                {visit.client_email}
+                              </div>
+                              {visit.client_phone && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="h-4 w-4" />
+                                  {visit.client_phone}
+                                </div>
+                              )}
+                            </div>
+                            {visit.message && (
+                              <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-2 rounded">
+                                {visit.message}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {visit.client_name}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Notifications Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notificaciones ({agentNotifications.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentNotifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene notificaciones</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {agentNotifications.map((notification) => (
+                      <div key={notification.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Bell className={`h-4 w-4 ${notification.read ? 'text-muted-foreground' : 'text-primary'}`} />
+                              <Badge variant={notification.read ? 'secondary' : 'default'}>
+                                {notification.read ? 'Leída' : 'Nueva'}
+                              </Badge>
+                            </div>
+                            <h4 className="font-medium">{notification.properties?.title || 'Propiedad'}</h4>
+                            <p className="text-sm text-muted-foreground">{notification.properties?.address}</p>
+                            <p className="text-sm mt-2 bg-muted/50 p-2 rounded">
+                              {notification.message}
+                            </p>
+                            <div className="text-sm text-muted-foreground mt-2">
+                              De: <Badge variant="outline">{notification.from_agent?.full_name || notification.from_agent?.email}</Badge>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
