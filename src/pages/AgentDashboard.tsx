@@ -820,9 +820,9 @@ export default function AgentDashboard() {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
                       Citas Programadas
-                      {propertyVisits.length > 0 && (
+                      {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
                         <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0.5 bg-orange/10 text-orange border-orange/20">
-                          {propertyVisits.length}
+                          {propertyVisits.filter(v => v.status === 'pending').length}
                         </Badge>
                       )}
                     </div>
@@ -1095,7 +1095,7 @@ export default function AgentDashboard() {
                         const rescheduledCount = propertyVisits.filter(v => v.status === 'rescheduled').length;
                         const completedCount = propertyVisits.filter(v => v.status === 'completed' && v.outcome === 'effective').length;
                         const deniedCount = propertyVisits.filter(v => v.status === 'completed' && v.outcome === 'denied').length;
-                        const totalCount = propertyVisits.length;
+                        const totalCount = propertyVisits.filter(v => v.status === 'pending').length;
                         
                         return (
                           <>
