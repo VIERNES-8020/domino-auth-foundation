@@ -1097,22 +1097,22 @@ export default function AgentDashboard() {
                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
                                  </>
                                )}
-                               {visit.status === 'confirmed' && (
-                                 <>
-                                   <Button size="sm" variant="outline" onClick={() => handleRescheduleVisit(visit)}>Reprogramar</Button>
-                                   <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
-                                   <Button size="sm" variant="default" onClick={() => handlePropertyEffective(visit)}>Propiedad Efectiva</Button>
-                                   <Button size="sm" variant="destructive" onClick={() => handlePropertyDenied(visit)}>Propiedad Negada</Button>
-                                 </>
-                               )}
-                               {visit.status === 'rescheduled' && (
-                                 <>
-                                   <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
-                                   <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
-                                   <Button size="sm" variant="default" onClick={() => handlePropertyEffective(visit)}>Propiedad Efectiva</Button>
-                                   <Button size="sm" variant="destructive" onClick={() => handlePropertyDenied(visit)}>Propiedad Negada</Button>
-                                 </>
-                               )}
+                                {visit.status === 'confirmed' && (
+                                  <>
+                                    <Button size="sm" variant="outline" onClick={() => handleRescheduleVisit(visit)}>Reprogramar</Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                    <Button size="sm" onClick={() => handlePropertyEffective(visit)} className="bg-green-500 text-white hover:bg-green-600">Propiedad Efectiva</Button>
+                                    <Button size="sm" onClick={() => handlePropertyDenied(visit)} className="bg-red-500 text-white hover:bg-red-600">Propiedad Negada</Button>
+                                  </>
+                                )}
+                                {visit.status === 'rescheduled' && (
+                                  <>
+                                    <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                    <Button size="sm" onClick={() => handlePropertyEffective(visit)} className="bg-green-500 text-white hover:bg-green-600">Propiedad Efectiva</Button>
+                                    <Button size="sm" onClick={() => handlePropertyDenied(visit)} className="bg-red-500 text-white hover:bg-red-600">Propiedad Negada</Button>
+                                  </>
+                                )}
                                <Badge variant="outline" className="capitalize">{visit.status}</Badge>
                              </div>
                           </div>
