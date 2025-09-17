@@ -367,36 +367,80 @@ export default function AdminDashboard() {
 
   const viewAgentDetails = async (agent: any) => {
     try {
+      // Reset previous data to avoid showing stale information
+      setAgentProperties([]);
+      setAgentAssignments([]);
+      setSelectedAgentForView(null);
+      
+      if (!agent || !agent.id) {
+        toast.error('Información del agente no válida');
+        return;
+      }
+
+      // Set the selected agent
       setSelectedAgentForView(agent);
       
-      // Fetch agent's properties
+      // Show loading state
+      setIsAgentViewModalOpen(true);
+      
+      console.log('Cargando detalles para agente:', agent.full_name || agent.email);
+      
+      // Fetch agent's properties with comprehensive data
       const { data: properties, error: propertiesError } = await supabase
         .from('properties')
-        .select('*')
+        .select(`
+          *,
+          agent_id,
+          title,
+          address,
+          property_type,
+          transaction_type,
+          price,
+          price_currency,
+          status,
+          created_at,
+          concluded_status
+        `)
         .eq('agent_id', agent.id)
         .order('created_at', { ascending: false });
       
-      if (propertiesError) throw propertiesError;
+      if (propertiesError) {
+        console.error('Error fetching properties:', propertiesError);
+        throw propertiesError;
+      }
+
+      console.log(`Encontradas ${properties?.length || 0} propiedades para el agente`);
       setAgentProperties(properties || []);
       
-      // Fetch agent's property assignments
+      // Fetch agent's property assignments with detailed information
       const { data: assignments, error: assignmentsError } = await supabase
         .from('property_assignments')
         .select(`
           *,
-          properties:property_id(title, address),
-          from_agent:from_agent_id(full_name),
-          to_agent:to_agent_id(full_name)
+          properties:property_id(title, address, property_type),
+          from_agent:from_agent_id(full_name, email),
+          to_agent:to_agent_id(full_name, email)
         `)
         .or(`from_agent_id.eq.${agent.id},to_agent_id.eq.${agent.id}`)
         .order('created_at', { ascending: false });
       
-      if (assignmentsError) throw assignmentsError;
+      if (assignmentsError) {
+        console.error('Error fetching assignments:', assignmentsError);
+        throw assignmentsError;
+      }
+
+      console.log(`Encontradas ${assignments?.length || 0} asignaciones para el agente`);
       setAgentAssignments(assignments || []);
       
-      setIsAgentViewModalOpen(true);
+      toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${assignments?.length || 0} asignaciones`);
+      
     } catch (error: any) {
-      toast.error('Error cargando detalles del agente: ' + error.message);
+      console.error('Error completo:', error);
+      setAgentProperties([]);
+      setAgentAssignments([]);
+      setSelectedAgentForView(null);
+      setIsAgentViewModalOpen(false);
+      toast.error('Error cargando detalles del agente: ' + (error.message || 'Error desconocido'));
     }
   };
 
