@@ -2168,25 +2168,63 @@ export default function AdminDashboard() {
 
       {/* Agent Notifications and Visits Modal */}
       <Dialog open={isNotificationsModalOpen} onOpenChange={setIsNotificationsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notificaciones y Citas: {selectedAgentForNotifications?.full_name || selectedAgentForNotifications?.email}
-            </DialogTitle>
-            <div className="text-sm text-muted-foreground">
-              Citas programadas y notificaciones del agente
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <Bell className="h-6 w-6" />
+                  Notificaciones y Citas: {selectedAgentForNotifications?.full_name || selectedAgentForNotifications?.email}
+                </DialogTitle>
+                <div className="text-sm text-muted-foreground">
+                  Citas programadas y notificaciones del agente
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsNotificationsModalOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Property Visits Section */}
+            {/* Citas Programadas Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Citas Programadas ({agentVisits.length})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    <CardTitle>Citas Programadas</CardTitle>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Gestiona y confirma tus próximas citas
+                  </div>
+                </div>
+                
+                {/* Filtros de Estado */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
+                    Pendientes (0)
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
+                    Confirmadas ({agentVisits.filter(v => v.status === 'confirmed').length})
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
+                    Canceladas (0)
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
+                    Reprogramadas (0)
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-green-500 text-white hover:bg-green-600">
+                    Propiedad Efectiva (1)
+                  </Button>
+                  <Button variant="outline" size="sm" className="bg-red-500 text-white hover:bg-red-600">
+                    Propiedad Negada (2)
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {agentVisits.length === 0 ? (
@@ -2197,38 +2235,93 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {agentVisits.map((visit) => (
-                      <div key={visit.id} className="border rounded-lg p-4">
+                      <div key={visit.id} className="border rounded-lg p-4 bg-background">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <h4 className="font-medium">{visit.properties?.title || 'Propiedad'}</h4>
-                            <p className="text-sm text-muted-foreground">{visit.properties?.address}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <Badge variant="outline">{visit.status}</Badge>
-                              <div className="flex items-center gap-1 text-sm">
-                                <Clock className="h-4 w-4" />
-                                {new Date(visit.scheduled_at).toLocaleString()}
+                            <h4 className="font-semibold text-lg text-primary">{visit.properties?.title || 'casa lujosa'}</h4>
+                            <p className="text-sm text-muted-foreground mb-2">{visit.properties?.address || 'Calle 23 De Enero, sarcobamba, Cercado, Cochabamba'}</p>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-orange-600">Cita programada:</span>
+                                <span className="text-sm font-medium text-orange-600">
+                                  {new Date(visit.scheduled_at).toLocaleDateString('es-ES', { 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    year: 'numeric' 
+                                  })}, {new Date(visit.scheduled_at).toLocaleTimeString('es-ES', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </span>
                               </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
-                              <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                {visit.client_email}
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">Acción realizada:</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date().toLocaleDateString('es-ES', { 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    year: 'numeric' 
+                                  })}, {new Date().toLocaleTimeString('es-ES', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
+                                </span>
                               </div>
+
+                              {visit.client_name && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-muted-foreground">Cliente:</span>
+                                  <span className="text-sm font-medium">{visit.client_name}</span>
+                                </div>
+                              )}
+
+                              {visit.client_email && (
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">{visit.client_email}</span>
+                                </div>
+                              )}
+
                               {visit.client_phone && (
-                                <div className="flex items-center gap-1">
-                                  <Phone className="h-4 w-4" />
-                                  {visit.client_phone}
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">{visit.client_phone}</span>
+                                </div>
+                              )}
+
+                              {visit.message && (
+                                <div className="mt-2 p-2 bg-muted/30 rounded text-sm">
+                                  <span className="font-medium">Mensaje: </span>
+                                  {visit.message}
                                 </div>
                               )}
                             </div>
-                            {visit.message && (
-                              <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-2 rounded">
-                                {visit.message}
-                              </p>
-                            )}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {visit.client_name}
+                          
+                          <div className="flex flex-col gap-2 ml-4">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                                Reprogramar
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-orange-600 border-orange-200 hover:bg-orange-50">
+                                Cancelar
+                              </Button>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
+                                Propiedad Efectiva
+                              </Button>
+                              <Button variant="outline" size="sm" className="bg-red-500 hover:bg-red-600 text-white border-red-500">
+                                Propiedad Negada
+                              </Button>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Confirmed
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2238,13 +2331,15 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Notifications Section */}
+            {/* Notificaciones Section */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notificaciones ({agentNotifications.length})
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    <CardTitle>Notificaciones ({agentNotifications.length})</CardTitle>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {agentNotifications.length === 0 ? (
@@ -2255,26 +2350,48 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {agentNotifications.map((notification) => (
-                      <div key={notification.id} className="border rounded-lg p-4">
+                      <div key={notification.id} className="border rounded-lg p-4 bg-background">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-3">
                               <Bell className={`h-4 w-4 ${notification.read ? 'text-muted-foreground' : 'text-primary'}`} />
                               <Badge variant={notification.read ? 'secondary' : 'default'}>
                                 {notification.read ? 'Leída' : 'Nueva'}
                               </Badge>
                             </div>
-                            <h4 className="font-medium">{notification.properties?.title || 'Propiedad'}</h4>
-                            <p className="text-sm text-muted-foreground">{notification.properties?.address}</p>
-                            <p className="text-sm mt-2 bg-muted/50 p-2 rounded">
-                              {notification.message}
-                            </p>
-                            <div className="text-sm text-muted-foreground mt-2">
-                              De: <Badge variant="outline">{notification.from_agent?.full_name || notification.from_agent?.email}</Badge>
+                            
+                            <div className="space-y-2">
+                              <h4 className="font-semibold">{notification.properties?.title || 'Propiedad'}</h4>
+                              <p className="text-sm text-muted-foreground">{notification.properties?.address}</p>
+                              
+                              <div className="bg-muted/30 p-3 rounded-lg">
+                                <p className="text-sm">{notification.message}</p>
+                              </div>
+                              
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground">
+                                  De: <Badge variant="outline">{notification.from_agent?.full_name || notification.from_agent?.email}</Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(notification.created_at).toLocaleDateString('es-ES', { 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(notification.created_at).toLocaleDateString()}
+                          
+                          <div className="ml-4">
+                            <Button 
+                              size="sm" 
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                              Responder
+                            </Button>
                           </div>
                         </div>
                       </div>
