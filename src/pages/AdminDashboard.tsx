@@ -35,7 +35,11 @@ import {
   X,
   Download,
   FileX,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Clock,
+  Bell,
+  Phone,
+  Mail
 } from "lucide-react";
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
@@ -76,6 +80,8 @@ export default function AdminDashboard() {
   const [isAgentViewModalOpen, setIsAgentViewModalOpen] = useState(false);
   const [agentProperties, setAgentProperties] = useState<any[]>([]);
   const [agentAssignments, setAgentAssignments] = useState<any[]>([]);
+  const [agentVisits, setAgentVisits] = useState<any[]>([]);
+  const [agentNotifications, setAgentNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     checkUserPermissions();
@@ -370,6 +376,8 @@ export default function AdminDashboard() {
       // Reset previous data to avoid showing stale information
       setAgentProperties([]);
       setAgentAssignments([]);
+      setAgentVisits([]);
+      setAgentNotifications([]);
       setSelectedAgentForView(null);
       
       if (!agent || !agent.id) {
@@ -461,12 +469,53 @@ export default function AdminDashboard() {
       console.log(`Encontradas ${enrichedAssignments?.length || 0} asignaciones para el agente`);
       setAgentAssignments(enrichedAssignments || []);
       
-      toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${enrichedAssignments?.length || 0} asignaciones`);
+      // Fetch agent's property visits (citas programadas)
+      const { data: visits, error: visitsError } = await supabase
+        .from('property_visits')
+        .select(`
+          *,
+          properties:property_id(title, address, property_type)
+        `)
+        .eq('agent_id', agent.id)
+        .order('scheduled_at', { ascending: false });
+
+      if (visitsError) {
+        console.error('Error fetching visits:', visitsError);
+        // Don't throw error, just log it and continue
+        setAgentVisits([]);
+      } else {
+        console.log(`Encontradas ${visits?.length || 0} citas programadas para el agente`);
+        setAgentVisits(visits || []);
+      }
+
+      // Fetch agent's notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
+        .from('agent_notifications')
+        .select(`
+          *,
+          properties:property_id(title, address),
+          from_agent:from_agent_id(full_name, email)
+        `)
+        .eq('to_agent_id', agent.id)
+        .order('created_at', { ascending: false });
+
+      if (notificationsError) {
+        console.error('Error fetching notifications:', notificationsError);
+        // Don't throw error, just log it and continue
+        setAgentNotifications([]);
+      } else {
+        console.log(`Encontradas ${notificationsData?.length || 0} notificaciones para el agente`);
+        setAgentNotifications(notificationsData || []);
+      }
+      
+      toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${enrichedAssignments?.length || 0} asignaciones, ${visits?.length || 0} citas, ${notificationsData?.length || 0} notificaciones`);
       
     } catch (error: any) {
       console.error('Error completo:', error);
       setAgentProperties([]);
       setAgentAssignments([]);
+      setAgentVisits([]);
+      setAgentNotifications([]);
       setSelectedAgentForView(null);
       setIsAgentViewModalOpen(false);
       toast.error('Error cargando detalles del agente: ' + (error.message || 'Error desconocido'));
@@ -2028,6 +2077,120 @@ export default function AdminDashboard() {
                     {agentAssignments.length > 5 && (
                       <p className="text-sm text-muted-foreground text-center">
                         Y {agentAssignments.length - 5} asignaciones más...
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Property Visits Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Citas Programadas ({agentVisits.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentVisits.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene citas programadas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {agentVisits.slice(0, 5).map((visit) => (
+                      <div key={visit.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{visit.properties?.title || 'Propiedad'}</h4>
+                            <p className="text-sm text-muted-foreground">{visit.properties?.address}</p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <Badge variant="outline">{visit.status}</Badge>
+                              <div className="flex items-center gap-1 text-sm">
+                                <Clock className="h-4 w-4" />
+                                {new Date(visit.scheduled_at).toLocaleString()}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                {visit.client_email}
+                              </div>
+                              {visit.client_phone && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="h-4 w-4" />
+                                  {visit.client_phone}
+                                </div>
+                              )}
+                            </div>
+                            {visit.message && (
+                              <p className="text-sm text-muted-foreground mt-2 bg-muted/50 p-2 rounded">
+                                {visit.message}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {visit.client_name}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {agentVisits.length > 5 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Y {agentVisits.length - 5} citas más...
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Notifications Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Notificaciones ({agentNotifications.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {agentNotifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No tiene notificaciones</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {agentNotifications.slice(0, 5).map((notification) => (
+                      <div key={notification.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Bell className={`h-4 w-4 ${notification.read ? 'text-muted-foreground' : 'text-primary'}`} />
+                              <Badge variant={notification.read ? 'secondary' : 'default'}>
+                                {notification.read ? 'Leída' : 'Nueva'}
+                              </Badge>
+                            </div>
+                            <h4 className="font-medium">{notification.properties?.title || 'Propiedad'}</h4>
+                            <p className="text-sm text-muted-foreground">{notification.properties?.address}</p>
+                            <p className="text-sm mt-2 bg-muted/50 p-2 rounded">
+                              {notification.message}
+                            </p>
+                            <div className="text-sm text-muted-foreground mt-2">
+                              De: <Badge variant="outline">{notification.from_agent?.full_name || notification.from_agent?.email}</Badge>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {agentNotifications.length > 5 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Y {agentNotifications.length - 5} notificaciones más...
                       </p>
                     )}
                   </div>
