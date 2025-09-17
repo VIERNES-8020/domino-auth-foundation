@@ -1052,7 +1052,7 @@ export default function AgentDashboard() {
                               size="sm"
                               onClick={() => setAppointmentFilter('all')}
                             >
-                              Todas ({totalCount})
+                              Pendientes ({totalCount})
                             </Button>
                             <Button
                               variant={appointmentFilter === 'confirmed' ? 'default' : 'outline'}
