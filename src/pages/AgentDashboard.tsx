@@ -1225,17 +1225,17 @@ export default function AgentDashboard() {
                                     <Button size="sm" onClick={() => handlePropertyDenied(visit)} className="bg-red-500 text-white hover:bg-red-600">Propiedad Negada</Button>
                                   </>
                                  )}
-                                 {(visit.status === 'completed') && (
-                                   <Button 
-                                     size="sm" 
-                                     variant="outline" 
-                                     onClick={() => handleArchiveVisit(visit)}
-                                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                   >
-                                     <Archive className="h-4 w-4 mr-1" />
-                                     Archivar
-                                   </Button>
-                                 )}
+                                  {(visit.status === 'completed') && visit.outcome !== 'effective' && visit.outcome !== 'denied' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      onClick={() => handleArchiveVisit(visit)}
+                                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    >
+                                      <Archive className="h-4 w-4 mr-1" />
+                                      Archivar
+                                    </Button>
+                                  )}
                                 <Badge variant="outline" className="capitalize">{visit.status}</Badge>
                              </div>
                           </div>
