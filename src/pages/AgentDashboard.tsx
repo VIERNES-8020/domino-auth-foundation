@@ -44,7 +44,7 @@ export default function AgentDashboard() {
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
-  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending'>('all');
+  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending' | 'rescheduled'>('all');
   const [cancellingVisit, setCancellingVisit] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
@@ -404,7 +404,8 @@ export default function AgentDashboard() {
         .from('property_visits')
         .update({ 
           scheduled_at: newScheduledDate.toISOString(),
-          visit_result: reschedulingReason,
+          visit_result: `Reprogramada: ${reschedulingReason}`,
+          status: 'rescheduled',
           updated_at: new Date().toISOString()
         })
         .eq('id', reschedulingVisit.id)
@@ -421,6 +422,56 @@ export default function AgentDashboard() {
     } catch (error: any) {
       console.error('Error rescheduling visit:', error);
       toast.error('Error al reprogramar la cita');
+    }
+  };
+
+  const handlePropertyEffective = async (visit: any) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('property_visits')
+        .update({ 
+          visit_result: 'Propiedad Efectiva',
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', visit.id)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success('Propiedad marcada como efectiva');
+      
+      await fetchPropertyVisits(user.id);
+    } catch (error: any) {
+      console.error('Error marking property as effective:', error);
+      toast.error('Error al marcar la propiedad como efectiva');
+    }
+  };
+
+  const handlePropertyDenied = async (visit: any) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('property_visits')
+        .update({ 
+          visit_result: 'Propiedad Negada',
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', visit.id)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success('Propiedad marcada como negada');
+      
+      await fetchPropertyVisits(user.id);
+    } catch (error: any) {
+      console.error('Error marking property as denied:', error);
+      toast.error('Error al marcar la propiedad como negada');
     }
   };
 
@@ -906,6 +957,7 @@ export default function AgentDashboard() {
                         const confirmedCount = propertyVisits.filter(v => v.status === 'confirmed').length;
                         const pendingCount = propertyVisits.filter(v => v.status === 'pending').length;
                         const cancelledCount = propertyVisits.filter(v => v.status === 'cancelled').length;
+                        const rescheduledCount = propertyVisits.filter(v => v.status === 'rescheduled').length;
                         const totalCount = propertyVisits.length;
                         
                         return (
@@ -938,6 +990,13 @@ export default function AgentDashboard() {
                             >
                               Canceladas ({cancelledCount})
                             </Button>
+                            <Button
+                              variant={appointmentFilter === 'rescheduled' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('rescheduled')}
+                            >
+                              Reprogramadas ({rescheduledCount})
+                            </Button>
                           </>
                         );
                       })()}
@@ -951,7 +1010,12 @@ export default function AgentDashboard() {
                       
                       return filteredVisits.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
-                          {appointmentFilter === 'all' ? 'No tienes citas programadas' : `No tienes citas ${appointmentFilter === 'confirmed' ? 'confirmadas' : appointmentFilter === 'pending' ? 'pendientes' : 'canceladas'}`}
+                          {appointmentFilter === 'all' ? 'No tienes citas programadas' : `No tienes citas ${
+                            appointmentFilter === 'confirmed' ? 'confirmadas' : 
+                            appointmentFilter === 'pending' ? 'pendientes' : 
+                            appointmentFilter === 'cancelled' ? 'canceladas' :
+                            appointmentFilter === 'rescheduled' ? 'reprogramadas' : ''
+                          }`}
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -964,8 +1028,8 @@ export default function AgentDashboard() {
                                 {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              {visit.status === 'pending' && (
+                             <div className="flex items-center gap-2">
+                               {visit.status === 'pending' && (
                                  <>
                                    <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
@@ -975,10 +1039,20 @@ export default function AgentDashboard() {
                                  <>
                                    <Button size="sm" variant="outline" onClick={() => handleRescheduleVisit(visit)}>Reprogramar</Button>
                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                   <Button size="sm" variant="default" onClick={() => handlePropertyEffective(visit)}>Propiedad Efectiva</Button>
+                                   <Button size="sm" variant="destructive" onClick={() => handlePropertyDenied(visit)}>Propiedad Negada</Button>
                                  </>
                                )}
-                              <Badge variant="outline" className="capitalize">{visit.status}</Badge>
-                            </div>
+                               {visit.status === 'rescheduled' && (
+                                 <>
+                                   <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                   <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                   <Button size="sm" variant="default" onClick={() => handlePropertyEffective(visit)}>Propiedad Efectiva</Button>
+                                   <Button size="sm" variant="destructive" onClick={() => handlePropertyDenied(visit)}>Propiedad Negada</Button>
+                                 </>
+                               )}
+                               <Badge variant="outline" className="capitalize">{visit.status}</Badge>
+                             </div>
                           </div>
                         ))}
                         </div>
