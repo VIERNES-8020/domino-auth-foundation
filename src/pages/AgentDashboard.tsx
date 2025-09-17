@@ -1151,7 +1151,7 @@ export default function AgentDashboard() {
                   <CardContent>
                     {(() => {
                       let filteredVisits = appointmentFilter === 'all' 
-                        ? propertyVisits 
+                        ? propertyVisits.filter(visit => visit.status === 'pending')
                         : appointmentFilter === 'effective'
                         ? propertyVisits.filter(visit => visit.status === 'completed' && visit.outcome === 'effective')
                         : appointmentFilter === 'denied'
