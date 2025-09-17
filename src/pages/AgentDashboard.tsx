@@ -567,66 +567,68 @@ export default function AgentDashboard() {
 
           {/* Enhanced Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-background to-background/90 border-2 border-primary/10 shadow-lg rounded-xl p-1 backdrop-blur-sm">
-              <TabsTrigger 
-                value="propiedades" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline">Mis Propiedades</span>
-                <span className="sm:hidden">Props</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="citas" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Citas Programadas</span>
-                <span className="sm:hidden">Citas</span>
-                {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full animate-pulse">
-                    {propertyVisits.filter(v => v.status === 'pending').length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="caracteristicas" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden lg:inline">Características</span>
-                <span className="lg:hidden">Caract.</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="asignacion" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <UserPlus className="h-4 w-4" />
-                <span className="hidden lg:inline">Asignación Propiedad</span>
-                <span className="lg:hidden">Asign.</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="notificaciones" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Notificaciones</span>
-                <span className="sm:hidden">Notifs</span>
-                {notifications.filter(n => !n.read).length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center rounded-full animate-pulse">
-                    {notifications.filter(n => !n.read).length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="perfil" 
-                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Mi Perfil</span>
-                <span className="sm:hidden">Perfil</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto scrollbar-hide">
+              <TabsList className="inline-flex h-12 items-center justify-start gap-1 rounded-xl bg-gradient-to-r from-card/80 to-card/60 p-1.5 shadow-lg border border-border/50 backdrop-blur-sm min-w-max">
+                <TabsTrigger 
+                  value="propiedades" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground"
+                >
+                  <Eye className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mis Propiedades</span>
+                  <span className="sm:hidden">Props</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="citas" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground relative"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Citas Programadas</span>
+                  <span className="sm:hidden">Citas</span>
+                  {propertyVisits.filter(v => v.status === 'pending').length > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs border-2 border-background animate-pulse">
+                      {propertyVisits.filter(v => v.status === 'pending').length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="caracteristicas" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden lg:inline">Características</span>
+                  <span className="lg:hidden">Caract.</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="asignacion" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden lg:inline">Asignación Propiedad</span>
+                  <span className="lg:hidden">Asign.</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="notificaciones" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground relative"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Notificaciones</span>
+                  <span className="sm:hidden">Notifs</span>
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs border-2 border-background animate-pulse">
+                      {notifications.filter(n => !n.read).length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="perfil" 
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 hover:text-accent-foreground"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Mi Perfil</span>
+                  <span className="sm:hidden">Perfil</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Tab Contents with improved spacing */}
             <div className="mt-6">
