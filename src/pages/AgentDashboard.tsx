@@ -824,34 +824,45 @@ export default function AgentDashboard() {
                     </CardTitle>
                     <CardDescription>Gestiona y confirma tus próximas citas</CardDescription>
                     <div className="flex gap-2 mt-4">
-                      <Button
-                        variant={appointmentFilter === 'all' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAppointmentFilter('all')}
-                      >
-                        Todas
-                      </Button>
-                      <Button
-                        variant={appointmentFilter === 'confirmed' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAppointmentFilter('confirmed')}
-                      >
-                        Confirmadas
-                      </Button>
-                      <Button
-                        variant={appointmentFilter === 'pending' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAppointmentFilter('pending')}
-                      >
-                        Pendientes
-                      </Button>
-                      <Button
-                        variant={appointmentFilter === 'cancelled' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAppointmentFilter('cancelled')}
-                      >
-                        Canceladas
-                      </Button>
+                      {(() => {
+                        const confirmedCount = propertyVisits.filter(v => v.status === 'confirmed').length;
+                        const pendingCount = propertyVisits.filter(v => v.status === 'pending').length;
+                        const cancelledCount = propertyVisits.filter(v => v.status === 'cancelled').length;
+                        const totalCount = propertyVisits.length;
+                        
+                        return (
+                          <>
+                            <Button
+                              variant={appointmentFilter === 'all' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('all')}
+                            >
+                              Todas ({totalCount})
+                            </Button>
+                            <Button
+                              variant={appointmentFilter === 'confirmed' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('confirmed')}
+                            >
+                              Confirmadas ({confirmedCount})
+                            </Button>
+                            <Button
+                              variant={appointmentFilter === 'pending' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('pending')}
+                            >
+                              Pendientes ({pendingCount})
+                            </Button>
+                            <Button
+                              variant={appointmentFilter === 'cancelled' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('cancelled')}
+                            >
+                              Canceladas ({cancelledCount})
+                            </Button>
+                          </>
+                        );
+                      })()}
                     </div>
                   </CardHeader>
                   <CardContent>
