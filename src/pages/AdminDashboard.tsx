@@ -1258,7 +1258,7 @@ export default function AdminDashboard() {
                                           size="sm"
                                           onClick={() => viewAgentDetails(user)}
                                         >
-                                          <Eye className="h-4 w-4" />
+                                          <Home className="h-4 w-4" />
                                         </Button>
                                         <Button
                                           variant="outline"
@@ -1266,7 +1266,7 @@ export default function AdminDashboard() {
                                           onClick={() => viewAgentNotificationsAndVisits(user)}
                                           title="Ver notificaciones y citas"
                                         >
-                                          <Bell className="h-4 w-4" />
+                                          <Mail className="h-4 w-4" />
                                         </Button>
                                        {isSuperAdmin && (
                                          <Button
