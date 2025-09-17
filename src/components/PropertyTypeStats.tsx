@@ -63,7 +63,17 @@ export default function PropertyTypeStats({ properties, onFilterChange }: Proper
     const filteredProperties = properties.filter(p => {
       const propertyType = p.property_type?.toLowerCase().trim();
       const searchType = type.toLowerCase().trim();
-      const matches = propertyType === searchType;
+      
+      // Special handling for "local comercial" to include "galpon"
+      let matches = propertyType === searchType;
+      
+      if (searchType === 'local comercial') {
+        matches = matches || 
+          propertyType === 'galpon' || 
+          propertyType === 'galpon comercial' ||
+          propertyType?.includes('galpon') ||
+          propertyType?.includes('comercial');
+      }
       
       if (!matches && p.property_type) {
         console.log(`Property ${p.id} type "${p.property_type}" doesn't match "${type}"`);
