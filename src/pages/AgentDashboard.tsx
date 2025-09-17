@@ -65,6 +65,10 @@ export default function AgentDashboard() {
   const [deniedPropertyModal, setDeniedPropertyModal] = useState<any>(null);
   const [denialReason, setDenialReason] = useState('');
 
+  // Estados para el modal de Archivar Visita
+  const [archivingVisit, setArchivingVisit] = useState<any>(null);
+  const [archiveReason, setArchiveReason] = useState('');
+
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -555,6 +559,42 @@ export default function AgentDashboard() {
     } catch (error: any) {
       console.error('Error marking property as denied:', error);
       toast.error('Error al marcar la propiedad como negada');
+    }
+  };
+
+  const handleArchiveVisit = (visit: any) => {
+    setArchivingVisit(visit);
+    setArchiveReason('');
+  };
+
+  const confirmArchiveVisit = async () => {
+    if (!user || !archivingVisit) return;
+    
+    if (!archiveReason.trim()) {
+      toast.error('Por favor ingresa la razón del archivo');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('property_visits')
+        .update({ 
+          message: archiveReason,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', archivingVisit.id)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success('Visita archivada correctamente');
+      
+      setArchivingVisit(null);
+      setArchiveReason('');
+      await fetchPropertyVisits(user.id);
+    } catch (error: any) {
+      console.error('Error archiving visit:', error);
+      toast.error('Error al archivar la visita');
     }
   };
 
@@ -1184,8 +1224,19 @@ export default function AgentDashboard() {
                                     <Button size="sm" onClick={() => handlePropertyEffective(visit)} className="bg-green-500 text-white hover:bg-green-600">Propiedad Efectiva</Button>
                                     <Button size="sm" onClick={() => handlePropertyDenied(visit)} className="bg-red-500 text-white hover:bg-red-600">Propiedad Negada</Button>
                                   </>
-                                )}
-                               <Badge variant="outline" className="capitalize">{visit.status}</Badge>
+                                 )}
+                                 {(visit.status === 'completed') && (
+                                   <Button 
+                                     size="sm" 
+                                     variant="outline" 
+                                     onClick={() => handleArchiveVisit(visit)}
+                                     className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                   >
+                                     <Archive className="h-4 w-4 mr-1" />
+                                     Archivar
+                                   </Button>
+                                 )}
+                                <Badge variant="outline" className="capitalize">{visit.status}</Badge>
                              </div>
                           </div>
                         ))}
@@ -1633,6 +1684,76 @@ export default function AgentDashboard() {
                 disabled={!denialReason.trim()}
               >
                 Confirmar Negación
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Archivar Visita */}
+        <Dialog open={!!archivingVisit} onOpenChange={() => setArchivingVisit(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-blue-600">Archivar Visita</DialogTitle>
+              <DialogDescription>
+                Registra el motivo por el cual deseas archivar esta visita
+              </DialogDescription>
+            </DialogHeader>
+            {archivingVisit && (
+              <div className="space-y-4">
+                {/* Información de la propiedad */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <h4 className="font-semibold text-gray-900">Información de la Visita</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium">Código:</span>
+                      <span className="ml-2">{archivingVisit.properties?.property_code || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Título:</span>
+                      <span className="ml-2">{archivingVisit.properties?.title}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Dirección:</span>
+                      <span className="ml-2">{archivingVisit.properties?.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Cliente:</span>
+                      <span className="ml-2">{archivingVisit.client_name}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Estado:</span>
+                      <span className="ml-2 capitalize">{archivingVisit.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Razón del archivo */}
+                <div className="space-y-2">
+                  <Label htmlFor="archive-reason">Motivo del Archivo *</Label>
+                  <Textarea
+                    id="archive-reason"
+                    placeholder="Describe el motivo por el cual archivas esta visita..."
+                    value={archiveReason}
+                    onChange={(e) => setArchiveReason(e.target.value)}
+                    className="min-h-[100px]"
+                    required
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Esta información quedará registrada para futuras referencias.
+                  </p>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setArchivingVisit(null)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={confirmArchiveVisit}
+                className="bg-blue-500 hover:bg-blue-600"
+                disabled={!archiveReason.trim()}
+              >
+                Archivar Visita
               </Button>
             </DialogFooter>
           </DialogContent>
