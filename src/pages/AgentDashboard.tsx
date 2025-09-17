@@ -16,6 +16,7 @@ import AssignPropertyModal from "@/components/AssignPropertyModal";
 import NotificationResponseModal from "@/components/NotificationResponseModal";
 import PropertyTypeStats from "@/components/PropertyTypeStats";
 import SalesProcessStats from "@/components/SalesProcessStats";
+import AmenitiesManagement from "@/components/AmenitiesManagement";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AgentDashboard() {
@@ -806,6 +807,94 @@ export default function AgentDashboard() {
                     </CardContent>
                   </Card>
                 )}
+              </TabsContent>
+
+              <TabsContent value="estadisticas" className="space-y-6">
+                <PropertyTypeStats properties={properties} onFilterChange={handlePropertyTypeFilter} />
+                {user && <SalesProcessStats agentId={user.id} />}
+              </TabsContent>
+
+              <TabsContent value="citas" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Citas Programadas
+                    </CardTitle>
+                    <CardDescription>Gestiona y confirma tus próximas citas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {propertyVisits.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">No tienes citas programadas</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {propertyVisits.map((visit) => (
+                          <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
+                            <div className="space-y-1">
+                              <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
+                              <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {visit.status === 'pending' && (
+                                <>
+                                  <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                  <Button size="sm" variant="outline" onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}>Cancelar</Button>
+                                </>
+                              )}
+                              {visit.status === 'confirmed' && (
+                                <Button size="sm" variant="outline" onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}>Cancelar</Button>
+                              )}
+                              <Badge variant="outline" className="capitalize">{visit.status}</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="caracteristicas" className="space-y-6">
+                <AmenitiesManagement />
+              </TabsContent>
+
+              <TabsContent value="notificaciones" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Notificaciones
+                    </CardTitle>
+                    <CardDescription>Responde a las consultas de clientes</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">No tienes notificaciones pendientes</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {notifications.map((n) => (
+                          <div key={n.id} className="p-4 border rounded-lg">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <div className="font-medium mb-1">{n.title || 'Nueva notificación'}</div>
+                                <div className="text-sm text-muted-foreground whitespace-pre-wrap">{n.message}</div>
+                                <div className="text-xs text-muted-foreground mt-2">
+                                  {new Date(n.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Button size="sm" onClick={() => setRespondingNotification(n)}>Responder</Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="asignacion" className="space-y-6">
