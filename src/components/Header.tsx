@@ -60,8 +60,10 @@ export default function Header() {
       return '/admin/dashboard';
     } else if (userRole === 'Agente Inmobiliario') {
       return '/dashboard/agent';
+    } else if (userRole === 'Cliente') {
+      return '/dashboard/client';
     }
-    return '/'; // Default fallback
+    return '/dashboard/client';
   };
 
   const handleSignOut = async () => {

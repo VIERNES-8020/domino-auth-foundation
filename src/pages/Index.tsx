@@ -29,9 +29,13 @@ const Index = () => {
 
   const getSmartPanelLink = () => {
     if (userRole === 'admin' || userRole === 'Super Administrador') {
-      return '/admin/dashboard/users';
+      return '/admin/dashboard';
     }
-    return '/dashboard/agent';
+    if (userRole === 'Agente Inmobiliario' || userRole === 'agent') {
+      return '/dashboard/agent';
+    }
+    // Por defecto, clientes al panel de cliente
+    return '/dashboard/client';
   };
 
   return (

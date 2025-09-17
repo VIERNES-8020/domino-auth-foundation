@@ -24,6 +24,7 @@ import FranchiseApplicationPage from '@/pages/FranchiseApplicationPage';
 import LeaderboardPage from '@/pages/LeaderboardPage';
 import AgentDashboard from '@/pages/AgentDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
+import ClientDashboard from '@/pages/ClientDashboard';
 import NotFound from '@/pages/NotFound';
 import AccessDenied from '@/pages/AccessDenied';
 
@@ -249,6 +250,14 @@ export default function App() {
         } />
 
         {/* Protected Dashboard Routes (no Header/Footer) */}
+        <Route path="/dashboard/client" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Cliente">
+              <ClientDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
         <Route path="/dashboard/agent" element={
           <DashboardLayout>
             <ProtectedRoute requiredRole="Agente Inmobiliario">
