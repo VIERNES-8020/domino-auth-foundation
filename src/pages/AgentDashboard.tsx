@@ -63,6 +63,7 @@ export default function AgentDashboard() {
   const [saleAmount, setSaleAmount] = useState('');
   const [commissionPercentage, setCommissionPercentage] = useState('');
   const [transactionType, setTransactionType] = useState('venta');
+  const [saleCurrency, setSaleCurrency] = useState('USD');
   
   // Estados para el modal de Propiedad Negada
   const [deniedPropertyModal, setDeniedPropertyModal] = useState<any>(null);
@@ -527,6 +528,7 @@ export default function AgentDashboard() {
     setSaleAmount('');
     setCommissionPercentage('5'); // Valor por defecto
     setTransactionType('venta');
+    setSaleCurrency(visit.properties?.price_currency || 'USD');
   };
 
   const confirmPropertySale = async () => {
@@ -550,7 +552,7 @@ export default function AgentDashboard() {
           commission_percentage: parseFloat(commissionPercentage),
           commission_amount: commissionAmount,
           transaction_type: transactionType,
-          currency: effectivePropertyModal.properties?.price_currency || 'USD',
+          currency: saleCurrency,
           updated_at: new Date().toISOString()
         })
         .eq('id', effectivePropertyModal.id)
@@ -1782,11 +1784,24 @@ export default function AgentDashboard() {
                   </div>
 
                   <div>
+                    <Label htmlFor="currency-select">Moneda *</Label>
+                    <select
+                      id="currency-select"
+                      value={saleCurrency}
+                      onChange={(e) => setSaleCurrency(e.target.value)}
+                      className="w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-1"
+                    >
+                      <option value="USD">Dólares (USD)</option>
+                      <option value="BOB">Bolivianos (BOB)</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <Label htmlFor="sale-amount">Monto Final de {transactionType === 'venta' ? 'Venta' : 'Alquiler'} *</Label>
                     <Input
                       id="sale-amount"
                       type="number"
-                      placeholder={`Monto final en ${effectivePropertyModal.properties?.price_currency || 'USD'}`}
+                      placeholder={`Monto final en ${saleCurrency}`}
                       value={saleAmount}
                       onChange={(e) => setSaleAmount(e.target.value)}
                       className="mt-1"
@@ -1813,7 +1828,7 @@ export default function AgentDashboard() {
                       <div className="text-sm text-green-800">
                         <strong>Comisión Calculada:</strong>
                         <span className="ml-2 font-semibold">
-                          {effectivePropertyModal.properties?.price_currency === 'USD' ? 'US$' : effectivePropertyModal.properties?.price_currency} {((parseFloat(saleAmount) * parseFloat(commissionPercentage)) / 100).toLocaleString()}
+                          {saleCurrency === 'USD' ? 'US$' : saleCurrency === 'BOB' ? 'Bs.' : saleCurrency} {((parseFloat(saleAmount) * parseFloat(commissionPercentage)) / 100).toLocaleString()}
                         </span>
                       </div>
                     </div>
