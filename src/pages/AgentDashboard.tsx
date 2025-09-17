@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X } from "lucide-react";
+import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X, UserPlus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import PropertyForm from "@/components/PropertyForm";
@@ -598,6 +598,14 @@ export default function AgentDashboard() {
                 <span className="lg:hidden">Caract.</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="asignacion" 
+                className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span className="hidden lg:inline">Asignación Propiedad</span>
+                <span className="lg:hidden">Asign.</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="notificaciones" 
                 className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-white rounded-lg transition-all duration-300"
               >
@@ -883,6 +891,24 @@ export default function AgentDashboard() {
                   <CardContent className="p-6">
                     <div className="text-center py-12">
                       <p className="text-muted-foreground">Funcionalidad de características próximamente...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="asignacion" className="space-y-6">
+                <Card className="shadow-lg border-primary/10">
+                  <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+                    <CardTitle className="text-xl">Asignación de Propiedades</CardTitle>
+                    <CardDescription>Gestiona y asigna propiedades a otros agentes</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="text-center py-12">
+                      <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                        <UserPlus className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">Asignación de Propiedades</h3>
+                      <p className="text-muted-foreground">Funcionalidad de asignación próximamente disponible.</p>
                     </div>
                   </CardContent>
                 </Card>
