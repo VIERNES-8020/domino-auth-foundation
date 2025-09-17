@@ -377,7 +377,18 @@ export default function AgentDashboard() {
       
       toast.success(`Cita ${newStatus === 'confirmed' ? 'confirmada' : 'cancelada'} exitosamente`);
       
+      // Forzar actualización inmediata de los datos
       await fetchPropertyVisits(user.id);
+      
+      // Forzar re-render del componente
+      setPropertyVisits(prev => 
+        prev.map(visit => 
+          visit.id === visitId 
+            ? { ...visit, status: newStatus, updated_at: new Date().toISOString() }
+            : visit
+        )
+      );
+      
     } catch (error: any) {
       console.error('Error updating visit status:', error);
       toast.error('Error al actualizar el estado de la cita');
