@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -84,6 +84,7 @@ export default function AdminDashboard() {
   const [agentNotifications, setAgentNotifications] = useState<any[]>([]);
   const [selectedAgentForNotifications, setSelectedAgentForNotifications] = useState<any>(null);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
+  const [visitFilter, setVisitFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'rescheduled' | 'effective' | 'denied'>('confirmed');
 
   useEffect(() => {
     checkUserPermissions();
@@ -776,6 +777,30 @@ export default function AdminDashboard() {
   const propertyStats = getPropertyStats();
   const userStats = getUserStats();
   const recentActivity = getRecentActivity();
+
+  // Normalización y conteos de visitas para filtros
+  const normalize = (s?: string) => (s || '').toString().trim().toLowerCase();
+  const visitCounts = {
+    pending: agentVisits.filter(v => ['pending','pendiente'].includes(normalize(v.status))).length,
+    confirmed: agentVisits.filter(v => ['confirmed','confirmado','confirmada'].includes(normalize(v.status))).length,
+    cancelled: agentVisits.filter(v => ['cancelled','canceled','cancelado','cancelada'].includes(normalize(v.status))).length,
+    rescheduled: agentVisits.filter(v => ['rescheduled','reprogramado','reprogramada'].includes(normalize(v.status))).length,
+    effective: agentVisits.filter(v => ['effective','efectiva','propiedad efectiva'].includes(normalize(v.outcome)) || ['effective','efectiva','propiedad efectiva'].includes(normalize(v.visit_result))).length,
+    denied: agentVisits.filter(v => ['denied','negada','propiedad negada'].includes(normalize(v.outcome)) || ['denied','negada','propiedad negada'].includes(normalize(v.visit_result))).length,
+  };
+  const filteredVisits = agentVisits.filter(v => {
+    const st = normalize(v.status);
+    const out = normalize(v.outcome) || normalize(v.visit_result);
+    switch (visitFilter) {
+      case 'pending': return ['pending','pendiente'].includes(st);
+      case 'confirmed': return ['confirmed','confirmado','confirmada'].includes(st);
+      case 'cancelled': return ['cancelled','canceled','cancelado','cancelada'].includes(st);
+      case 'rescheduled': return ['rescheduled','reprogramado','reprogramada'].includes(st);
+      case 'effective': return ['effective','efectiva','propiedad efectiva'].includes(out);
+      case 'denied': return ['denied','negada','propiedad negada'].includes(out);
+      default: return true;
+    }
+  });
 
   if (loading) {
     return (
@@ -2244,9 +2269,9 @@ export default function AdminDashboard() {
                   <Bell className="h-6 w-6" />
                   Notificaciones y Citas: {selectedAgentForNotifications?.full_name || selectedAgentForNotifications?.email}
                 </DialogTitle>
-                <div className="text-sm text-muted-foreground">
+                <DialogDescription>
                   Citas programadas y notificaciones del agente
-                </div>
+                </DialogDescription>
               </div>
               <Button
                 variant="ghost"
@@ -2265,7 +2290,9 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    <CardTitle>Citas Programadas</CardTitle>
+                    <CardTitle>
+                      Citas Programadas ({filteredVisits.length})
+                    </CardTitle>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Gestiona y confirma tus próximas citas
@@ -2274,23 +2301,54 @@ export default function AdminDashboard() {
                 
                 {/* Filtros de Estado */}
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
-                    Pendientes (0)
+                  <Button
+                    variant={visitFilter === 'pending' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('pending')}
+                  >
+                    Pendientes ({visitCounts.pending})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-orange-500 text-white hover:bg-orange-600">
-                    Confirmadas ({agentVisits.filter(v => v.status === 'confirmed').length})
+                  <Button
+                    variant={visitFilter === 'confirmed' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('confirmed')}
+                  >
+                    Confirmadas ({visitCounts.confirmed})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
-                    Canceladas (0)
+                  <Button
+                    variant={visitFilter === 'cancelled' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('cancelled')}
+                  >
+                    Canceladas ({visitCounts.cancelled})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100">
-                    Reprogramadas (0)
+                  <Button
+                    variant={visitFilter === 'rescheduled' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('rescheduled')}
+                  >
+                    Reprogramadas ({visitCounts.rescheduled})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-green-500 text-white hover:bg-green-600">
-                    Propiedad Efectiva (1)
+                  <Button
+                    variant={visitFilter === 'effective' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('effective')}
+                  >
+                    Propiedad Efectiva ({visitCounts.effective})
                   </Button>
-                  <Button variant="outline" size="sm" className="bg-red-500 text-white hover:bg-red-600">
-                    Propiedad Negada (2)
+                  <Button
+                    variant={visitFilter === 'denied' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('denied')}
+                  >
+                    Propiedad Negada ({visitCounts.denied})
+                  </Button>
+                  <Button
+                    variant={visitFilter === 'all' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVisitFilter('all')}
+                  >
+                    Todas ({agentVisits.length})
                   </Button>
                 </div>
               </CardHeader>
