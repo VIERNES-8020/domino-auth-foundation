@@ -1012,13 +1012,13 @@ export default function AdminDashboard() {
                               const userRole = getUserRole(user.id);
                               return userRole === 'agent' || user.is_super_admin;
                             })
-                            .filter(user => {
-                              if (searchTerm) {
-                                return user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-                              }
-                              return true;
-                            })
+                             .filter(user => {
+                               if (searchTerm) {
+                                 return user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                               }
+                               return true;
+                             })
                             .filter(user => {
                               if (selectedStatus === 'all') return true;
                               if (selectedStatus === 'agent') return !user.is_super_admin;
@@ -1032,12 +1032,12 @@ export default function AdminDashboard() {
                               return (
                                 <TableRow key={user.id}>
                                   <TableCell>
-                                    <div className="flex items-center space-x-2">
-                                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                        {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
-                                      </div>
-                                      <span className="font-medium">{user.display_name || 'Sin nombre'}</span>
-                                    </div>
+                                     <div className="flex items-center space-x-2">
+                                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                         {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                                       </div>
+                                       <span className="font-medium">{user.full_name || 'Sin nombre'}</span>
+                                     </div>
                                   </TableCell>
                                   <TableCell>{user.email}</TableCell>
                                   <TableCell>
