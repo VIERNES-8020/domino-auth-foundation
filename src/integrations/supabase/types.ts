@@ -676,6 +676,39 @@ export type Database = {
           },
         ]
       }
+      property_assignments: {
+        Row: {
+          assignment_date: string
+          created_at: string
+          from_agent_id: string
+          id: string
+          property_id: string
+          reason: string
+          to_agent_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_date?: string
+          created_at?: string
+          from_agent_id: string
+          id?: string
+          property_id: string
+          reason: string
+          to_agent_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_date?: string
+          created_at?: string
+          from_agent_id?: string
+          id?: string
+          property_id?: string
+          reason?: string
+          to_agent_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       property_reviews: {
         Row: {
           client_email: string
