@@ -757,6 +757,7 @@ export type Database = {
           currency: string | null
           id: string
           message: string | null
+          outcome: string | null
           property_id: string
           sale_amount: number | null
           scheduled_at: string
@@ -776,6 +777,7 @@ export type Database = {
           currency?: string | null
           id?: string
           message?: string | null
+          outcome?: string | null
           property_id: string
           sale_amount?: number | null
           scheduled_at: string
@@ -795,6 +797,7 @@ export type Database = {
           currency?: string | null
           id?: string
           message?: string | null
+          outcome?: string | null
           property_id?: string
           sale_amount?: number | null
           scheduled_at?: string
