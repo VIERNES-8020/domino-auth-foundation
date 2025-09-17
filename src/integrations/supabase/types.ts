@@ -566,6 +566,7 @@ export type Database = {
           plans_url: string[] | null
           price: number
           price_currency: string
+          property_code: string | null
           property_type: string | null
           status: string
           tags: string[] | null
@@ -600,6 +601,7 @@ export type Database = {
           plans_url?: string[] | null
           price: number
           price_currency?: string
+          property_code?: string | null
           property_type?: string | null
           status?: string
           tags?: string[] | null
@@ -634,6 +636,7 @@ export type Database = {
           plans_url?: string[] | null
           price?: number
           price_currency?: string
+          property_code?: string | null
           property_type?: string | null
           status?: string
           tags?: string[] | null
@@ -1136,6 +1139,14 @@ export type Database = {
         Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
+      generate_property_code: {
+        Args: {
+          p_agent_id: string
+          p_property_type: string
+          p_transaction_type: string
+        }
+        Returns: string
+      }
       geography: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -1389,6 +1400,7 @@ export type Database = {
           plans_url: string[] | null
           price: number
           price_currency: string
+          property_code: string | null
           property_type: string | null
           status: string
           tags: string[] | null
@@ -1720,6 +1732,7 @@ export type Database = {
           plans_url: string[] | null
           price: number
           price_currency: string
+          property_code: string | null
           property_type: string | null
           status: string
           tags: string[] | null
