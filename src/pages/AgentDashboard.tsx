@@ -50,6 +50,8 @@ export default function AgentDashboard() {
   const [cancellationReason, setCancellationReason] = useState('');
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
   const [confirmingVisit, setConfirmingVisit] = useState<any>(null);
+  const [actionStep, setActionStep] = useState<'details' | 'communication'>('details');
+  const [selectedAction, setSelectedAction] = useState<'confirm' | 'reschedule' | 'cancel' | null>(null);
   const [newScheduledDate, setNewScheduledDate] = useState<Date>();
   const [reschedulingReason, setReschedulingReason] = useState('');
   const [dateConflict, setDateConflict] = useState(false);
@@ -394,6 +396,35 @@ export default function AgentDashboard() {
       console.error('Error updating visit status:', error);
       toast.error('Error al actualizar el estado de la cita');
     }
+  };
+
+  const handleActionSelect = (action: 'confirm' | 'reschedule' | 'cancel') => {
+    setSelectedAction(action);
+    setActionStep('communication');
+  };
+
+  const handleCommunicationMethod = async (method: 'whatsapp' | 'email' | 'phone') => {
+    if (!confirmingVisit || !selectedAction) return;
+
+    if (selectedAction === 'confirm') {
+      await handleVisitStatusChange(confirmingVisit.id, 'confirmed');
+      toast.success(`Cita confirmada. Se contactará al cliente por ${method === 'whatsapp' ? 'WhatsApp' : method === 'email' ? 'correo electrónico' : 'teléfono'}`);
+    } else if (selectedAction === 'cancel') {
+      handleCancelVisit(confirmingVisit);
+    } else if (selectedAction === 'reschedule') {
+      handleRescheduleVisit(confirmingVisit);
+    }
+
+    // Reset states
+    setConfirmingVisit(null);
+    setActionStep('details');
+    setSelectedAction(null);
+  };
+
+  const resetConfirmationModal = () => {
+    setConfirmingVisit(null);
+    setActionStep('details');
+    setSelectedAction(null);
   };
 
   const handleCancelVisit = (visit: any) => {
@@ -1404,102 +1435,151 @@ export default function AgentDashboard() {
         )}
 
         {/* Confirmation Visit Modal */}
-        <Dialog open={!!confirmingVisit} onOpenChange={() => setConfirmingVisit(null)}>
+        <Dialog open={!!confirmingVisit} onOpenChange={resetConfirmationModal}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Detalles de la Cita</DialogTitle>
+              <DialogTitle>
+                {actionStep === 'details' ? 'Detalles de la Cita' : 'Método de Comunicación'}
+              </DialogTitle>
               <DialogDescription>
-                Revisa los detalles del cliente y la cita antes de confirmar.
+                {actionStep === 'details' 
+                  ? 'Revisa los detalles del cliente y la cita antes de confirmar.'
+                  : 'Selecciona cómo confirmarás la cita con el cliente.'
+                }
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              {/* Información del Cliente */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Información del Cliente</Label>
-                <div className="p-3 bg-muted rounded-md space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Nombre:</span>
-                    <span>{confirmingVisit?.client_name}</span>
-                  </div>
-                  {confirmingVisit?.client_email && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span className="text-sm">{confirmingVisit.client_email}</span>
-                    </div>
-                  )}
-                  {confirmingVisit?.client_phone && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Teléfono:</span>
-                      <span>{confirmingVisit.client_phone}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Información de la Propiedad */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Propiedad</Label>
-                <div className="p-3 bg-muted rounded-md space-y-2">
-                  <div className="font-medium">{confirmingVisit?.properties?.title}</div>
-                  <div className="text-sm text-muted-foreground">{confirmingVisit?.properties?.address}</div>
-                  {confirmingVisit?.properties?.price && (
-                    <div className="text-sm">
-                      <span className="font-medium">Precio: </span>
-                      {confirmingVisit?.properties?.price_currency === 'USD' ? 'US$' : confirmingVisit?.properties?.price_currency} {confirmingVisit?.properties?.price?.toLocaleString()}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Información de la Cita */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">Fecha y Hora</Label>
-                <div className="p-3 bg-muted rounded-md">
-                  <div className="font-medium text-primary">
-                    {confirmingVisit && format(new Date(confirmingVisit.scheduled_at), 'PPP p')}
-                  </div>
-                </div>
-              </div>
-
-              {/* Mensaje adicional si existe */}
-              {confirmingVisit?.message && (
+            
+            {actionStep === 'details' ? (
+              <div className="space-y-4">
+                {/* Información del Cliente */}
                 <div className="space-y-2">
-                  <Label className="text-base font-semibold">Mensaje del Cliente</Label>
-                  <div className="p-3 bg-muted rounded-md text-sm">
-                    {confirmingVisit.message}
+                  <Label className="text-base font-semibold">Información del Cliente</Label>
+                  <div className="p-3 bg-muted rounded-md space-y-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Nombre:</span>
+                      <span>{confirmingVisit?.client_name}</span>
+                    </div>
+                    {confirmingVisit?.client_email && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Email:</span>
+                        <span className="text-sm">{confirmingVisit.client_email}</span>
+                      </div>
+                    )}
+                    {confirmingVisit?.client_phone && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Teléfono:</span>
+                        <span>{confirmingVisit.client_phone}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Información de la Propiedad */}
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Propiedad</Label>
+                  <div className="p-3 bg-muted rounded-md space-y-2">
+                    <div className="font-medium">{confirmingVisit?.properties?.title}</div>
+                    <div className="text-sm text-muted-foreground">{confirmingVisit?.properties?.address}</div>
+                    {confirmingVisit?.properties?.price && (
+                      <div className="text-sm">
+                        <span className="font-medium">Precio: </span>
+                        {confirmingVisit?.properties?.price_currency === 'USD' ? 'US$' : confirmingVisit?.properties?.price_currency} {confirmingVisit?.properties?.price?.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Información de la Cita */}
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Fecha y Hora</Label>
+                  <div className="p-3 bg-muted rounded-md">
+                    <div className="font-medium text-primary">
+                      {confirmingVisit && format(new Date(confirmingVisit.scheduled_at), 'PPP p')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mensaje adicional si existe */}
+                {confirmingVisit?.message && (
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold">Mensaje del Cliente</Label>
+                    <div className="p-3 bg-muted rounded-md text-sm">
+                      {confirmingVisit.message}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Communication Methods Selection */
+              <div className="space-y-4">
+                <div className="text-center text-muted-foreground">
+                  ¿Cómo confirmarás la {selectedAction === 'confirm' ? 'confirmación' : selectedAction === 'reschedule' ? 'reprogramación' : 'cancelación'} con el cliente?
+                </div>
+                <div className="grid gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start gap-3 h-12"
+                    onClick={() => handleCommunicationMethod('whatsapp')}
+                  >
+                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">W</span>
+                    </div>
+                    WhatsApp
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start gap-3 h-12"
+                    onClick={() => handleCommunicationMethod('email')}
+                  >
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">@</span>
+                    </div>
+                    Correo Electrónico
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start gap-3 h-12"
+                    onClick={() => handleCommunicationMethod('phone')}
+                  >
+                    <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">📞</span>
+                    </div>
+                    Llamada Telefónica
+                  </Button>
+                </div>
+              </div>
+            )}
             
             <DialogFooter className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setConfirmingVisit(null);
-                  handleCancelVisit(confirmingVisit);
-                }}
-              >
-                Cancelar Cita
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setConfirmingVisit(null);
-                  handleRescheduleVisit(confirmingVisit);
-                }}
-              >
-                Reprogramar
-              </Button>
-              <Button 
-                onClick={() => {
-                  handleVisitStatusChange(confirmingVisit.id, 'confirmed');
-                  setConfirmingVisit(null);
-                }}
-                className="bg-green-500 hover:bg-green-600"
-              >
-                Confirmar Cita
-              </Button>
+              {actionStep === 'details' ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleActionSelect('cancel')}
+                  >
+                    Cancelar Cita
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleActionSelect('reschedule')}
+                  >
+                    Reprogramar
+                  </Button>
+                  <Button 
+                    onClick={() => handleActionSelect('confirm')}
+                    className="bg-green-500 hover:bg-green-600"
+                  >
+                    Confirmar Cita
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActionStep('details')}
+                >
+                  Volver
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
