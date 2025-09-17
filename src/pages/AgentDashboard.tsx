@@ -1127,14 +1127,35 @@ export default function AgentDashboard() {
                       ) : (
                         <div className="space-y-4">
                           {filteredVisits.map((visit) => (
-                          <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
-                            <div className="space-y-1">
-                              <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
-                              <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
-                              </div>
-                            </div>
+                           <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
+                             <div className="space-y-1 flex-1">
+                               <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
+                               <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
+                               <div className="text-sm text-muted-foreground">
+                                 {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                               </div>
+                               
+                               {/* Mostrar motivo de negación cuando está en filtro de propiedades negadas */}
+                               {appointmentFilter === 'denied' && visit.message && (
+                                 <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                                   <div className="text-sm font-medium text-red-800 mb-1">Motivo de la Negación:</div>
+                                   <div className="text-sm text-red-700">{visit.message}</div>
+                                 </div>
+                               )}
+                               
+                               {/* Mostrar información de venta cuando está en filtro de propiedades efectivas */}
+                               {appointmentFilter === 'effective' && visit.sale_amount && (
+                                 <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                                   <div className="text-sm font-medium text-green-800 mb-1">Detalles de la Venta:</div>
+                                   <div className="text-sm text-green-700">
+                                     <div>Monto: {visit.currency || 'USD'} {visit.sale_amount?.toLocaleString()}</div>
+                                     {visit.commission_percentage && (
+                                       <div>Comisión: {visit.commission_percentage}% ({visit.currency || 'USD'} {visit.commission_amount?.toLocaleString()})</div>
+                                     )}
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
                              <div className="flex items-center gap-2">
                                {visit.status === 'pending' && (
                                  <>
