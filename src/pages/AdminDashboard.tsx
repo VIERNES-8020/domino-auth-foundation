@@ -412,27 +412,56 @@ export default function AdminDashboard() {
       console.log(`Encontradas ${properties?.length || 0} propiedades para el agente`);
       setAgentProperties(properties || []);
       
-      // Fetch agent's property assignments with detailed information
+      // Fetch agent's property assignments - simplified query to avoid relationship errors
       const { data: assignments, error: assignmentsError } = await supabase
         .from('property_assignments')
-        .select(`
-          *,
-          properties:property_id(title, address, property_type),
-          from_agent:from_agent_id(full_name, email),
-          to_agent:to_agent_id(full_name, email)
-        `)
+        .select('*')
         .or(`from_agent_id.eq.${agent.id},to_agent_id.eq.${agent.id}`)
         .order('created_at', { ascending: false });
-      
+
       if (assignmentsError) {
         console.error('Error fetching assignments:', assignmentsError);
         throw assignmentsError;
       }
 
-      console.log(`Encontradas ${assignments?.length || 0} asignaciones para el agente`);
-      setAgentAssignments(assignments || []);
+      // If we have assignments, fetch the related data separately
+      let enrichedAssignments: any[] = [];
+      if (assignments && assignments.length > 0) {
+        for (const assignment of assignments) {
+          // Get property details
+          const { data: propertyData } = await supabase
+            .from('properties')
+            .select('title, address, property_type')
+            .eq('id', assignment.property_id)
+            .single();
+
+          // Get from_agent details
+          const { data: fromAgentData } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', assignment.from_agent_id)
+            .single();
+
+          // Get to_agent details  
+          const { data: toAgentData } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', assignment.to_agent_id)
+            .single();
+
+          enrichedAssignments.push({
+            ...assignment,
+            properties: propertyData,
+            from_agent: fromAgentData,
+            to_agent: toAgentData
+          });
+        }
+      }
       
-      toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${assignments?.length || 0} asignaciones`);
+      console.log(`Encontradas ${enrichedAssignments?.length || 0} asignaciones para el agente`);
+      setAgentAssignments(enrichedAssignments || []);
+      
+      toast.success(`Detalles cargados: ${properties?.length || 0} propiedades, ${enrichedAssignments?.length || 0} asignaciones`);
       
     } catch (error: any) {
       console.error('Error completo:', error);
@@ -1872,6 +1901,9 @@ export default function AdminDashboard() {
               <UserCheck className="h-5 w-5" />
               Detalles del Agente: {selectedAgentForView?.full_name || selectedAgentForView?.email}
             </DialogTitle>
+            <div className="text-sm text-muted-foreground">
+              Información detallada de propiedades y asignaciones del agente
+            </div>
           </DialogHeader>
           
           <div className="space-y-6">
