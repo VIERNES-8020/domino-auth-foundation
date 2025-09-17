@@ -521,9 +521,8 @@ export default function AgentDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg -z-10"></div>
-              <TabsList className="inline-flex h-12 items-center justify-start w-full bg-transparent p-1 overflow-x-auto">
-                <div className="flex gap-1 min-w-max">
-                  <TabsTrigger 
+              <TabsList className="grid w-full grid-cols-7 h-12 bg-white/50 backdrop-blur-sm border border-primary/10">
+                <TabsTrigger
                     value="propiedades" 
                     className="relative px-6 py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary hover:bg-white/50"
                   >
@@ -607,7 +606,6 @@ export default function AgentDashboard() {
                       Mi Perfil
                     </div>
                   </TabsTrigger>
-                </div>
               </TabsList>
             </div>
 
