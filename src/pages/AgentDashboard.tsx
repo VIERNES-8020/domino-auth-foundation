@@ -1062,13 +1062,6 @@ export default function AgentDashboard() {
                               Confirmadas ({confirmedCount})
                             </Button>
                             <Button
-                              variant={appointmentFilter === 'pending' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setAppointmentFilter('pending')}
-                            >
-                              Pendientes ({pendingCount})
-                            </Button>
-                            <Button
                               variant={appointmentFilter === 'cancelled' ? 'default' : 'outline'}
                               size="sm"
                               onClick={() => setAppointmentFilter('cancelled')}
