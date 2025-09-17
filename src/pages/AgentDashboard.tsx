@@ -1132,7 +1132,12 @@ export default function AgentDashboard() {
                                <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
                                <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
                                <div className="text-sm text-muted-foreground">
-                                 {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                 <div>Cita programada: {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}</div>
+                                 {visit.updated_at && visit.status !== 'pending' && (
+                                   <div className="text-xs text-muted-foreground mt-1">
+                                     Acción realizada: {new Date(visit.updated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                   </div>
+                                 )}
                                </div>
                                
                                {/* Mostrar motivo de negación cuando está en filtro de propiedades negadas */}
