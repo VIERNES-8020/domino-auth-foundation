@@ -56,13 +56,27 @@ export default function PropertyTypeStats({ properties, onFilterChange }: Proper
   ];
 
   const getPropertyStats = (type: string) => {
-    const filteredProperties = properties.filter(p => 
-      p.property_type?.toLowerCase() === type.toLowerCase()
-    );
+    // Debug logging to see all property types
+    console.log('All properties:', properties.map(p => ({ id: p.id, property_type: p.property_type })));
+    console.log('Looking for type:', type);
+    
+    const filteredProperties = properties.filter(p => {
+      const propertyType = p.property_type?.toLowerCase().trim();
+      const searchType = type.toLowerCase().trim();
+      const matches = propertyType === searchType;
+      
+      if (!matches && p.property_type) {
+        console.log(`Property ${p.id} type "${p.property_type}" doesn't match "${type}"`);
+      }
+      
+      return matches;
+    });
     
     const total = filteredProperties.length;
     const concluded = filteredProperties.filter(p => p.concluded_status).length;
     const active = total - concluded;
+    
+    console.log(`Stats for ${type}:`, { total, concluded, active, filteredProperties: filteredProperties.length });
     
     return { total, concluded, active };
   };
