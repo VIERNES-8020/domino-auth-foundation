@@ -1041,7 +1041,7 @@ export default function AgentDashboard() {
                               variant={appointmentFilter === 'effective' ? 'default' : 'outline'}
                               size="sm"
                               onClick={() => setAppointmentFilter('effective')}
-                              className="bg-primary hover:bg-primary/90"
+                              className="bg-green-500 text-white hover:bg-green-600 border-green-500 data-[state=active]:bg-green-600"
                             >
                               Propiedad Efectiva ({completedCount})
                             </Button>
@@ -1049,7 +1049,7 @@ export default function AgentDashboard() {
                               variant={appointmentFilter === 'denied' ? 'destructive' : 'outline'}
                               size="sm"
                               onClick={() => setAppointmentFilter('denied')}
-                              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              className="bg-red-500 text-white hover:bg-red-600 border-red-500 data-[state=active]:bg-red-600"
                             >
                               Propiedad Negada ({deniedCount})
                             </Button>
