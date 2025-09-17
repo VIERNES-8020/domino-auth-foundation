@@ -7,6 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X, UserPlus, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -42,6 +47,8 @@ export default function AgentDashboard() {
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending'>('all');
   const [cancellingVisit, setCancellingVisit] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
+  const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
+  const [newScheduledDate, setNewScheduledDate] = useState<Date>();
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
@@ -372,6 +379,40 @@ export default function AgentDashboard() {
     await handleVisitStatusChange(cancellingVisit.id, 'cancelled', cancellationReason);
     setCancellingVisit(null);
     setCancellationReason('');
+  };
+
+  const handleRescheduleVisit = (visit: any) => {
+    setReschedulingVisit(visit);
+    setNewScheduledDate(new Date(visit.scheduled_at));
+  };
+
+  const confirmRescheduleVisit = async () => {
+    if (!reschedulingVisit || !newScheduledDate) {
+      toast.error('Por favor, selecciona una nueva fecha');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('property_visits')
+        .update({ 
+          scheduled_at: newScheduledDate.toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reschedulingVisit.id)
+        .eq('agent_id', user.id);
+
+      if (error) throw error;
+      
+      toast.success('Cita reprogramada exitosamente');
+      
+      await fetchPropertyVisits(user.id);
+      setReschedulingVisit(null);
+      setNewScheduledDate(undefined);
+    } catch (error: any) {
+      console.error('Error rescheduling visit:', error);
+      toast.error('Error al reprogramar la cita');
+    }
   };
 
   const signOut = async () => {
@@ -922,8 +963,11 @@ export default function AgentDashboard() {
                                  </>
                                )}
                                {visit.status === 'confirmed' && (
-                                 <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
-                              )}
+                                 <>
+                                   <Button size="sm" variant="outline" onClick={() => handleRescheduleVisit(visit)}>Reprogramar</Button>
+                                   <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                 </>
+                               )}
                               <Badge variant="outline" className="capitalize">{visit.status}</Badge>
                             </div>
                           </div>
@@ -1084,6 +1128,89 @@ export default function AgentDashboard() {
                 disabled={!cancellationReason.trim()}
               >
                 Cancelar Cita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reschedule Visit Modal */}
+        <Dialog open={!!reschedulingVisit} onOpenChange={() => setReschedulingVisit(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reprogramar Cita</DialogTitle>
+              <DialogDescription>
+                Selecciona una nueva fecha y hora para la cita con {reschedulingVisit?.client_name}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Propiedad</Label>
+                <div className="p-2 bg-muted rounded-md text-sm">
+                  <div className="font-medium">{reschedulingVisit?.properties?.title}</div>
+                  <div className="text-muted-foreground">{reschedulingVisit?.properties?.address}</div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Fecha actual</Label>
+                <div className="text-sm text-muted-foreground">
+                  {reschedulingVisit && format(new Date(reschedulingVisit.scheduled_at), 'PPP p')}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Nueva fecha y hora</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !newScheduledDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newScheduledDate ? format(newScheduledDate, "PPP p") : <span>Seleccionar fecha</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newScheduledDate}
+                      onSelect={setNewScheduledDate}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                    <div className="p-3 border-t">
+                      <Label className="text-sm font-medium">Hora</Label>
+                      <input
+                        type="time"
+                        className="w-full mt-1 p-2 border rounded-md"
+                        value={newScheduledDate ? format(newScheduledDate, 'HH:mm') : ''}
+                        onChange={(e) => {
+                          if (newScheduledDate && e.target.value) {
+                            const [hours, minutes] = e.target.value.split(':');
+                            const newDate = new Date(newScheduledDate);
+                            newDate.setHours(parseInt(hours), parseInt(minutes));
+                            setNewScheduledDate(newDate);
+                          }
+                        }}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReschedulingVisit(null)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={confirmRescheduleVisit}
+                disabled={!newScheduledDate}
+              >
+                Reprogramar Cita
               </Button>
             </DialogFooter>
           </DialogContent>
