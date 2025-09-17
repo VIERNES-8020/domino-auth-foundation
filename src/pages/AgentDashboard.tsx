@@ -1138,13 +1138,28 @@ export default function AgentDashboard() {
                   </CardHeader>
                   <CardContent>
                     {(() => {
-                      const filteredVisits = appointmentFilter === 'all' 
+                      let filteredVisits = appointmentFilter === 'all' 
                         ? propertyVisits 
                         : appointmentFilter === 'effective'
                         ? propertyVisits.filter(visit => visit.status === 'completed' && visit.outcome === 'effective')
                         : appointmentFilter === 'denied'
                         ? propertyVisits.filter(visit => visit.status === 'completed' && visit.outcome === 'denied')
                         : propertyVisits.filter(visit => visit.status === appointmentFilter);
+                      
+                      // Sort visits to show pending first, then by scheduled date
+                      filteredVisits = filteredVisits.sort((a, b) => {
+                        // Priority: pending > confirmed > rescheduled > others
+                        const statusPriority = { pending: 0, confirmed: 1, rescheduled: 2 };
+                        const aPriority = statusPriority[a.status] ?? 3;
+                        const bPriority = statusPriority[b.status] ?? 3;
+                        
+                        if (aPriority !== bPriority) {
+                          return aPriority - bPriority;
+                        }
+                        
+                        // If same status, sort by scheduled date (closest first)
+                        return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
+                      });
                       
                       return filteredVisits.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
@@ -1159,19 +1174,29 @@ export default function AgentDashboard() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {filteredVisits.map((visit) => (
-                           <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
-                             <div className="space-y-1 flex-1">
-                               <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
-                               <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
-                               <div className="text-sm text-muted-foreground">
-                                 <div>Cita programada: {new Date(visit.scheduled_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}</div>
-                                 {visit.updated_at && visit.status !== 'pending' && (
-                                   <div className="text-xs text-muted-foreground mt-1">
-                                     Acción realizada: {new Date(visit.updated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
-                                   </div>
-                                 )}
-                               </div>
+                           {filteredVisits.map((visit) => (
+                            <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
+                              <div className="space-y-2 flex-1">
+                                <div className="font-semibold text-lg">{visit.properties?.title || 'Propiedad'}</div>
+                                <div className="text-sm text-muted-foreground">{visit.properties?.address}</div>
+                                <div className="text-sm">
+                                  <span className="font-medium">Cita programada:</span>{' '}
+                                  <span className="font-medium text-primary">
+                                    {new Date(visit.scheduled_at).toLocaleDateString('es-ES', { 
+                                      day: 'numeric', 
+                                      month: 'short', 
+                                      year: 'numeric' 
+                                    })}, {new Date(visit.scheduled_at).toLocaleTimeString('es-ES', { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}
+                                  </span>
+                                </div>
+                                {visit.updated_at && visit.status !== 'pending' && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Acción realizada: {new Date(visit.updated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                  </div>
+                                )}
                                
                                {/* Mostrar motivo de negación cuando está en filtro de propiedades negadas */}
                                {appointmentFilter === 'denied' && visit.message && (
