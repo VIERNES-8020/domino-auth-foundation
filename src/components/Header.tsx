@@ -32,6 +32,12 @@ export default function Header() {
         return;
       }
       
+      // Check if user has agent_code (makes them an agent)
+      if (profileData?.agent_code) {
+        setUserRole('Agente Inmobiliario');
+        return;
+      }
+      
       // Check user_roles for other roles
       const { data: roleData } = await supabase
         .from('user_roles')

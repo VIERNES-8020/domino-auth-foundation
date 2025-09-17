@@ -69,10 +69,10 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
 
   const fetchUserProfile = async (user: User) => {
     try {
-      // First check profiles table for super admin flag
+      // First check profiles table for super admin flag and agent_code
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, is_super_admin, full_name')
+        .select('id, is_super_admin, full_name, agent_code')
         .eq('id', user.id)
         .maybeSingle();
       
@@ -80,6 +80,15 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         setProfile({ 
           id: profileData.id, 
           role: 'Super Administrador' 
+        });
+        return;
+      }
+      
+      // Check if user has agent_code (makes them an agent)
+      if (profileData?.agent_code) {
+        setProfile({ 
+          id: user.id, 
+          role: 'Agente Inmobiliario' 
         });
         return;
       }
