@@ -60,6 +60,10 @@ export default function AgentDashboard() {
   const [saleAmount, setSaleAmount] = useState('');
   const [commissionPercentage, setCommissionPercentage] = useState('');
   const [transactionType, setTransactionType] = useState('venta');
+  
+  // Estados para el modal de Propiedad Negada
+  const [deniedPropertyModal, setDeniedPropertyModal] = useState<any>(null);
+  const [denialReason, setDenialReason] = useState('');
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -516,8 +520,18 @@ export default function AgentDashboard() {
     }
   };
 
-  const handlePropertyDenied = async (visit: any) => {
-    if (!user) return;
+  const handlePropertyDenied = (visit: any) => {
+    setDeniedPropertyModal(visit);
+    setDenialReason('');
+  };
+
+  const confirmPropertyDenial = async () => {
+    if (!user || !deniedPropertyModal) return;
+    
+    if (!denialReason.trim()) {
+      toast.error('Por favor ingresa la razón de la negación');
+      return;
+    }
     
     try {
       const { error } = await supabase
@@ -526,15 +540,17 @@ export default function AgentDashboard() {
           visit_result: 'Propiedad Negada',
           status: 'completed',
           outcome: 'denied',
+          message: denialReason,
           updated_at: new Date().toISOString()
         })
-        .eq('id', visit.id)
+        .eq('id', deniedPropertyModal.id)
         .eq('agent_id', user.id);
 
       if (error) throw error;
       
       toast.success('Propiedad marcada como negada');
       
+      setDeniedPropertyModal(null);
       await fetchPropertyVisits(user.id);
     } catch (error: any) {
       console.error('Error marking property as denied:', error);
@@ -1518,6 +1534,78 @@ export default function AgentDashboard() {
                 disabled={!saleAmount || !commissionPercentage}
               >
                 Confirmar Venta
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Propiedad Negada */}
+        <Dialog open={!!deniedPropertyModal} onOpenChange={() => setDeniedPropertyModal(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-red-600">Propiedad Negada</DialogTitle>
+              <DialogDescription>
+                Registra el motivo por el cual la propiedad no fue efectiva
+              </DialogDescription>
+            </DialogHeader>
+            {deniedPropertyModal && (
+              <div className="space-y-4">
+                {/* Información de la propiedad */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <h4 className="font-semibold text-gray-900">Información de la Propiedad</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium">Código:</span>
+                      <span className="ml-2">{deniedPropertyModal.properties?.property_code || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Título:</span>
+                      <span className="ml-2">{deniedPropertyModal.properties?.title}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Dirección:</span>
+                      <span className="ml-2">{deniedPropertyModal.properties?.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Precio Comercial:</span>
+                      <span className="ml-2 font-semibold text-primary">
+                        {deniedPropertyModal.properties?.price_currency === 'USD' ? 'US$' : deniedPropertyModal.properties?.price_currency} {deniedPropertyModal.properties?.price?.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Cliente:</span>
+                      <span className="ml-2">{deniedPropertyModal.client_name}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Razón de la negación */}
+                <div className="space-y-2">
+                  <Label htmlFor="denial-reason">Motivo de la Negación *</Label>
+                  <Textarea
+                    id="denial-reason"
+                    placeholder="Describe por qué el cliente no está interesado en la propiedad..."
+                    value={denialReason}
+                    onChange={(e) => setDenialReason(e.target.value)}
+                    className="min-h-[100px]"
+                    required
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Esta información te ayudará a entender mejor las preferencias de los clientes.
+                  </p>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeniedPropertyModal(null)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={confirmPropertyDenial}
+                className="bg-red-500 hover:bg-red-600"
+                disabled={!denialReason.trim()}
+              >
+                Confirmar Negación
               </Button>
             </DialogFooter>
           </DialogContent>
