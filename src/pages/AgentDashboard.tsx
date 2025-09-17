@@ -44,7 +44,7 @@ export default function AgentDashboard() {
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
-  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending' | 'rescheduled'>('all');
+  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending' | 'rescheduled' | 'effective' | 'denied'>('all');
   const [cancellingVisit, setCancellingVisit] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
@@ -990,12 +990,14 @@ export default function AgentDashboard() {
                       Citas Programadas
                     </CardTitle>
                     <CardDescription>Gestiona y confirma tus próximas citas</CardDescription>
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex flex-wrap gap-2 mt-4">
                       {(() => {
                         const confirmedCount = propertyVisits.filter(v => v.status === 'confirmed').length;
                         const pendingCount = propertyVisits.filter(v => v.status === 'pending').length;
                         const cancelledCount = propertyVisits.filter(v => v.status === 'cancelled').length;
                         const rescheduledCount = propertyVisits.filter(v => v.status === 'rescheduled').length;
+                        const completedCount = propertyVisits.filter(v => v.status === 'completed' && v.outcome === 'effective').length;
+                        const deniedCount = propertyVisits.filter(v => v.status === 'completed' && v.outcome === 'denied').length;
                         const totalCount = propertyVisits.length;
                         
                         return (
@@ -1035,6 +1037,22 @@ export default function AgentDashboard() {
                             >
                               Reprogramadas ({rescheduledCount})
                             </Button>
+                            <Button
+                              variant={appointmentFilter === 'effective' ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('effective')}
+                              className="bg-primary hover:bg-primary/90"
+                            >
+                              Propiedad Efectiva ({completedCount})
+                            </Button>
+                            <Button
+                              variant={appointmentFilter === 'denied' ? 'destructive' : 'outline'}
+                              size="sm"
+                              onClick={() => setAppointmentFilter('denied')}
+                              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              Propiedad Negada ({deniedCount})
+                            </Button>
                           </>
                         );
                       })()}
@@ -1044,6 +1062,10 @@ export default function AgentDashboard() {
                     {(() => {
                       const filteredVisits = appointmentFilter === 'all' 
                         ? propertyVisits 
+                        : appointmentFilter === 'effective'
+                        ? propertyVisits.filter(visit => visit.status === 'completed' && visit.outcome === 'effective')
+                        : appointmentFilter === 'denied'
+                        ? propertyVisits.filter(visit => visit.status === 'completed' && visit.outcome === 'denied')
                         : propertyVisits.filter(visit => visit.status === appointmentFilter);
                       
                       return filteredVisits.length === 0 ? (
@@ -1052,7 +1074,9 @@ export default function AgentDashboard() {
                             appointmentFilter === 'confirmed' ? 'confirmadas' : 
                             appointmentFilter === 'pending' ? 'pendientes' : 
                             appointmentFilter === 'cancelled' ? 'canceladas' :
-                            appointmentFilter === 'rescheduled' ? 'reprogramadas' : ''
+                            appointmentFilter === 'rescheduled' ? 'reprogramadas' :
+                            appointmentFilter === 'effective' ? 'con resultado efectivo' :
+                            appointmentFilter === 'denied' ? 'con resultado negativo' : ''
                           }`}
                         </div>
                       ) : (
