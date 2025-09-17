@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import MapPicker from "@/components/MapPicker";
 import { toast } from "sonner";
 import { Home, MapPin, Camera, Settings, Upload, FileText, Video, Sparkles, Plus, Trash2, CheckCircle, AlertTriangle } from "lucide-react";
@@ -69,6 +70,8 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [incompleteFields, setIncompleteFields] = useState<string[]>([]);
   
   // Location selection states
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -493,18 +496,38 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
   // Enhanced form validation - ARCHIVOS OPCIONALES
   const validateForm = () => {
     const errors: string[] = [];
+    const missingFields: string[] = [];
     
-    if (!formData.title) errors.push("El título es obligatorio");
-    if (!formData.property_type) errors.push("El tipo de propiedad es obligatorio");
-    if (!formData.transaction_type) errors.push("El tipo de transacción es obligatorio");
-    if (!formData.price) errors.push("El precio es obligatorio");
-    if (!formData.description) errors.push("La descripción es obligatoria para una mejor presentación");
+    if (!formData.title) {
+      errors.push("El título es obligatorio");
+      missingFields.push("Título de la propiedad");
+    }
+    if (!formData.property_type) {
+      errors.push("El tipo de propiedad es obligatorio");
+      missingFields.push("Tipo de propiedad");
+    }
+    if (!formData.transaction_type) {
+      errors.push("El tipo de transacción es obligatorio");
+      missingFields.push("Tipo de transacción");
+    }
+    if (!formData.price) {
+      errors.push("El precio es obligatorio");
+      missingFields.push("Precio");
+    }
+    if (!formData.description) {
+      errors.push("La descripción es obligatoria para una mejor presentación");
+      missingFields.push("Descripción");
+    }
     
     // CAMBIO: Las imágenes y planos son ahora OPCIONALES
     // No se requieren archivos para guardar la propiedad
     
     setValidationErrors(errors);
-    return errors.length === 0;
+    return {
+      isValid: errors.length === 0,
+      errors,
+      missingFields
+    };
   };
 
   // Text auto-correction for description
@@ -576,13 +599,19 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
     console.log("Form data:", formData);
     
     // Enhanced validation
-    if (!validateForm()) {
+    const validationResult = validateForm();
+    if (!validationResult.isValid) {
       console.log("VALIDACION FALLIDA");
-      toast.error("Complete todos los campos obligatorios marcados para continuar");
+      setIncompleteFields(validationResult.missingFields);
+      setShowIncompleteDialog(true);
       return;
     }
     
     console.log("VALIDACION PASADA - Iniciando guardado...");
+    await submitForm();
+  };
+
+  const submitForm = async () => {
     setFormSubmitting(true);
     setSaveSuccess(false);
 
@@ -1471,6 +1500,50 @@ export default function PropertyForm({ onClose, onSubmit, initialData }: Propert
           </div>
         </form>
       </CardContent>
+
+      {/* Confirmation Dialog for Incomplete Data */}
+      <AlertDialog open={showIncompleteDialog} onOpenChange={setShowIncompleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Datos Incompletos
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Faltan datos importantes para completar la propiedad. La propiedad no será asignada a la plataforma hasta que esté completa.
+                </p>
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                  <p className="font-medium text-amber-800 mb-2">Campos faltantes:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-amber-700">
+                    {incompleteFields.map((field, index) => (
+                      <li key={index}>{field}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  ¿Desea guardar la propiedad como borrador o cancelar para completar los datos?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowIncompleteDialog(false);
+                submitForm();
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Guardar como Borrador
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
