@@ -49,6 +49,7 @@ export default function AgentDashboard() {
   const [cancellingVisit, setCancellingVisit] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
+  const [confirmingVisit, setConfirmingVisit] = useState<any>(null);
   const [newScheduledDate, setNewScheduledDate] = useState<Date>();
   const [reschedulingReason, setReschedulingReason] = useState('');
   const [dateConflict, setDateConflict] = useState(false);
@@ -1242,7 +1243,7 @@ export default function AgentDashboard() {
                              <div className="flex items-center gap-2">
                                {visit.status === 'pending' && (
                                  <>
-                                   <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                    <Button size="sm" onClick={() => setConfirmingVisit(visit)}>Confirmar</Button>
                                    <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
                                  </>
                                )}
@@ -1256,7 +1257,7 @@ export default function AgentDashboard() {
                                 )}
                                 {visit.status === 'rescheduled' && (
                                   <>
-                                    <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                    <Button size="sm" onClick={() => setConfirmingVisit(visit)}>Confirmar</Button>
                                     <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
                                     <Button size="sm" onClick={() => handlePropertyEffective(visit)} className="bg-green-500 text-white hover:bg-green-600">Propiedad Efectiva</Button>
                                     <Button size="sm" onClick={() => handlePropertyDenied(visit)} className="bg-red-500 text-white hover:bg-red-600">Propiedad Negada</Button>
@@ -1401,6 +1402,107 @@ export default function AgentDashboard() {
             agentProfile={profile}
           />
         )}
+
+        {/* Confirmation Visit Modal */}
+        <Dialog open={!!confirmingVisit} onOpenChange={() => setConfirmingVisit(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Detalles de la Cita</DialogTitle>
+              <DialogDescription>
+                Revisa los detalles del cliente y la cita antes de confirmar.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Información del Cliente */}
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Información del Cliente</Label>
+                <div className="p-3 bg-muted rounded-md space-y-2">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Nombre:</span>
+                    <span>{confirmingVisit?.client_name}</span>
+                  </div>
+                  {confirmingVisit?.client_email && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span>
+                      <span className="text-sm">{confirmingVisit.client_email}</span>
+                    </div>
+                  )}
+                  {confirmingVisit?.client_phone && (
+                    <div className="flex justify-between">
+                      <span className="font-medium">Teléfono:</span>
+                      <span>{confirmingVisit.client_phone}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Información de la Propiedad */}
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Propiedad</Label>
+                <div className="p-3 bg-muted rounded-md space-y-2">
+                  <div className="font-medium">{confirmingVisit?.properties?.title}</div>
+                  <div className="text-sm text-muted-foreground">{confirmingVisit?.properties?.address}</div>
+                  {confirmingVisit?.properties?.price && (
+                    <div className="text-sm">
+                      <span className="font-medium">Precio: </span>
+                      {confirmingVisit?.properties?.price_currency === 'USD' ? 'US$' : confirmingVisit?.properties?.price_currency} {confirmingVisit?.properties?.price?.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Información de la Cita */}
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Fecha y Hora</Label>
+                <div className="p-3 bg-muted rounded-md">
+                  <div className="font-medium text-primary">
+                    {confirmingVisit && format(new Date(confirmingVisit.scheduled_at), 'PPP p')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mensaje adicional si existe */}
+              {confirmingVisit?.message && (
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Mensaje del Cliente</Label>
+                  <div className="p-3 bg-muted rounded-md text-sm">
+                    {confirmingVisit.message}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setConfirmingVisit(null);
+                  handleCancelVisit(confirmingVisit);
+                }}
+              >
+                Cancelar Cita
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setConfirmingVisit(null);
+                  handleRescheduleVisit(confirmingVisit);
+                }}
+              >
+                Reprogramar
+              </Button>
+              <Button 
+                onClick={() => {
+                  handleVisitStatusChange(confirmingVisit.id, 'confirmed');
+                  setConfirmingVisit(null);
+                }}
+                className="bg-green-500 hover:bg-green-600"
+              >
+                Confirmar Cita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Cancellation Reason Modal */}
         <Dialog open={!!cancellingVisit} onOpenChange={() => setCancellingVisit(null)}>
