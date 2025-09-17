@@ -447,6 +447,9 @@ export default function AdminDashboard() {
     const user = users.find(u => u.id === userId);
     if (user?.is_super_admin) return 'Super Admin';
     
+    // Check if user has agent_code - that makes them an agent
+    if (user?.agent_code) return 'agent';
+    
     const role = userRoles.find(r => r.user_id === userId);
     return role?.role || 'client';
   };
