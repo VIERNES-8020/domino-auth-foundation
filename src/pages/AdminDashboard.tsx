@@ -522,7 +522,7 @@ export default function AdminDashboard() {
         {/* Navigation Tabs */}
         <Card className="shadow-lg border-0 bg-background/95 backdrop-blur">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={`grid w-full h-14 bg-muted/50 ${isSuperAdmin ? 'grid-cols-9' : 'grid-cols-8'}`}>
+            <TabsList className={`grid w-full h-14 bg-muted/50 ${isSuperAdmin ? 'grid-cols-10' : 'grid-cols-9'}`}>
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
@@ -537,6 +537,10 @@ export default function AdminDashboard() {
                   Usuarios
                 </TabsTrigger>
               )}
+              <TabsTrigger value="agentes" className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4" />
+                Agentes / Staff
+              </TabsTrigger>
               <TabsTrigger value="franquicias" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Franquicias
@@ -873,6 +877,182 @@ export default function AdminDashboard() {
                 <AdminUserManagement />
               </TabsContent>
             )}
+
+            {/* Agentes / Staff Management Tab */}
+            <TabsContent value="agentes" className="space-y-6 mt-6">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCheck className="h-5 w-5" />
+                    Gestión de Agentes y Staff
+                  </CardTitle>
+                  <CardDescription>
+                    Administra los agentes inmobiliarios y personal de DOMINIO
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Filter Controls */}
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Buscar agentes..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="max-w-sm"
+                        />
+                      </div>
+                      <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="Filtrar por rol" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos</SelectItem>
+                          <SelectItem value="agent">Agentes</SelectItem>
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Agent Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-blue-600">Total Agentes</p>
+                              <p className="text-2xl font-bold text-blue-700">{userStats.agents}</p>
+                            </div>
+                            <UserCheck className="h-8 w-8 text-blue-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-green-600">Super Admins</p>
+                              <p className="text-2xl font-bold text-green-700">{userStats.superAdmins}</p>
+                            </div>
+                            <Crown className="h-8 w-8 text-green-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-yellow-600">Total Staff</p>
+                              <p className="text-2xl font-bold text-yellow-700">{userStats.agents + userStats.superAdmins}</p>
+                            </div>
+                            <Users className="h-8 w-8 text-yellow-600" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Agents List */}
+                    <div className="border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Agente</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Rol</TableHead>
+                            <TableHead>Propiedades</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead>Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {users
+                            .filter(user => {
+                              const userRole = getUserRole(user.id);
+                              return userRole === 'agent' || user.is_super_admin;
+                            })
+                            .filter(user => {
+                              if (searchTerm) {
+                                return user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+                              }
+                              return true;
+                            })
+                            .filter(user => {
+                              if (selectedStatus === 'all') return true;
+                              if (selectedStatus === 'agent') return !user.is_super_admin;
+                              if (selectedStatus === 'super_admin') return user.is_super_admin;
+                              return true;
+                            })
+                            .map((user) => {
+                              const userRole = getUserRole(user.id);
+                              const userProperties = properties.filter(p => p.agent_id === user.id);
+                              
+                              return (
+                                <TableRow key={user.id}>
+                                  <TableCell>
+                                    <div className="flex items-center space-x-2">
+                                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        {user.display_name ? user.display_name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                                      </div>
+                                      <span className="font-medium">{user.display_name || 'Sin nombre'}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>{user.email}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={user.is_super_admin ? 'default' : 'secondary'}>
+                                      {user.is_super_admin ? 'Super Admin' : 'Agente'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline">
+                                      {userProperties.length} propiedades
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Badge variant="default" className="bg-green-100 text-green-800">
+                                      Activo
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center space-x-2">
+                                      <Button variant="outline" size="sm">
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                      {isSuperAdmin && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
+                                        >
+                                          {user.is_super_admin ? (
+                                            <UserX className="h-4 w-4" />
+                                          ) : (
+                                            <Crown className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {users.filter(user => getUserRole(user.id) === 'agent' || user.is_super_admin).length === 0 && (
+                      <div className="text-center py-12">
+                        <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No hay agentes registrados</h3>
+                        <p className="text-muted-foreground">Los agentes aparecerán aquí cuando se registren en el sistema.</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Franchises Management Tab */}
             <TabsContent value="franquicias" className="space-y-6 mt-6">
