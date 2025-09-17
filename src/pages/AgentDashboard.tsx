@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Eye, Edit, Trash, Archive, Plus, CheckCircle, ArchiveRestore, MoreVertical, Reply, Mail, MessageCircle, Bot, User, TrendingUp, Clock, CheckSquare, X, UserPlus, UserCheck } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -37,6 +40,8 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending'>('all');
+  const [cancellingVisit, setCancellingVisit] = useState<any>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
@@ -322,16 +327,23 @@ export default function AgentDashboard() {
     }
   };
 
-  const handleVisitStatusChange = async (visitId: string, newStatus: 'confirmed' | 'cancelled') => {
+  const handleVisitStatusChange = async (visitId: string, newStatus: 'confirmed' | 'cancelled', reason?: string) => {
     if (!user) return;
     
     try {
+      const updateData: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      // Add cancellation reason if cancelling
+      if (newStatus === 'cancelled' && reason) {
+        updateData.visit_result = reason;
+      }
+
       const { error } = await supabase
         .from('property_visits')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', visitId)
         .eq('agent_id', user.id);
 
@@ -344,6 +356,22 @@ export default function AgentDashboard() {
       console.error('Error updating visit status:', error);
       toast.error('Error al actualizar el estado de la cita');
     }
+  };
+
+  const handleCancelVisit = (visit: any) => {
+    setCancellingVisit(visit);
+    setCancellationReason('');
+  };
+
+  const confirmCancelVisit = async () => {
+    if (!cancellingVisit || !cancellationReason.trim()) {
+      toast.error('Por favor, proporciona un motivo para la cancelación');
+      return;
+    }
+    
+    await handleVisitStatusChange(cancellingVisit.id, 'cancelled', cancellationReason);
+    setCancellingVisit(null);
+    setCancellationReason('');
   };
 
   const signOut = async () => {
@@ -888,13 +916,13 @@ export default function AgentDashboard() {
                             </div>
                             <div className="flex items-center gap-2">
                               {visit.status === 'pending' && (
-                                <>
-                                  <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
-                                  <Button size="sm" variant="outline" onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}>Cancelar</Button>
-                                </>
-                              )}
-                              {visit.status === 'confirmed' && (
-                                <Button size="sm" variant="outline" onClick={() => handleVisitStatusChange(visit.id, 'cancelled')}>Cancelar</Button>
+                                 <>
+                                   <Button size="sm" onClick={() => handleVisitStatusChange(visit.id, 'confirmed')}>Confirmar</Button>
+                                   <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
+                                 </>
+                               )}
+                               {visit.status === 'confirmed' && (
+                                 <Button size="sm" variant="outline" onClick={() => handleCancelVisit(visit)}>Cancelar</Button>
                               )}
                               <Badge variant="outline" className="capitalize">{visit.status}</Badge>
                             </div>
@@ -1024,6 +1052,42 @@ export default function AgentDashboard() {
             agentProfile={profile}
           />
         )}
+
+        {/* Cancellation Reason Modal */}
+        <Dialog open={!!cancellingVisit} onOpenChange={() => setCancellingVisit(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancelar Cita</DialogTitle>
+              <DialogDescription>
+                Por favor, proporciona el motivo de la cancelación de esta cita.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="cancellation-reason">Motivo de cancelación</Label>
+                <Textarea
+                  id="cancellation-reason"
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Explica el motivo de la cancelación..."
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCancellingVisit(null)}>
+                Volver
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmCancelVisit}
+                disabled={!cancellationReason.trim()}
+              >
+                Cancelar Cita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
