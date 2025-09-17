@@ -252,6 +252,13 @@ export default function PropertyDetailPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">{property.title}</h1>
+                {property.property_code && (
+                  <div className="mb-3">
+                    <Badge variant="outline" className="text-sm font-mono bg-primary/10 border-primary/30 text-primary px-3 py-1">
+                      ID: {property.property_code}
+                    </Badge>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   <span>{property.address}</span>

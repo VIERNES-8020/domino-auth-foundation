@@ -292,7 +292,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
         let query = supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,geolocation", { count: "exact" })
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,geolocation,property_code", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);

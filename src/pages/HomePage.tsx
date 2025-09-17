@@ -81,7 +81,7 @@ export default function HomePage() {
         const fetchType = async (type: string) => {
         const { data } = await supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type,property_code")
           .eq("status", "approved")
           .eq("property_type", type)
           .eq("is_archived", false)
@@ -113,7 +113,7 @@ export default function HomePage() {
       const fetchConcludedType = async (type: string) => {
         const { data } = await supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type,concluded_status")
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,constructed_area_m2,address,property_type,concluded_status,property_code")
           .eq("status", "approved")
           .eq("property_type", type)
           .not("concluded_status", "is", null)
