@@ -36,6 +36,7 @@ export default function AgentDashboard() {
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
+  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending'>('all');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
@@ -822,13 +823,50 @@ export default function AgentDashboard() {
                       Citas Programadas
                     </CardTitle>
                     <CardDescription>Gestiona y confirma tus próximas citas</CardDescription>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        variant={appointmentFilter === 'all' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAppointmentFilter('all')}
+                      >
+                        Todas
+                      </Button>
+                      <Button
+                        variant={appointmentFilter === 'confirmed' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAppointmentFilter('confirmed')}
+                      >
+                        Confirmadas
+                      </Button>
+                      <Button
+                        variant={appointmentFilter === 'pending' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAppointmentFilter('pending')}
+                      >
+                        Pendientes
+                      </Button>
+                      <Button
+                        variant={appointmentFilter === 'cancelled' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setAppointmentFilter('cancelled')}
+                      >
+                        Canceladas
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    {propertyVisits.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">No tienes citas programadas</div>
-                    ) : (
-                      <div className="space-y-4">
-                        {propertyVisits.map((visit) => (
+                    {(() => {
+                      const filteredVisits = appointmentFilter === 'all' 
+                        ? propertyVisits 
+                        : propertyVisits.filter(visit => visit.status === appointmentFilter);
+                      
+                      return filteredVisits.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground">
+                          {appointmentFilter === 'all' ? 'No tienes citas programadas' : `No tienes citas ${appointmentFilter === 'confirmed' ? 'confirmadas' : appointmentFilter === 'pending' ? 'pendientes' : 'canceladas'}`}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {filteredVisits.map((visit) => (
                           <div key={visit.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 border rounded-lg">
                             <div className="space-y-1">
                               <div className="font-medium">{visit.properties?.title || 'Propiedad'}</div>
@@ -851,8 +889,9 @@ export default function AgentDashboard() {
                             </div>
                           </div>
                         ))}
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </TabsContent>
