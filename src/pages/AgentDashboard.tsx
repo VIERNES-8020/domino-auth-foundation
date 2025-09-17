@@ -525,6 +525,7 @@ export default function AgentDashboard() {
         .update({ 
           visit_result: 'Propiedad Negada',
           status: 'completed',
+          outcome: 'denied',
           updated_at: new Date().toISOString()
         })
         .eq('id', visit.id)
