@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,12 @@ export default function AgentDashboard() {
   const [dateConflict, setDateConflict] = useState(false);
   const [dateChanged, setDateChanged] = useState(false);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
+  
+  // Estados para el modal de Propiedad Efectiva
+  const [effectivePropertyModal, setEffectivePropertyModal] = useState<any>(null);
+  const [saleAmount, setSaleAmount] = useState('');
+  const [commissionPercentage, setCommissionPercentage] = useState('');
+  const [transactionType, setTransactionType] = useState('venta');
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -463,24 +470,45 @@ export default function AgentDashboard() {
     }
   };
 
-  const handlePropertyEffective = async (visit: any) => {
-    if (!user) return;
+  const handlePropertyEffective = (visit: any) => {
+    setEffectivePropertyModal(visit);
+    setSaleAmount('');
+    setCommissionPercentage('5'); // Valor por defecto
+    setTransactionType('venta');
+  };
+
+  const confirmPropertySale = async () => {
+    if (!user || !effectivePropertyModal) return;
+    
+    if (!saleAmount || !commissionPercentage) {
+      toast.error('Por favor completa todos los campos requeridos');
+      return;
+    }
     
     try {
+      const commissionAmount = (parseFloat(saleAmount) * parseFloat(commissionPercentage)) / 100;
+      
       const { error } = await supabase
         .from('property_visits')
         .update({ 
           visit_result: 'Propiedad Efectiva',
           status: 'completed',
+          outcome: 'effective',
+          sale_amount: parseFloat(saleAmount),
+          commission_percentage: parseFloat(commissionPercentage),
+          commission_amount: commissionAmount,
+          transaction_type: transactionType,
+          currency: effectivePropertyModal.properties?.price_currency || 'USD',
           updated_at: new Date().toISOString()
         })
-        .eq('id', visit.id)
+        .eq('id', effectivePropertyModal.id)
         .eq('agent_id', user.id);
 
       if (error) throw error;
       
       toast.success('Propiedad marcada como efectiva');
       
+      setEffectivePropertyModal(null);
       await fetchPropertyVisits(user.id);
     } catch (error: any) {
       console.error('Error marking property as effective:', error);
@@ -1383,6 +1411,112 @@ export default function AgentDashboard() {
                 )}
               >
                 Reprogramar Cita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Propiedad Efectiva */}
+        <Dialog open={!!effectivePropertyModal} onOpenChange={() => setEffectivePropertyModal(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-green-600">Propiedad Efectiva</DialogTitle>
+              <DialogDescription>
+                Registra los detalles de la venta exitosa
+              </DialogDescription>
+            </DialogHeader>
+            {effectivePropertyModal && (
+              <div className="space-y-4">
+                {/* Información de la propiedad */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <h4 className="font-semibold text-gray-900">Información de la Propiedad</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium">Código:</span>
+                      <span className="ml-2">{effectivePropertyModal.properties?.property_code || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Título:</span>
+                      <span className="ml-2">{effectivePropertyModal.properties?.title}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Dirección:</span>
+                      <span className="ml-2">{effectivePropertyModal.properties?.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Precio Comercial:</span>
+                      <span className="ml-2 font-semibold text-primary">
+                        {effectivePropertyModal.properties?.price_currency === 'USD' ? 'US$' : effectivePropertyModal.properties?.price_currency} {effectivePropertyModal.properties?.price?.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detalles de la venta */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="transaction-type">Tipo de Transacción</Label>
+                    <select
+                      id="transaction-type"
+                      className="w-full mt-1 p-2 border rounded-md"
+                      value={transactionType}
+                      onChange={(e) => setTransactionType(e.target.value)}
+                    >
+                      <option value="venta">Venta</option>
+                      <option value="alquiler">Alquiler</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sale-amount">Monto Final de {transactionType === 'venta' ? 'Venta' : 'Alquiler'} *</Label>
+                    <Input
+                      id="sale-amount"
+                      type="number"
+                      placeholder={`Monto final en ${effectivePropertyModal.properties?.price_currency || 'USD'}`}
+                      value={saleAmount}
+                      onChange={(e) => setSaleAmount(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="commission-percentage">Porcentaje de Comisión (%) *</Label>
+                    <Input
+                      id="commission-percentage"
+                      type="number"
+                      placeholder="Ej: 5"
+                      value={commissionPercentage}
+                      onChange={(e) => setCommissionPercentage(e.target.value)}
+                      className="mt-1"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                    />
+                  </div>
+
+                  {saleAmount && commissionPercentage && (
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="text-sm text-green-800">
+                        <strong>Comisión Calculada:</strong>
+                        <span className="ml-2 font-semibold">
+                          {effectivePropertyModal.properties?.price_currency === 'USD' ? 'US$' : effectivePropertyModal.properties?.price_currency} {((parseFloat(saleAmount) * parseFloat(commissionPercentage)) / 100).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEffectivePropertyModal(null)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={confirmPropertySale}
+                className="bg-green-500 hover:bg-green-600"
+                disabled={!saleAmount || !commissionPercentage}
+              >
+                Confirmar Venta
               </Button>
             </DialogFooter>
           </DialogContent>
