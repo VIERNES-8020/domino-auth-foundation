@@ -50,6 +50,8 @@ export default function AgentDashboard() {
   const [reschedulingVisit, setReschedulingVisit] = useState<any>(null);
   const [newScheduledDate, setNewScheduledDate] = useState<Date>();
   const [reschedulingReason, setReschedulingReason] = useState('');
+  const [dateConflict, setDateConflict] = useState(false);
+  const [dateChanged, setDateChanged] = useState(false);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<{type: string; status: 'all' | 'active' | 'concluded'} | null>(null);
 
   useEffect(() => {
@@ -386,6 +388,42 @@ export default function AgentDashboard() {
     setReschedulingVisit(visit);
     setNewScheduledDate(new Date(visit.scheduled_at));
     setReschedulingReason('');
+    setDateChanged(false);
+    setDateConflict(false);
+  };
+
+  const checkDateConflict = (newDate: Date) => {
+    if (!newDate || !reschedulingVisit) return false;
+    
+    const newDateStr = newDate.toISOString().split('T')[0];
+    const newTimeStr = newDate.toISOString().split('T')[1].substring(0, 5);
+    
+    return propertyVisits.some(visit => {
+      if (visit.id === reschedulingVisit.id) return false; // Skip current visit
+      if (visit.status === 'cancelled') return false; // Skip cancelled visits
+      
+      const visitDate = new Date(visit.scheduled_at);
+      const visitDateStr = visitDate.toISOString().split('T')[0];
+      const visitTimeStr = visitDate.toISOString().split('T')[1].substring(0, 5);
+      
+      return visitDateStr === newDateStr && visitTimeStr === newTimeStr;
+    });
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date && reschedulingVisit) {
+      const originalDate = new Date(reschedulingVisit.scheduled_at);
+      const hasChanged = date.getTime() !== originalDate.getTime();
+      const hasConflict = checkDateConflict(date);
+      
+      setNewScheduledDate(date);
+      setDateChanged(hasChanged);
+      setDateConflict(hasConflict);
+    } else {
+      setNewScheduledDate(date);
+      setDateChanged(false);
+      setDateConflict(false);
+    }
   };
 
   const confirmRescheduleVisit = async () => {
@@ -1243,24 +1281,33 @@ export default function AgentDashboard() {
 
               <div className="space-y-2">
                 <Label>Nueva fecha y hora</Label>
+                {dateConflict && (
+                  <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md p-2 mb-2">
+                    ⚠️ Conflicto detectado: Ya tienes una cita programada en esta fecha y hora. Por favor, verifica la fecha de reprogramación.
+                  </div>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !newScheduledDate && "text-muted-foreground"
+                        !newScheduledDate && "text-muted-foreground",
+                        dateChanged && !dateConflict && "border-green-500 bg-green-50 text-green-700",
+                        dateConflict && "border-red-500 bg-red-50 text-red-700"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {newScheduledDate ? format(newScheduledDate, "PPP p") : <span>Seleccionar fecha</span>}
+                      {dateChanged && !dateConflict && <span className="ml-2 text-green-600">✓</span>}
+                      {dateConflict && <span className="ml-2 text-red-600">⚠️</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={newScheduledDate}
-                      onSelect={setNewScheduledDate}
+                      onSelect={handleDateChange}
                       disabled={(date) => date < new Date()}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
@@ -1269,14 +1316,18 @@ export default function AgentDashboard() {
                       <Label className="text-sm font-medium">Hora</Label>
                       <input
                         type="time"
-                        className="w-full mt-1 p-2 border rounded-md"
+                        className={cn(
+                          "w-full mt-1 p-2 border rounded-md",
+                          dateChanged && !dateConflict && "border-green-500 bg-green-50",
+                          dateConflict && "border-red-500 bg-red-50"
+                        )}
                         value={newScheduledDate ? format(newScheduledDate, 'HH:mm') : ''}
                         onChange={(e) => {
                           if (newScheduledDate && e.target.value) {
                             const [hours, minutes] = e.target.value.split(':');
                             const newDate = new Date(newScheduledDate);
                             newDate.setHours(parseInt(hours), parseInt(minutes));
-                            setNewScheduledDate(newDate);
+                            handleDateChange(newDate);
                           }
                         }}
                       />
@@ -1302,7 +1353,10 @@ export default function AgentDashboard() {
               </Button>
               <Button 
                 onClick={confirmRescheduleVisit}
-                disabled={!newScheduledDate || !reschedulingReason.trim()}
+                disabled={!newScheduledDate || !reschedulingReason.trim() || dateConflict}
+                className={cn(
+                  dateConflict && "opacity-50 cursor-not-allowed"
+                )}
               >
                 Reprogramar Cita
               </Button>
