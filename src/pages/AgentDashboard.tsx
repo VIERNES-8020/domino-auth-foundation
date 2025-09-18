@@ -46,6 +46,7 @@ export default function AgentDashboard() {
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
+  const [respondingLead, setRespondingLead] = useState<any>(null);
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending' | 'rescheduled' | 'effective' | 'denied'>('all');
   const [cancellingVisit, setCancellingVisit] = useState<any>(null);
   const [cancellationReason, setCancellationReason] = useState('');
@@ -1389,7 +1390,7 @@ export default function AgentDashboard() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                      <Button size="sm" variant="secondary" onClick={() => markLeadAsHandled(lead.id)}>Ver</Button>
+                                      <Button size="sm" variant="secondary" onClick={() => setRespondingLead(lead)}>Ver</Button>
                                     </div>
                                   </div>
                                 </div>
@@ -1501,6 +1502,21 @@ export default function AgentDashboard() {
             notification={respondingNotification}
             isOpen={!!respondingNotification}
             onClose={() => setRespondingNotification(null)}
+            agentProfile={profile}
+          />
+        )}
+
+        {respondingLead && (
+          <NotificationResponseModal
+            notification={{
+              id: respondingLead.id,
+              message: respondingLead.message
+            }}
+            clientEmail={respondingLead.client_email}
+            clientName={respondingLead.client_name}
+            clientPhone={respondingLead.client_phone}
+            isOpen={!!respondingLead}
+            onClose={() => setRespondingLead(null)}
             agentProfile={profile}
           />
         )}
