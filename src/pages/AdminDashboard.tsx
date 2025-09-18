@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import NotificationResponseModal from "@/components/NotificationResponseModal";
+import { AgentSearchSelector } from "@/components/AgentSearchSelector";
 import PropertyTypeStats from "@/components/PropertyTypeStats";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -85,6 +87,13 @@ export default function AdminDashboard() {
   const [selectedAgentForNotifications, setSelectedAgentForNotifications] = useState<any>(null);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [visitFilter, setVisitFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled' | 'rescheduled' | 'effective' | 'denied'>('confirmed');
+  
+  // Contact message response and assignment states
+  const [selectedContactMessage, setSelectedContactMessage] = useState<any>(null);
+  const [showResponseModal, setShowResponseModal] = useState(false);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [availableAgents, setAvailableAgents] = useState<any[]>([]);
+  const [selectedAgentForAssignment, setSelectedAgentForAssignment] = useState("");
 
   useEffect(() => {
     checkUserPermissions();
@@ -140,10 +149,26 @@ export default function AdminDashboard() {
 
       // If we reach here, user has permissions - now load data
       await fetchAllData(user);
+      await fetchAvailableAgents();
     } catch (error) {
       console.error('Error checking permissions:', error);
       toast.error('Error verificando permisos');
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableAgents = async () => {
+    try {
+      const { data: agents, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, agent_code, email')
+        .not('agent_code', 'is', null)
+        .order('full_name');
+
+      if (error) throw error;
+      setAvailableAgents(agents || []);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
     }
   };
 
@@ -1576,11 +1601,39 @@ export default function AdminDashboard() {
                                   {new Date(message.created_at).toLocaleDateString('es-ES')}
                                 </Badge>
                               </div>
-                              <div className="bg-muted/50 p-3 rounded-lg">
-                                <p className="text-sm">{message.message}</p>
-                              </div>
-                            </CardContent>
-                          </Card>
+                               <div className="bg-muted/50 p-3 rounded-lg mb-4">
+                                 <p className="text-sm">{message.message}</p>
+                               </div>
+                               
+                               {/* Action Buttons */}
+                               <div className="flex gap-2 pt-2 border-t">
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => {
+                                     setSelectedContactMessage(message);
+                                     setShowResponseModal(true);
+                                   }}
+                                   className="flex items-center gap-2"
+                                 >
+                                   <Mail className="h-4 w-4" />
+                                   Responder al Cliente
+                                 </Button>
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => {
+                                     setSelectedContactMessage(message);
+                                     setShowAssignmentModal(true);
+                                   }}
+                                   className="flex items-center gap-2"
+                                 >
+                                   <UserCheck className="h-4 w-4" />
+                                   Asignar a Agente
+                                 </Button>
+                               </div>
+                             </CardContent>
+                           </Card>
                         ))}
                       </div>
                     )}
@@ -2534,6 +2587,109 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Contact Message Response Modal */}
+      {selectedContactMessage && showResponseModal && (
+        <NotificationResponseModal
+          isOpen={showResponseModal}
+          onClose={() => {
+            setShowResponseModal(false);
+            setSelectedContactMessage(null);
+          }}
+          notification={{
+            id: selectedContactMessage.id,
+            message: selectedContactMessage.message,
+            created_at: selectedContactMessage.created_at
+          }}
+          clientEmail={selectedContactMessage.email}
+          clientName={selectedContactMessage.name}
+          clientPhone={selectedContactMessage.phone || selectedContactMessage.whatsapp}
+        />
+      )}
+      
+      {/* Agent Assignment Modal */}
+      <Dialog open={showAssignmentModal} onOpenChange={setShowAssignmentModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Asignar a Agente</DialogTitle>
+            <DialogDescription>
+              Asigna este mensaje de contacto a un agente específico
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedContactMessage && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium">{selectedContactMessage.name}</p>
+                <p className="text-xs text-muted-foreground">{selectedContactMessage.email}</p>
+              </div>
+            )}
+            
+            <div>
+              <label className="text-sm font-medium">Seleccionar Agente</label>
+              <AgentSearchSelector
+                agents={availableAgents.filter(agent => agent.agent_code && agent.agent_code.trim() !== '')}
+                value={selectedAgentForAssignment}
+                onValueChange={setSelectedAgentForAssignment}
+                placeholder="Buscar agente..."
+                defaultOption={{
+                  value: "",
+                  label: "Seleccionar agente"
+                }}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAssignmentModal(false);
+                  setSelectedContactMessage(null);
+                  setSelectedAgentForAssignment("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!selectedAgentForAssignment) {
+                    toast.error("Selecciona un agente");
+                    return;
+                  }
+                  
+                  // Create agent lead from contact message
+                  const selectedAgent = availableAgents.find(a => a.agent_code === selectedAgentForAssignment);
+                  if (selectedAgent) {
+                    try {
+                      const { error } = await supabase
+                        .from('agent_leads')
+                        .insert({
+                          agent_id: selectedAgent.id,
+                          client_name: selectedContactMessage.name,
+                          client_email: selectedContactMessage.email,
+                          client_phone: selectedContactMessage.phone || selectedContactMessage.whatsapp,
+                          message: selectedContactMessage.message,
+                          status: 'new'
+                        });
+                        
+                      if (error) throw error;
+                      
+                      toast.success(`Mensaje asignado a ${selectedAgent.full_name}`);
+                      setShowAssignmentModal(false);
+                      setSelectedContactMessage(null);
+                      setSelectedAgentForAssignment("");
+                    } catch (error: any) {
+                      toast.error("Error asignando mensaje: " + error.message);
+                    }
+                  }
+                }}
+              >
+                Asignar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
