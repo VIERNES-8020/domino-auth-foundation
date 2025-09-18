@@ -2767,8 +2767,28 @@ export default function AdminDashboard() {
                       setSelectedContactMessage(null);
                       setSelectedAgentForAssignment("");
                       
-                      // Refresh assigned message IDs
-                      await fetchAllData();
+                      // Add a small delay and refresh data properly
+                      setTimeout(async () => {
+                        await fetchAllData();
+                        // Force update assigned message IDs immediately
+                        const { data: agentLeads } = await supabase
+                          .from('agent_leads')
+                          .select('client_email, client_name')
+                          .limit(1000);
+                        
+                        if (agentLeads) {
+                          const assignedIds = contactMessages
+                            .filter((msg: any) => 
+                              agentLeads.some((lead: any) => 
+                                lead.client_email === msg.email && 
+                                lead.client_name === msg.name
+                              )
+                            )
+                            .map((msg: any) => msg.id);
+                          
+                          setAssignedMessageIds(assignedIds);
+                        }
+                      }, 500);
                     } catch (error: any) {
                       toast.error("Error asignando mensaje: " + error.message);
                     }
