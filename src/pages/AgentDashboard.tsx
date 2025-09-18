@@ -1389,7 +1389,7 @@ export default function AgentDashboard() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                      <Button size="sm" variant="outline" onClick={() => markLeadAsHandled(lead.id)}>Marcar atendido</Button>
+                                      <Button size="sm" variant="secondary" onClick={() => markLeadAsHandled(lead.id)}>Ver</Button>
                                     </div>
                                   </div>
                                 </div>
