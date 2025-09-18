@@ -87,20 +87,18 @@ const handler = async (req: Request): Promise<Response> => {
       throw visitError;
     }
 
-    // Create notification for the agent
-    const { error: notificationError } = await supabase
-      .from("agent_notifications")
-      .insert({
-        agent_id: agentId,
-        type: "visit_request",
-        title: "Nueva solicitud de visita",
-        message: `${clientName} ha solicitado una visita para ${property.title} el ${visitDate} a las ${visitTime}`,
-        property_id: propertyId,
-        client_name: clientName,
-        client_email: clientEmail
-      });
-
-    if (notificationError) {
+    // Create notification for the agent (adjusted to match schema)
+    try {
+      await supabase
+        .from("agent_notifications")
+        .insert({
+          from_agent_id: agentId, // System-originated; using agentId to satisfy NOT NULL
+          to_agent_id: agentId,
+          property_id: propertyId,
+          message: `${clientName} ha solicitado una visita para ${property.title} el ${visitDate} a las ${visitTime}`,
+          read: false
+        });
+    } catch (notificationError) {
       console.error("Error creating notification:", notificationError);
     }
 

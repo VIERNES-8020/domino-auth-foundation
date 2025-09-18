@@ -877,7 +877,9 @@ export default function PropertyDetailPage() {
         {property && (
           <PropertyBookingCalendar
             propertyId={property.id}
-            agentId={property.agent_id}
+            agentId={(selectedAgentCode && selectedAgentCode !== "default"
+              ? (availableAgents.find(a => a.agent_code === selectedAgentCode)?.id || property.agent_id)
+              : property.agent_id) as string}
             isOpen={showBookingCalendar}
             onClose={() => setShowBookingCalendar(false)}
           />
