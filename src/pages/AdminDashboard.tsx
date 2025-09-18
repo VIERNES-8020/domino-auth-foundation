@@ -256,39 +256,49 @@ export default function AdminDashboard() {
         const messages = (messagesResult.value as any)?.data || [];
         setContactMessages(messages);
         
-        // Fetch assigned message IDs from agent_leads
+        // Inmediatamente verificar qué mensajes están asignados
         if (messages.length > 0) {
           try {
             const { data: agentLeads } = await supabase
               .from('agent_leads')
-              .select('client_email, client_phone')
+              .select('client_email, client_phone, client_name')
               .limit(1000);
             
+            console.log('Contact messages:', messages.map(m => ({ id: m.id, email: m.email, name: m.name })));
+            console.log('Agent leads found:', agentLeads);
+            
             if (agentLeads) {
-              const leadEmails = new Set(
-                agentLeads.map((l: any) => (l.client_email || '').trim().toLowerCase())
-              );
-              const leadPhones = new Set(
-                agentLeads
-                  .map((l: any) => (l.client_phone || '').replace(/\D/g, '').slice(-8))
-                  .filter((p: string) => p)
-              );
-
+              // Usar combinación de email Y nombre para identificar asignaciones
               const assignedIds = messages
                 .filter((msg: any) => {
-                  const emailMatch = leadEmails.has((msg.email || '').trim().toLowerCase());
-                  const phoneNorm = (msg.phone || msg.whatsapp || '').replace(/\D/g, '').slice(-8);
-                  const phoneMatch = phoneNorm && leadPhones.has(phoneNorm);
-                  return emailMatch || phoneMatch;
+                  const emailMatch = agentLeads.some((lead: any) => 
+                    lead.client_email && msg.email && 
+                    lead.client_email.toLowerCase() === msg.email.toLowerCase()
+                  );
+                  const nameMatch = agentLeads.some((lead: any) => 
+                    lead.client_name && msg.name && 
+                    lead.client_name.toLowerCase() === msg.name.toLowerCase()
+                  );
+                  const match = emailMatch && nameMatch;
+                  if (match) {
+                    console.log(`Message ${msg.id} (${msg.name}/${msg.email}) is assigned`);
+                  }
+                  return match;
                 })
                 .map((msg: any) => msg.id);
               
+              console.log('Assigned message IDs:', assignedIds);
               setAssignedMessageIds(assignedIds);
+            } else {
+              console.log('No agent leads found');
+              setAssignedMessageIds([]);
             }
           } catch (error) {
             console.error('Error fetching assigned message IDs:', error);
             setAssignedMessageIds([]);
           }
+        } else {
+          setAssignedMessageIds([]);
         }
       } else {
         console.error('Messages fetch failed:', messagesResult.reason);
@@ -2783,7 +2793,8 @@ export default function AdminDashboard() {
                       
                       console.log('Assignment successful');
                       
-                      // Immediately update the assigned message IDs state
+                      // Inmediatamente marcar este mensaje como asignado en el estado
+                      console.log('Adding message to assigned list:', selectedContactMessage.id);
                       const updatedAssignedIds = [...assignedMessageIds, selectedContactMessage.id];
                       setAssignedMessageIds(updatedAssignedIds);
                       
@@ -2793,8 +2804,10 @@ export default function AdminDashboard() {
                       setSelectedContactMessage(null);
                       setSelectedAgentForAssignment("");
                       
-                      // Refresh all data in background to keep everything in sync
-                      setTimeout(() => fetchAllData(), 1000);
+                      // Esperar antes de refrescar para que la UI se actualice
+                      setTimeout(() => {
+                        fetchAllData();
+                      }, 2000);
                     } catch (error: any) {
                       console.error('Full assignment error:', error);
                       toast.error("Error asignando mensaje: " + error.message);
