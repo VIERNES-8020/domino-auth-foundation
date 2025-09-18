@@ -42,6 +42,7 @@ export default function AgentDashboard() {
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [assignedLeads, setAssignedLeads] = useState<any[]>([]);
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
@@ -81,6 +82,7 @@ export default function AgentDashboard() {
         await fetchProfile(user.id);
         await fetchProperties(user.id);
         await fetchNotifications(user.id);
+        await fetchAssignedLeads(user.id);
         await fetchPropertyVisits(user.id);
       }
       setLoading(false);
@@ -133,7 +135,38 @@ export default function AgentDashboard() {
       console.error('Error fetching notifications:', error);
     }
   };
+  const markLeadAsHandled = async (leadId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('agent_leads')
+        .update({ status: 'contacted' })
+        .eq('id', leadId)
+        .eq('agent_id', user.id);
+      if (error) throw error;
+      toast.success('Contacto marcado como atendido');
+      await fetchAssignedLeads(user.id);
+    } catch (error) {
+      console.error('Error updating lead status:', error);
+      toast.error('No se pudo actualizar el estado');
+    }
+  };
 
+  const fetchAssignedLeads = async (agentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('agent_leads')
+        .select('*')
+        .eq('agent_id', agentId)
+        .eq('status', 'new')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAssignedLeads(data || []);
+    } catch (error) {
+      console.error('Error fetching assigned leads:', error);
+    }
+  };
   const fetchPropertyVisits = async (agentId: string) => {
     try {
       const { data: visits, error: visitsError } = await supabase
@@ -889,9 +922,9 @@ export default function AgentDashboard() {
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       Notificaciones
-                      {notifications.length > 0 && (
+                      {(notifications.length + assignedLeads.length) > 0 && (
                         <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0.5">
-                          {notifications.length}
+                          {notifications.length + assignedLeads.length}
                         </Badge>
                       )}
                     </div>
@@ -1332,26 +1365,62 @@ export default function AgentDashboard() {
                     <CardDescription>Responde a las consultas de clientes</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {notifications.length === 0 ? (
+                    {(assignedLeads.length + notifications.length) === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">No tienes notificaciones pendientes</div>
                     ) : (
-                      <div className="space-y-4">
-                        {notifications.map((n) => (
-                          <div key={n.id} className="p-4 border rounded-lg">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <div className="font-medium mb-1">{n.title || 'Nueva notificación'}</div>
-                                <div className="text-sm text-muted-foreground whitespace-pre-wrap">{n.message}</div>
-                                <div className="text-xs text-muted-foreground mt-2">
-                                  {new Date(n.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                      <div className="space-y-6">
+                        {assignedLeads.length > 0 && (
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="font-semibold">Contactos asignados ({assignedLeads.length})</h4>
+                            </div>
+                            <div className="space-y-3">
+                              {assignedLeads.map((lead) => (
+                                <div key={lead.id} className="p-4 border rounded-lg">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                      <div className="font-medium mb-1">{lead.client_name} · {lead.client_email}</div>
+                                      <div className="text-sm text-muted-foreground">{lead.client_phone}</div>
+                                      {lead.message && (
+                                        <div className="mt-2 text-sm whitespace-pre-wrap">{lead.message}</div>
+                                      )}
+                                      <div className="text-xs text-muted-foreground mt-2">
+                                        {new Date(lead.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Button size="sm" variant="outline" onClick={() => markLeadAsHandled(lead.id)}>Marcar atendido</Button>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <Button size="sm" onClick={() => setRespondingNotification(n)}>Responder</Button>
-                              </div>
+                              ))}
                             </div>
                           </div>
-                        ))}
+                        )}
+
+                        {notifications.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-3">Otras notificaciones ({notifications.length})</h4>
+                            <div className="space-y-4">
+                              {notifications.map((n) => (
+                                <div key={n.id} className="p-4 border rounded-lg">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                      <div className="font-medium mb-1">{n.title || 'Nueva notificación'}</div>
+                                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">{n.message}</div>
+                                      <div className="text-xs text-muted-foreground mt-2">
+                                        {new Date(n.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Button size="sm" onClick={() => setRespondingNotification(n)}>Responder</Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
