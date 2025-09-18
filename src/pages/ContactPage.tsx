@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import SuccessMessage from "@/components/SuccessMessage";
 
 function usePageSEO(opts: { title: string; description: string; canonicalPath: string }) {
   const { title, description, canonicalPath } = opts;
@@ -34,6 +35,7 @@ export default function ContactPage() {
     message: ""
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +60,7 @@ export default function ContactPage() {
 
       toast.success("¡Gracias! Tu mensaje ha sido enviado. Te contactaremos pronto.");
       setFormData({ name: "", email: "", phone: "", whatsapp: "", message: "" });
+      setShowSuccessMessage(true);
     } catch (error) {
       console.error('Error sending contact message:', error);
       toast.error("Hubo un error al enviar tu mensaje. Por favor intenta nuevamente.");
@@ -129,6 +132,12 @@ export default function ContactPage() {
           </div>
         </form>
       </main>
+      
+      {/* Success Message Modal */}
+      <SuccessMessage 
+        isOpen={showSuccessMessage}
+        onClose={() => setShowSuccessMessage(false)}
+      />
     </div>
   );
 }
