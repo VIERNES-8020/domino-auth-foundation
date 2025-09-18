@@ -94,6 +94,8 @@ export default function AdminDashboard() {
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [availableAgents, setAvailableAgents] = useState<any[]>([]);
   const [selectedAgentForAssignment, setSelectedAgentForAssignment] = useState("");
+  const [messageFilter, setMessageFilter] = useState<"all" | "pending" | "assigned">("all");
+  const [assignedMessageIds, setAssignedMessageIds] = useState<string[]>([]);
 
   useEffect(() => {
     checkUserPermissions();
@@ -251,10 +253,38 @@ export default function AdminDashboard() {
       }
       
       if (messagesResult.status === 'fulfilled') {
-        setContactMessages((messagesResult.value as any)?.data || []);
+        const messages = (messagesResult.value as any)?.data || [];
+        setContactMessages(messages);
+        
+        // Fetch assigned message IDs from agent_leads
+        if (messages.length > 0) {
+          try {
+            const { data: agentLeads } = await supabase
+              .from('agent_leads')
+              .select('client_email, client_name')
+              .limit(1000);
+            
+            if (agentLeads) {
+              const assignedIds = messages
+                .filter((msg: any) => 
+                  agentLeads.some((lead: any) => 
+                    lead.client_email === msg.email && 
+                    lead.client_name === msg.name
+                  )
+                )
+                .map((msg: any) => msg.id);
+              
+              setAssignedMessageIds(assignedIds);
+            }
+          } catch (error) {
+            console.error('Error fetching assigned message IDs:', error);
+            setAssignedMessageIds([]);
+          }
+        }
       } else {
         console.error('Messages fetch failed:', messagesResult.reason);
         setContactMessages([]);
+        setAssignedMessageIds([]);
       }
       
       if (notificationsResult.status === 'fulfilled') {
@@ -917,11 +947,14 @@ export default function AdminDashboard() {
               <TabsTrigger value="mensajes" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Mensajes
-                {contactMessages.length > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-5 w-5 text-xs">
-                    {contactMessages.length}
-                  </Badge>
-                )}
+                {(() => {
+                  const pendingCount = contactMessages.filter(msg => !assignedMessageIds.includes(msg.id)).length;
+                  return pendingCount > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-5 w-5 text-xs">
+                      {pendingCount}
+                    </Badge>
+                  );
+                })()}
               </TabsTrigger>
               <TabsTrigger value="testimonios" className="flex items-center gap-2">
                 <Star className="h-4 w-4" />
@@ -1569,74 +1602,126 @@ export default function AdminDashboard() {
                   <CardDescription>
                     Mensajes recibidos desde el formulario de contacto del sitio web
                   </CardDescription>
+                  
+                  {/* Filter Buttons */}
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant={messageFilter === "pending" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setMessageFilter("pending")}
+                      className={messageFilter === "pending" 
+                        ? "bg-red-500 hover:bg-red-600 text-white border-red-500" 
+                        : "border-red-500 text-red-500 hover:bg-red-50"}
+                    >
+                      Pendientes ({contactMessages.filter(msg => !assignedMessageIds.includes(msg.id)).length})
+                    </Button>
+                    <Button
+                      variant={messageFilter === "assigned" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setMessageFilter("assigned")}
+                      className={messageFilter === "assigned" 
+                        ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
+                        : "border-green-500 text-green-500 hover:bg-green-50"}
+                    >
+                      Asignada ({assignedMessageIds.length})
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {contactMessages.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No hay mensajes</h3>
-                        <p>Los mensajes de contacto aparecerán aquí cuando los usuarios se comuniquen.</p>
-                      </div>
-                    ) : (
-                      <div className="grid gap-4">
-                        {contactMessages.map((message) => (
-                          <Card key={message.id} className="hover:shadow-lg transition-all duration-300">
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-start gap-3">
-                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                                    <MessageSquare className="h-5 w-5 text-white" />
-                                  </div>
-                                  <div>
-                                    <h4 className="font-semibold">{message.name}</h4>
-                                    <p className="text-sm text-muted-foreground">{message.email}</p>
-                                    <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                                      {message.phone && <span>Tel: {message.phone}</span>}
-                                      {message.whatsapp && <span>WhatsApp: {message.whatsapp}</span>}
+                    {(() => {
+                      const getFilteredMessages = () => {
+                        if (messageFilter === "pending") {
+                          return contactMessages.filter(msg => !assignedMessageIds.includes(msg.id));
+                        } else if (messageFilter === "assigned") {
+                          return contactMessages.filter(msg => assignedMessageIds.includes(msg.id));
+                        }
+                        return contactMessages;
+                      };
+                      
+                      const filteredMessages = getFilteredMessages();
+                      
+                      return filteredMessages.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">
+                            {messageFilter === "pending" && "No hay mensajes pendientes"}
+                            {messageFilter === "assigned" && "No hay mensajes asignados"}
+                            {messageFilter === "all" && "No hay mensajes"}
+                          </h3>
+                          <p>
+                            {messageFilter === "pending" && "Todos los mensajes han sido asignados."}
+                            {messageFilter === "assigned" && "No hay mensajes asignados a agentes aún."}
+                            {messageFilter === "all" && "Los mensajes de contacto aparecerán aquí cuando los usuarios se comuniquen."}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4">
+                          {filteredMessages.map((message) => (
+                            <Card key={message.id} className="hover:shadow-lg transition-all duration-300">
+                              <CardContent className="p-4">
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                                      <MessageSquare className="h-5 w-5 text-white" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold">{message.name}</h4>
+                                      <p className="text-sm text-muted-foreground">{message.email}</p>
+                                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                                        {message.phone && <span>Tel: {message.phone}</span>}
+                                        {message.whatsapp && <span>WhatsApp: {message.whatsapp}</span>}
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="flex items-center gap-2">
+                                    {assignedMessageIds.includes(message.id) && (
+                                      <Badge className="bg-green-100 text-green-700 border-green-200">
+                                        Asignado
+                                      </Badge>
+                                    )}
+                                    <Badge variant="outline">
+                                      {new Date(message.created_at).toLocaleDateString('es-ES')}
+                                    </Badge>
+                                  </div>
                                 </div>
-                                <Badge variant="outline">
-                                  {new Date(message.created_at).toLocaleDateString('es-ES')}
-                                </Badge>
-                              </div>
-                               <div className="bg-muted/50 p-3 rounded-lg mb-4">
-                                 <p className="text-sm">{message.message}</p>
-                               </div>
-                               
-                               {/* Action Buttons */}
-                               <div className="flex gap-2 pt-2 border-t">
-                                 <Button
-                                   size="sm"
-                                   variant="outline"
-                                   onClick={() => {
-                                     setSelectedContactMessage(message);
-                                     setShowResponseModal(true);
-                                   }}
-                                   className="flex items-center gap-2"
-                                 >
-                                   <Mail className="h-4 w-4" />
-                                   Responder al Cliente
-                                 </Button>
-                                 <Button
-                                   size="sm"
-                                   variant="outline"
-                                   onClick={() => {
-                                     setSelectedContactMessage(message);
-                                     setShowAssignmentModal(true);
-                                   }}
-                                   className="flex items-center gap-2"
-                                 >
-                                   <UserCheck className="h-4 w-4" />
-                                   Asignar a Agente
-                                 </Button>
-                               </div>
-                             </CardContent>
-                           </Card>
-                        ))}
-                      </div>
-                    )}
+                                 <div className="bg-muted/50 p-3 rounded-lg mb-4">
+                                   <p className="text-sm">{message.message}</p>
+                                 </div>
+                                 
+                                 {/* Action Buttons */}
+                                 <div className="flex gap-2 pt-2 border-t">
+                                   <Button
+                                     size="sm"
+                                     variant="outline"
+                                     onClick={() => {
+                                       setSelectedContactMessage(message);
+                                       setShowResponseModal(true);
+                                     }}
+                                     className="flex items-center gap-2"
+                                   >
+                                     <Mail className="h-4 w-4" />
+                                     Responder al Cliente
+                                   </Button>
+                                   <Button
+                                     size="sm"
+                                     variant="outline"
+                                     onClick={() => {
+                                       setSelectedContactMessage(message);
+                                       setShowAssignmentModal(true);
+                                     }}
+                                     className="flex items-center gap-2"
+                                   >
+                                     <UserCheck className="h-4 w-4" />
+                                     Asignar a Agente
+                                   </Button>
+                                 </div>
+                               </CardContent>
+                             </Card>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -2681,6 +2766,9 @@ export default function AdminDashboard() {
                       setShowAssignmentModal(false);
                       setSelectedContactMessage(null);
                       setSelectedAgentForAssignment("");
+                      
+                      // Refresh assigned message IDs
+                      await fetchAllData();
                     } catch (error: any) {
                       toast.error("Error asignando mensaje: " + error.message);
                     }
