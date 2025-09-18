@@ -2747,8 +2747,15 @@ export default function AdminDashboard() {
                   
                   // Create agent lead from contact message
                   const selectedAgent = availableAgents.find(a => a.agent_code === selectedAgentForAssignment);
-                  if (selectedAgent) {
+                  if (selectedAgent && selectedContactMessage) {
                     try {
+                      console.log('Assigning message:', {
+                        messageId: selectedContactMessage.id,
+                        agentId: selectedAgent.id,
+                        clientName: selectedContactMessage.name,
+                        clientEmail: selectedContactMessage.email
+                      });
+
                       const { error } = await supabase
                         .from('agent_leads')
                         .insert({
@@ -2760,36 +2767,27 @@ export default function AdminDashboard() {
                           status: 'new'
                         });
                         
-                      if (error) throw error;
+                      if (error) {
+                        console.error('Assignment error:', error);
+                        throw error;
+                      }
+                      
+                      console.log('Assignment successful');
+                      
+                      // Immediately update the assigned message IDs state
+                      const updatedAssignedIds = [...assignedMessageIds, selectedContactMessage.id];
+                      setAssignedMessageIds(updatedAssignedIds);
                       
                       toast.success(`Mensaje asignado a ${selectedAgent.full_name}`);
+                      
                       setShowAssignmentModal(false);
                       setSelectedContactMessage(null);
                       setSelectedAgentForAssignment("");
                       
-                      // Add a small delay and refresh data properly
-                      setTimeout(async () => {
-                        await fetchAllData();
-                        // Force update assigned message IDs immediately
-                        const { data: agentLeads } = await supabase
-                          .from('agent_leads')
-                          .select('client_email, client_name')
-                          .limit(1000);
-                        
-                        if (agentLeads) {
-                          const assignedIds = contactMessages
-                            .filter((msg: any) => 
-                              agentLeads.some((lead: any) => 
-                                lead.client_email === msg.email && 
-                                lead.client_name === msg.name
-                              )
-                            )
-                            .map((msg: any) => msg.id);
-                          
-                          setAssignedMessageIds(assignedIds);
-                        }
-                      }, 500);
+                      // Refresh all data in background to keep everything in sync
+                      setTimeout(() => fetchAllData(), 1000);
                     } catch (error: any) {
+                      console.error('Full assignment error:', error);
                       toast.error("Error asignando mensaje: " + error.message);
                     }
                   }
