@@ -567,9 +567,15 @@ export default function AdminDashboard() {
       setSelectedAgentForNotifications(null);
       
       if (!agent || !agent.id) {
+        console.error('Agente inválido:', agent);
         toast.error('Información del agente no válida');
         return;
       }
+
+      console.log('=== DEBUG: Cargando datos para agente ===');
+      console.log('Agent ID:', agent.id);
+      console.log('Agent Name:', agent.full_name || agent.email);
+      console.log('Agent Object:', agent);
 
       // Set the selected agent
       setSelectedAgentForNotifications(agent);
@@ -577,36 +583,45 @@ export default function AdminDashboard() {
       // Show loading state
       setIsNotificationsModalOpen(true);
       
-      console.log('Cargando notificaciones y citas para agente:', agent.full_name || agent.email);
-      
-      // Fetch agent's property visits (citas programadas)
+      // Fetch agent's property visits (citas programadas) with debug
+      console.log('Consultando property_visits con agent_id:', agent.id);
       const { data: visits, error: visitsError } = await supabase
         .from('property_visits')
         .select('*')
         .eq('agent_id', agent.id)
         .order('scheduled_at', { ascending: false });
 
+      console.log('Visits query result:', { visits, error: visitsError });
+
       if (visitsError) {
         console.error('Error fetching visits:', visitsError);
         setAgentVisits([]);
       } else {
+        console.log(`Encontradas ${visits?.length || 0} citas RAW para el agente`);
+        
         // Fetch property details for each visit
         const enrichedVisits = [];
         if (visits && visits.length > 0) {
           for (const visit of visits) {
-            const { data: propertyData } = await supabase
+            console.log('Processing visit:', visit);
+            const { data: propertyData, error: propError } = await supabase
               .from('properties')
               .select('title, address, property_type')
               .eq('id', visit.property_id)
               .single();
             
+            if (propError) {
+              console.warn('Error fetching property for visit:', propError);
+            }
+            
             enrichedVisits.push({
               ...visit,
-              properties: propertyData
+              properties: propertyData || { title: 'Propiedad no encontrada', address: 'N/A' }
             });
           }
         }
-        console.log(`Encontradas ${enrichedVisits?.length || 0} citas programadas para el agente`);
+        console.log(`Citas enriquecidas: ${enrichedVisits?.length || 0}`);
+        console.log('Enriched visits:', enrichedVisits);
         setAgentVisits(enrichedVisits || []);
       }
 
