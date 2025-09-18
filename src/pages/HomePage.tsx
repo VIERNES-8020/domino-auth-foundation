@@ -196,20 +196,20 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">{t('properties.featured')}</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
-          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
+          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
             <span className="relative z-10">{t('properties.house')}</span>
           </TabsTrigger>
-          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
             <span className="relative z-10">{t('properties.apartment')}</span>
           </TabsTrigger>
-          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
             <span className="relative z-10">{t('properties.land')}</span>
           </TabsTrigger>
-          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
             <span className="relative z-10">{t('properties.office')}</span>
           </TabsTrigger>
-          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
+          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
             <span className="relative z-10">{t('properties.commercial')}</span>
           </TabsTrigger>
         </TabsList>
@@ -384,20 +384,20 @@ export default function HomePage() {
       <main>
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
           <h2 id="metrics-heading" className="text-2xl font-semibold mb-6 text-center">{t('stats.title')}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 animate-fade-in">
             <Link to="/propiedades" aria-label="Ver propiedades" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.properties')}</p>
+                <CardContent className="p-3 sm:p-4 md:p-6 text-center">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t('stats.properties')}</p>
                 </CardContent>
               </Card>
             </Link>
             <Link to="/propiedades" aria-label="Ver franquicias" className="block group">
               <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.franchises')}</p>
+                <CardContent className="p-3 sm:p-4 md:p-6 text-center">
+                  <div className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t('stats.franchises')}</p>
                 </CardContent>
               </Card>
             </Link>

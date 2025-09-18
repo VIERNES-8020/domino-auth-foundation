@@ -1376,32 +1376,32 @@ export default function AgentDashboard() {
                               <h4 className="font-semibold">Contactos asignados ({assignedLeads.length})</h4>
                             </div>
                             <div className="space-y-3">
-                              {assignedLeads.map((lead) => (
-                                <div key={lead.id} className="p-4 border rounded-lg">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <div className="font-medium mb-1">{lead.client_name} · {lead.client_email}</div>
-                                      <div className="text-sm text-muted-foreground">{lead.client_phone}</div>
-                                      {lead.message && (
-                                        <div className="mt-2 text-sm whitespace-pre-wrap">{lead.message}</div>
-                                      )}
-                                      <div className="text-xs text-muted-foreground mt-2">
-                                        {new Date(lead.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                       <Button 
-                                         size="sm" 
-                                         variant="outline" 
-                                         onClick={() => setRespondingLead(lead)}
-                                         className="rounded-full px-6 border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-200"
-                                       >
-                                         Ver
-                                       </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                               {assignedLeads.map((lead) => (
+                                 <div key={lead.id} className="p-3 sm:p-4 border rounded-lg">
+                                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                                     <div className="flex-1 min-w-0">
+                                       <div className="font-medium mb-1 text-sm sm:text-base break-words">{lead.client_name} · {lead.client_email}</div>
+                                       <div className="text-xs sm:text-sm text-muted-foreground break-words">{lead.client_phone}</div>
+                                       {lead.message && (
+                                         <div className="mt-2 text-xs sm:text-sm whitespace-pre-wrap break-words">{lead.message}</div>
+                                       )}
+                                       <div className="text-xs text-muted-foreground mt-2">
+                                         {new Date(lead.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+                                       </div>
+                                     </div>
+                                     <div className="flex items-center gap-2 shrink-0 self-start">
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          onClick={() => setRespondingLead(lead)}
+                                          className="rounded-full px-4 sm:px-6 text-xs sm:text-sm border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-200"
+                                        >
+                                          Ver
+                                        </Button>
+                                     </div>
+                                   </div>
+                                 </div>
+                               ))}
                             </div>
                           </div>
                         )}
