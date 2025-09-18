@@ -261,17 +261,26 @@ export default function AdminDashboard() {
           try {
             const { data: agentLeads } = await supabase
               .from('agent_leads')
-              .select('client_email, client_name')
+              .select('client_email, client_phone')
               .limit(1000);
             
             if (agentLeads) {
+              const leadEmails = new Set(
+                agentLeads.map((l: any) => (l.client_email || '').trim().toLowerCase())
+              );
+              const leadPhones = new Set(
+                agentLeads
+                  .map((l: any) => (l.client_phone || '').replace(/\D/g, '').slice(-8))
+                  .filter((p: string) => p)
+              );
+
               const assignedIds = messages
-                .filter((msg: any) => 
-                  agentLeads.some((lead: any) => 
-                    lead.client_email === msg.email && 
-                    lead.client_name === msg.name
-                  )
-                )
+                .filter((msg: any) => {
+                  const emailMatch = leadEmails.has((msg.email || '').trim().toLowerCase());
+                  const phoneNorm = (msg.phone || msg.whatsapp || '').replace(/\D/g, '').slice(-8);
+                  const phoneMatch = phoneNorm && leadPhones.has(phoneNorm);
+                  return emailMatch || phoneMatch;
+                })
                 .map((msg: any) => msg.id);
               
               setAssignedMessageIds(assignedIds);
