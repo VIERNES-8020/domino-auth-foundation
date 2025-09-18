@@ -1390,7 +1390,14 @@ export default function AgentDashboard() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                      <Button size="sm" variant="secondary" onClick={() => setRespondingLead(lead)}>Ver</Button>
+                                       <Button 
+                                         size="sm" 
+                                         variant="outline" 
+                                         onClick={() => setRespondingLead(lead)}
+                                         className="rounded-full px-6 border-primary/20 hover:border-primary hover:bg-primary/5 transition-all duration-200"
+                                       >
+                                         Ver
+                                       </Button>
                                     </div>
                                   </div>
                                 </div>
