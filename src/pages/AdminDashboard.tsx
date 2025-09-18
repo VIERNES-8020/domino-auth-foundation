@@ -2273,13 +2273,6 @@ export default function AdminDashboard() {
                   Citas programadas y notificaciones del agente
                 </DialogDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsNotificationsModalOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </DialogHeader>
           
@@ -2353,14 +2346,14 @@ export default function AdminDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {agentVisits.length === 0 ? (
+                {filteredVisits.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No tiene citas programadas</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {agentVisits.map((visit) => (
+                    {filteredVisits.map((visit) => (
                       <div key={visit.id} className="border rounded-lg p-4 bg-background">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
