@@ -808,6 +808,113 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_closures: {
+        Row: {
+          agent_captador_id: string
+          agent_vendedor_id: string
+          captador_amount: number | null
+          captador_percentage: number
+          closure_date: string
+          closure_price: number
+          contract_url: string | null
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          office_amount: number | null
+          office_percentage: number
+          property_id: string
+          published_price: number
+          status: string
+          transaction_type: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          vendedor_amount: number | null
+          vendedor_percentage: number
+          voucher_urls: string[] | null
+        }
+        Insert: {
+          agent_captador_id: string
+          agent_vendedor_id: string
+          captador_amount?: number | null
+          captador_percentage?: number
+          closure_date?: string
+          closure_price: number
+          contract_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          office_amount?: number | null
+          office_percentage?: number
+          property_id: string
+          published_price: number
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vendedor_amount?: number | null
+          vendedor_percentage?: number
+          voucher_urls?: string[] | null
+        }
+        Update: {
+          agent_captador_id?: string
+          agent_vendedor_id?: string
+          captador_amount?: number | null
+          captador_percentage?: number
+          closure_date?: string
+          closure_price?: number
+          contract_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          office_amount?: number | null
+          office_percentage?: number
+          property_id?: string
+          published_price?: number
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vendedor_amount?: number | null
+          vendedor_percentage?: number
+          voucher_urls?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_closures_agent_captador_id_fkey"
+            columns: ["agent_captador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_closures_agent_vendedor_id_fkey"
+            columns: ["agent_vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_closures_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_closures_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spatial_ref_sys: {
         Row: {
           auth_name: string | null

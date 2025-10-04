@@ -25,6 +25,7 @@ import AssignPropertyModal from "@/components/AssignPropertyModal";
 import NotificationResponseModal from "@/components/NotificationResponseModal";
 import PropertyTypeStats from "@/components/PropertyTypeStats";
 import SalesProcessStats from "@/components/SalesProcessStats";
+import SaleClosuresSection from "@/components/SaleClosuresSection";
 import AmenitiesManagement from "@/components/AmenitiesManagement";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -1145,6 +1146,7 @@ export default function AgentDashboard() {
               <TabsContent value="estadisticas" className="space-y-6">
                 <PropertyTypeStats properties={properties} onFilterChange={handlePropertyTypeFilter} />
                 {user && <SalesProcessStats agentId={user.id} />}
+                {user && <SaleClosuresSection agentId={user.id} />}
               </TabsContent>
 
               <TabsContent value="citas" className="space-y-6">
