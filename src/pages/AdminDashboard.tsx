@@ -46,6 +46,7 @@ import {
 import TestimonialManagement from "@/components/admin/TestimonialManagement";
 import AboutPageManagement from "@/components/admin/AboutPageManagement";
 import WatermarkManagement from "@/components/admin/WatermarkManagement";
+import AdminSaleClosuresSection from "@/components/admin/AdminSaleClosuresSection";
 import AdminUserManagement from "@/pages/AdminUserManagement";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1906,6 +1907,9 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Cierres de Venta Section */}
+              <AdminSaleClosuresSection />
             </TabsContent>
           </Tabs>
         </Card>
