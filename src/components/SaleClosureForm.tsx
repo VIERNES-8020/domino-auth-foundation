@@ -117,10 +117,21 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("=== Iniciando registro de cierre ===");
+
     if (!formData.property_id || !formData.closure_price) {
       toast.error("Por favor complete todos los campos requeridos");
       return;
     }
+
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Debe iniciar sesión para registrar un cierre");
+      return;
+    }
+
+    console.log("Usuario autenticado:", user.id);
 
     setUploading(true);
 
@@ -130,19 +141,36 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
 
       // Upload contract if provided
       if (contractFile) {
+        console.log("Subiendo contrato:", contractFile.name);
         const contractPath = `${agentId}/contracts/${Date.now()}-${contractFile.name}`;
-        contractUrl = await uploadFile(contractFile, contractPath);
+        try {
+          contractUrl = await uploadFile(contractFile, contractPath);
+          console.log("Contrato subido:", contractUrl);
+        } catch (uploadError: any) {
+          console.error("Error al subir contrato:", uploadError);
+          throw new Error(`Error al subir contrato: ${uploadError.message}`);
+        }
       }
 
       // Upload vouchers if provided
-      for (const file of voucherFiles) {
-        const voucherPath = `${agentId}/vouchers/${Date.now()}-${file.name}`;
-        const url = await uploadFile(file, voucherPath);
-        voucherUrls.push(url);
+      if (voucherFiles.length > 0) {
+        console.log(`Subiendo ${voucherFiles.length} comprobantes`);
+        for (const file of voucherFiles) {
+          const voucherPath = `${agentId}/vouchers/${Date.now()}-${file.name}`;
+          try {
+            const url = await uploadFile(file, voucherPath);
+            voucherUrls.push(url);
+            console.log("Comprobante subido:", url);
+          } catch (uploadError: any) {
+            console.error("Error al subir comprobante:", uploadError);
+            throw new Error(`Error al subir comprobante: ${uploadError.message}`);
+          }
+        }
       }
 
       // Insert sale closure record
-      const { error } = await supabase.from("sale_closures").insert([{
+      console.log("Insertando registro de cierre...");
+      const closureData = {
         property_id: formData.property_id,
         agent_captador_id: formData.agent_captador_id,
         agent_vendedor_id: formData.agent_vendedor_id,
@@ -157,17 +185,40 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
         notes: formData.notes,
         contract_url: contractUrl,
         voucher_urls: voucherUrls.length > 0 ? voucherUrls : null,
-      }]);
+      };
 
-      if (error) throw error;
+      console.log("Datos a insertar:", closureData);
 
+      const { data, error } = await supabase.from("sale_closures").insert([closureData]).select();
+
+      if (error) {
+        console.error("Error de Supabase:", error);
+        throw error;
+      }
+
+      console.log("Cierre registrado exitosamente:", data);
       toast.success("Cierre de venta registrado exitosamente");
       onSuccess();
     } catch (error: any) {
-      console.error("Error al registrar cierre:", error);
-      toast.error(error.message || "Error al registrar el cierre de venta");
+      console.error("=== Error al registrar cierre ===");
+      console.error("Tipo:", error.constructor.name);
+      console.error("Mensaje:", error.message);
+      console.error("Detalles:", error);
+      
+      let errorMessage = "Error al registrar el cierre de venta";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.details) {
+        errorMessage = error.details;
+      } else if (error.hint) {
+        errorMessage = error.hint;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
+      console.log("=== Fin del proceso ===");
     }
   };
 
