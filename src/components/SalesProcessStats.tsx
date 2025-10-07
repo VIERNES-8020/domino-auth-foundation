@@ -494,7 +494,7 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
       </div>
 
       {/* Filtered Content Based on Active Filter */}
-      {activeFilter && (
+      {activeFilter ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -505,10 +505,10 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
                 {activeFilter === 'successful' && <DollarSign className="w-4 h-4 text-green-600" />}
               </div>
               <h3 className="text-lg font-semibold text-foreground">
-                {activeFilter === 'pending' && 'Citas Pendientes - Desglose Detallado'}
-                {activeFilter === 'confirmed' && 'Citas Confirmadas - Desglose Detallado'}
-                {activeFilter === 'completed' && 'Visitas Realizadas - Desglose Detallado'}
-                {activeFilter === 'successful' && 'Ventas Exitosas - Desglose Detallado'}
+                {activeFilter === 'pending' && 'Desglose detallado: Citas Pendientes'}
+                {activeFilter === 'confirmed' && 'Desglose detallado: Citas Confirmadas'}
+                {activeFilter === 'completed' && 'Desglose detallado: Visitas Realizadas'}
+                {activeFilter === 'successful' && 'Desglose detallado: Ventas Exitosas'}
               </h3>
             </div>
             <Button 
@@ -556,56 +556,16 @@ export default function SalesProcessStats({ agentId }: SalesProcessStatsProps) {
             )}
           </div>
         </div>
-      )}
-
-      {/* Show all appointments when no filter is active */}
-      {!activeFilter && (stats.pending > 0 || stats.confirmed > 0 || stats.completed > 0) && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">Todas las Citas Programadas</h3>
-            <div className="text-sm text-muted-foreground">
-              Haz clic en las tarjetas de arriba para filtrar por estado
-            </div>
+      ) : (
+        <Card className="p-12 text-center border-2 border-dashed">
+          <div className="text-muted-foreground">
+            <Calendar className="w-16 h-16 mx-auto mb-4 opacity-30" />
+            <p className="text-xl font-medium mb-2">Seleccione una categoría</p>
+            <p className="text-sm">
+              Haga clic en las tarjetas de arriba para ver el detalle de las citas o ventas.
+            </p>
           </div>
-
-          <div className="grid gap-4">
-            {/* Pending Appointments */}
-            {visits.filter(v => v.status === 'pending').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-            
-            {/* Confirmed Appointments */}
-            {visits.filter(v => v.status === 'confirmed').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-            
-            {/* Completed Visits */}
-            {visits.filter(v => v.status === 'completed').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Successful Sales History */}
-      {!activeFilter && stats.successful > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-green-100 flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-green-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">Historial de Ventas Exitosas</h3>
-          </div>
-
-          <div className="grid gap-4">
-            {visits.filter(v => v.status === 'successful').map(visit => (
-              <VisitCard key={visit.id} visit={visit} />
-            ))}
-          </div>
-        </div>
+        </Card>
       )}
 
       {/* Sale Completion Dialog */}
