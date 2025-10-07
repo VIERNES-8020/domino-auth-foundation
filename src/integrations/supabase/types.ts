@@ -806,7 +806,15 @@ export type Database = {
           updated_at?: string
           visit_result?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "property_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_closures: {
         Row: {
