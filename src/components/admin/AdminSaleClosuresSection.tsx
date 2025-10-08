@@ -83,18 +83,30 @@ export default function AdminSaleClosuresSection() {
   const handleValidate = async (closureId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado");
+      if (!user) {
+        toast.error("Usuario no autenticado");
+        return;
+      }
 
-      const { error } = await supabase
+      console.log("Validating closure:", closureId);
+      
+      const { data, error } = await supabase
         .from("sale_closures")
         .update({
           status: "validated",
           validated_by: user.id,
           validated_at: new Date().toISOString(),
         })
-        .eq("id", closureId);
+        .eq("id", closureId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
+      }
+
+      console.log("Closure validated successfully:", data);
 
       // Obtener el closure actualizado con todas las relaciones
       const { data: updatedClosure } = await supabase
@@ -129,9 +141,14 @@ export default function AdminSaleClosuresSection() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado");
+      if (!user) {
+        toast.error("Usuario no autenticado");
+        return;
+      }
 
-      const { error } = await supabase
+      console.log("Rejecting closure:", closureId, "Reason:", rejectionReason);
+
+      const { data, error } = await supabase
         .from("sale_closures")
         .update({
           status: "rejected",
@@ -139,9 +156,16 @@ export default function AdminSaleClosuresSection() {
           validated_at: new Date().toISOString(),
           rejection_reason: rejectionReason,
         })
-        .eq("id", closureId);
+        .eq("id", closureId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
+      }
+
+      console.log("Closure rejected successfully:", data);
 
       // Obtener el closure actualizado con todas las relaciones
       const { data: updatedClosure } = await supabase
