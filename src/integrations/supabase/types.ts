@@ -833,6 +833,7 @@ export type Database = {
           office_percentage: number
           property_id: string
           published_price: number
+          rejection_reason: string | null
           status: string
           transaction_type: string
           updated_at: string
@@ -858,6 +859,7 @@ export type Database = {
           office_percentage?: number
           property_id: string
           published_price: number
+          rejection_reason?: string | null
           status?: string
           transaction_type: string
           updated_at?: string
@@ -883,6 +885,7 @@ export type Database = {
           office_percentage?: number
           property_id?: string
           published_price?: number
+          rejection_reason?: string | null
           status?: string
           transaction_type?: string
           updated_at?: string

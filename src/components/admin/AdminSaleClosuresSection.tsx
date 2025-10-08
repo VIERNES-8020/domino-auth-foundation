@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { 
   FileText, 
   Download, 
@@ -24,6 +26,8 @@ export default function AdminSaleClosuresSection() {
   const [closures, setClosures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewingClosure, setViewingClosure] = useState<any>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     fetchClosures();
@@ -76,7 +80,7 @@ export default function AdminSaleClosuresSection() {
     }
   };
 
-  const handleValidate = async (closureId: string, status: "validated" | "rejected") => {
+  const handleValidate = async (closureId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
@@ -84,7 +88,7 @@ export default function AdminSaleClosuresSection() {
       const { error } = await supabase
         .from("sale_closures")
         .update({
-          status,
+          status: "validated",
           validated_by: user.id,
           validated_at: new Date().toISOString(),
         })
@@ -92,12 +96,64 @@ export default function AdminSaleClosuresSection() {
 
       if (error) throw error;
 
-      toast.success(`Cierre ${status === "validated" ? "validado" : "rechazado"} exitosamente`);
+      toast.success("✅ Cierre validado exitosamente");
       fetchClosures();
-      setViewingClosure(null);
+      
+      // Actualizar el closure actual para reflejar el cambio
+      if (viewingClosure?.id === closureId) {
+        setViewingClosure({
+          ...viewingClosure,
+          status: "validated",
+          validated_at: new Date().toISOString(),
+          validated_by: user.id
+        });
+      }
     } catch (error: any) {
       console.error("Error al validar:", error);
-      toast.error("Error al actualizar el estado del cierre");
+      toast.error("Error al validar el cierre");
+    }
+  };
+
+  const handleReject = async (closureId: string) => {
+    if (!rejectionReason.trim()) {
+      toast.error("Debe ingresar un motivo de rechazo");
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const { error } = await supabase
+        .from("sale_closures")
+        .update({
+          status: "rejected",
+          validated_by: user.id,
+          validated_at: new Date().toISOString(),
+          rejection_reason: rejectionReason,
+        })
+        .eq("id", closureId);
+
+      if (error) throw error;
+
+      toast.success("❌ Cierre rechazado");
+      setShowRejectDialog(false);
+      setRejectionReason("");
+      fetchClosures();
+      
+      // Actualizar el closure actual para reflejar el cambio
+      if (viewingClosure?.id === closureId) {
+        setViewingClosure({
+          ...viewingClosure,
+          status: "rejected",
+          validated_at: new Date().toISOString(),
+          validated_by: user.id,
+          rejection_reason: rejectionReason
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al rechazar:", error);
+      toast.error("Error al rechazar el cierre");
     }
   };
 
@@ -360,27 +416,39 @@ export default function AdminSaleClosuresSection() {
 
               {/* Información de Validación */}
               {viewingClosure.validated_at && (
-                <div className="p-3 bg-muted/30 rounded-lg text-sm">
-                  <p className="text-muted-foreground">
-                    {viewingClosure.status === "validated" ? "Validado" : "Rechazado"} por{" "}
+                <div className={`p-4 rounded-lg ${
+                  viewingClosure.status === "validated" 
+                    ? "bg-green-50 dark:bg-green-950 border border-green-200" 
+                    : "bg-red-50 dark:bg-red-950 border border-red-200"
+                }`}>
+                  <p className="text-sm font-medium mb-1">
+                    {viewingClosure.status === "validated" ? "✅ Validado" : "❌ Rechazado"} por{" "}
                     <span className="font-semibold">{viewingClosure.validated_by_profile?.full_name || "Administrador"}</span>
-                    {" "}el {format(new Date(viewingClosure.validated_at), "dd/MM/yyyy HH:mm", { locale: es })}
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(viewingClosure.validated_at), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}
+                  </p>
+                  {viewingClosure.status === "rejected" && viewingClosure.rejection_reason && (
+                    <div className="mt-3 p-3 bg-white/50 dark:bg-black/20 rounded">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Motivo del rechazo:</p>
+                      <p className="text-sm">{viewingClosure.rejection_reason}</p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Botones de Acción */}
               {viewingClosure.status === "pending" && (
-                <div className="flex gap-2 pt-4 border-t">
+                <div className="flex gap-3 pt-4 border-t">
                   <Button
-                    onClick={() => handleValidate(viewingClosure.id, "validated")}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleValidate(viewingClosure.id)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Validar Cierre
                   </Button>
                   <Button
-                    onClick={() => handleValidate(viewingClosure.id, "rejected")}
+                    onClick={() => setShowRejectDialog(true)}
                     variant="destructive"
                     className="flex-1"
                   >
@@ -391,6 +459,56 @@ export default function AdminSaleClosuresSection() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Rechazo */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <XCircle className="h-5 w-5" />
+              Rechazar Cierre de Venta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="rejection-reason" className="text-sm font-medium">
+                Motivo del Rechazo *
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Explique el motivo por el cual se rechaza este cierre..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="mt-2 min-h-[120px]"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Este motivo será visible para los agentes involucrados
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRejectDialog(false);
+                  setRejectionReason("");
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => handleReject(viewingClosure?.id)}
+                variant="destructive"
+                className="flex-1"
+                disabled={!rejectionReason.trim()}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Confirmar Rechazo
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
