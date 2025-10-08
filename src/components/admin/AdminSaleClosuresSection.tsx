@@ -96,18 +96,25 @@ export default function AdminSaleClosuresSection() {
 
       if (error) throw error;
 
+      // Obtener el closure actualizado con todas las relaciones
+      const { data: updatedClosure } = await supabase
+        .from("sale_closures")
+        .select(`
+          *,
+          property:properties(title, address, property_code),
+          agent_captador:profiles!agent_captador_id(full_name, agent_code),
+          agent_vendedor:profiles!agent_vendedor_id(full_name, agent_code),
+          validated_by_profile:profiles!validated_by(full_name)
+        `)
+        .eq("id", closureId)
+        .single();
+
+      if (updatedClosure && viewingClosure?.id === closureId) {
+        setViewingClosure(updatedClosure);
+      }
+
       toast.success("✅ Cierre validado exitosamente");
       fetchClosures();
-      
-      // Actualizar el closure actual para reflejar el cambio
-      if (viewingClosure?.id === closureId) {
-        setViewingClosure({
-          ...viewingClosure,
-          status: "validated",
-          validated_at: new Date().toISOString(),
-          validated_by: user.id
-        });
-      }
     } catch (error: any) {
       console.error("Error al validar:", error);
       toast.error("Error al validar el cierre");
@@ -136,21 +143,27 @@ export default function AdminSaleClosuresSection() {
 
       if (error) throw error;
 
+      // Obtener el closure actualizado con todas las relaciones
+      const { data: updatedClosure } = await supabase
+        .from("sale_closures")
+        .select(`
+          *,
+          property:properties(title, address, property_code),
+          agent_captador:profiles!agent_captador_id(full_name, agent_code),
+          agent_vendedor:profiles!agent_vendedor_id(full_name, agent_code),
+          validated_by_profile:profiles!validated_by(full_name)
+        `)
+        .eq("id", closureId)
+        .single();
+
+      if (updatedClosure && viewingClosure?.id === closureId) {
+        setViewingClosure(updatedClosure);
+      }
+
       toast.success("❌ Cierre rechazado");
       setShowRejectDialog(false);
       setRejectionReason("");
       fetchClosures();
-      
-      // Actualizar el closure actual para reflejar el cambio
-      if (viewingClosure?.id === closureId) {
-        setViewingClosure({
-          ...viewingClosure,
-          status: "rejected",
-          validated_at: new Date().toISOString(),
-          validated_by: user.id,
-          rejection_reason: rejectionReason
-        });
-      }
     } catch (error: any) {
       console.error("Error al rechazar:", error);
       toast.error("Error al rechazar el cierre");
