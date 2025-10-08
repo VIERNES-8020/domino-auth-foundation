@@ -6,11 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, X, FileText } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import DocumentFileUpload from "@/components/DocumentFileUpload";
 
 interface SaleClosureFormProps {
   agentId: string;
@@ -36,8 +37,8 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
     captador_percentage: 35,
     vendedor_percentage: 35,
   });
-  const [contractFile, setContractFile] = useState<File | null>(null);
-  const [voucherFiles, setVoucherFiles] = useState<File[]>([]);
+  const [contractUrls, setContractUrls] = useState<string[]>([]);
+  const [voucherUrls, setVoucherUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -82,37 +83,6 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
     }
   };
 
-  const handleContractUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setContractFile(file);
-    } else {
-      toast.error("Solo se permiten archivos PDF para el contrato");
-    }
-  };
-
-  const handleVoucherUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setVoucherFiles((prev) => [...prev, ...files]);
-  };
-
-  const removeVoucher = (index: number) => {
-    setVoucherFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const uploadFile = async (file: File, path: string) => {
-    const { data, error } = await supabase.storage
-      .from("sale-documents")
-      .upload(path, file);
-
-    if (error) throw error;
-
-    const { data: urlData } = supabase.storage
-      .from("sale-documents")
-      .getPublicUrl(path);
-
-    return urlData.publicUrl;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,37 +106,6 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
     setUploading(true);
 
     try {
-      let contractUrl = null;
-      let voucherUrls: string[] = [];
-
-      // Upload contract if provided
-      if (contractFile) {
-        console.log("Subiendo contrato:", contractFile.name);
-        const contractPath = `${agentId}/contracts/${Date.now()}-${contractFile.name}`;
-        try {
-          contractUrl = await uploadFile(contractFile, contractPath);
-          console.log("Contrato subido:", contractUrl);
-        } catch (uploadError: any) {
-          console.error("Error al subir contrato:", uploadError);
-          throw new Error(`Error al subir contrato: ${uploadError.message}`);
-        }
-      }
-
-      // Upload vouchers if provided
-      if (voucherFiles.length > 0) {
-        console.log(`Subiendo ${voucherFiles.length} comprobantes`);
-        for (const file of voucherFiles) {
-          const voucherPath = `${agentId}/vouchers/${Date.now()}-${file.name}`;
-          try {
-            const url = await uploadFile(file, voucherPath);
-            voucherUrls.push(url);
-            console.log("Comprobante subido:", url);
-          } catch (uploadError: any) {
-            console.error("Error al subir comprobante:", uploadError);
-            throw new Error(`Error al subir comprobante: ${uploadError.message}`);
-          }
-        }
-      }
 
       // Insert sale closure record
       console.log("Insertando registro de cierre...");
@@ -183,7 +122,7 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
         captador_percentage: formData.captador_percentage,
         vendedor_percentage: formData.vendedor_percentage,
         notes: formData.notes,
-        contract_url: contractUrl,
+        contract_url: contractUrls.length > 0 ? contractUrls[0] : null,
         voucher_urls: voucherUrls.length > 0 ? voucherUrls : null,
       };
 
@@ -384,62 +323,34 @@ export default function SaleClosureForm({ agentId, onSuccess, onCancel }: SaleCl
 
       {/* Subir Contrato */}
       <div className="space-y-2">
-        <Label htmlFor="contract">Contrato (PDF)</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="contract"
-            type="file"
-            accept=".pdf"
-            onChange={handleContractUpload}
-            className="flex-1"
-          />
-          {contractFile && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
-              <FileText className="h-4 w-4" />
-              <span className="text-sm">{contractFile.name}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setContractFile(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <Label>Contrato (PDF)</Label>
+        <DocumentFileUpload
+          files={contractUrls}
+          onFilesChange={setContractUrls}
+          type="contract"
+          maxFiles={1}
+          maxSizeMB={5}
+          bucket="sale-documents"
+          label="Subir Contrato"
+          description="Arrastra o selecciona el contrato de venta en formato PDF"
+          agentId={agentId}
+        />
       </div>
 
       {/* Subir Comprobantes */}
       <div className="space-y-2">
-        <Label htmlFor="vouchers">Comprobantes (Recibos/Vouchers)</Label>
-        <Input
-          id="vouchers"
-          type="file"
-          accept="image/*,.pdf"
-          multiple
-          onChange={handleVoucherUpload}
+        <Label>Comprobantes (Recibos/Vouchers)</Label>
+        <DocumentFileUpload
+          files={voucherUrls}
+          onFilesChange={setVoucherUrls}
+          type="voucher"
+          maxFiles={10}
+          maxSizeMB={5}
+          bucket="sale-documents"
+          label="Subir Comprobantes"
+          description="Arrastra o selecciona hasta 10 comprobantes (PDF, JPG, PNG)"
+          agentId={agentId}
         />
-        {voucherFiles.length > 0 && (
-          <div className="space-y-2 mt-2">
-            {voucherFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                <div className="flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  <span className="text-sm">{file.name}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeVoucher(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Notas */}
