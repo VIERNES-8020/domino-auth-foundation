@@ -47,15 +47,24 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        await fetchUserProfile(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          await fetchUserProfile(session.user);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true);
       if (session?.user) {
         setUser(session.user);
         await fetchUserProfile(session.user);
@@ -63,6 +72,7 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         setUser(null);
         setProfile(null);
       }
+      setLoading(false);
     });
 
     initializeAuth();

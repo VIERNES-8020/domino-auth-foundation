@@ -15,6 +15,19 @@ export default function Header() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
 
+  // Mapear roles de la base de datos a nombres de la aplicación
+  const mapDatabaseRoleToAppRole = (dbRole: string): string => {
+    const roleMapping: Record<string, string> = {
+      'SUPERADMIN': 'Super Administrador',
+      'SUPERVISIÓN': 'Supervisor',
+      'AGENTE': 'Agente Inmobiliario',
+      'ADMINISTRACIÓN': 'Gerente de Oficina',
+      'CONTABILIDAD': 'Contabilidad',
+    };
+    
+    return roleMapping[dbRole] || dbRole;
+  };
+
   const fetchUserProfile = async (userId: string) => {
     try {
       // Obtener perfil con rol desde profiles.rol_id -> roles
@@ -32,11 +45,12 @@ export default function Header() {
         return;
       }
       
-      // Obtener rol desde la relación con la tabla roles
-      const roleName = (profileData?.roles as any)?.nombre;
+      // Obtener rol desde la relación con la tabla roles y mapear
+      const dbRoleName = (profileData?.roles as any)?.nombre;
       
-      if (roleName) {
-        setUserRole(roleName);
+      if (dbRoleName) {
+        const mappedRole = mapDatabaseRoleToAppRole(dbRoleName);
+        setUserRole(mappedRole);
         return;
       }
       
