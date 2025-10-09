@@ -25,6 +25,8 @@ import LeaderboardPage from '@/pages/LeaderboardPage';
 import AgentDashboard from '@/pages/AgentDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
+import SupervisorDashboard from '@/pages/SupervisorDashboard';
+import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
 import NotFound from '@/pages/NotFound';
 import AccessDenied from '@/pages/AccessDenied';
 
@@ -69,13 +71,22 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
 
   const fetchUserProfile = async (user: User) => {
     try {
-      // First check profiles table for super admin flag and agent_code
-      const { data: profileData } = await supabase
+      // Obtener perfil con rol desde profiles.rol_id -> roles
+      const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, is_super_admin, full_name, agent_code')
+        .select('id, is_super_admin, full_name, rol_id, roles(nombre)')
         .eq('id', user.id)
-        .maybeSingle();
+        .single();
       
+      if (error) {
+        console.error("Error al obtener perfil:", error);
+        setProfile({ id: user.id, role: 'Cliente' });
+        return;
+      }
+      
+      console.log("Datos del perfil obtenidos:", profileData);
+      
+      // Si es super admin, ese es su rol principal
       if (profileData?.is_super_admin === true) {
         setProfile({ 
           id: profileData.id, 
@@ -84,39 +95,20 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
         return;
       }
       
-      // Check if user has agent_code (makes them an agent)
-      if (profileData?.agent_code) {
+      // Obtener rol desde la relación con la tabla roles
+      const roleName = (profileData?.roles as any)?.nombre;
+      
+      if (roleName) {
+        console.log("Rol del usuario:", roleName);
         setProfile({ 
           id: user.id, 
-          role: 'Agente Inmobiliario' 
+          role: roleName 
         });
         return;
       }
       
-      // Then check user_roles for other roles
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (roleData?.role === 'agent') {
-        setProfile({ 
-          id: user.id, 
-          role: 'Agente Inmobiliario' 
-        });
-        return;
-      }
-      
-      if (roleData?.role === 'super_admin') {
-        setProfile({ 
-          id: user.id, 
-          role: 'Super Administrador' 
-        });
-        return;
-      }
-      
-      // Default to client role
+      // Si no tiene rol asignado, es cliente por defecto
+      console.log("Usuario sin rol específico, asignando Cliente");
       setProfile({ 
         id: user.id, 
         role: 'Cliente' 
@@ -271,6 +263,22 @@ export default function App() {
           <DashboardLayout>
             <ProtectedRoute requiredRole="Agente Inmobiliario">
               <AgentDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
+        <Route path="/dashboard/supervisor" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Supervisor">
+              <SupervisorDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
+        <Route path="/dashboard/office-manager" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Gerente de Oficina">
+              <OfficeManagerDashboard />
             </ProtectedRoute>
           </DashboardLayout>
         } />

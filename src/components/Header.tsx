@@ -17,43 +17,30 @@ export default function Header() {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      // Get full user profile including avatar
+      // Obtener perfil con rol desde profiles.rol_id -> roles
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, roles(nombre)')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
       
       setUserProfile(profileData);
 
-      // Determine role using same logic as App.tsx
+      // Determinar rol: primero super admin, luego rol desde la tabla roles
       if (profileData?.is_super_admin === true) {
         setUserRole('Super Administrador');
         return;
       }
       
-      // Check if user has agent_code (makes them an agent)
-      if (profileData?.agent_code) {
-        setUserRole('Agente Inmobiliario');
+      // Obtener rol desde la relación con la tabla roles
+      const roleName = (profileData?.roles as any)?.nombre;
+      
+      if (roleName) {
+        setUserRole(roleName);
         return;
       }
       
-      // Check user_roles for other roles
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-      
-      if (roleData?.role === 'agent') {
-        setUserRole('Agente Inmobiliario');
-        return;
-      } else if (roleData?.role === 'super_admin') {
-        setUserRole('Super Administrador');
-        return;
-      }
-      
-      // Default to client role
+      // Si no tiene rol asignado, es cliente por defecto
       setUserRole('Cliente');
     } catch (error) {
       console.warn("Could not fetch user profile:", error);
@@ -62,14 +49,20 @@ export default function Header() {
   };
 
   const getDashboardLink = () => {
-    if (userRole === 'Super Administrador') {
-      return '/admin/dashboard';
-    } else if (userRole === 'Agente Inmobiliario') {
-      return '/dashboard/agent';
-    } else if (userRole === 'Cliente') {
-      return '/dashboard/client';
+    switch (userRole) {
+      case 'Super Administrador':
+        return '/admin/dashboard';
+      case 'Supervisor':
+        return '/dashboard/supervisor';
+      case 'Gerente de Oficina':
+        return '/dashboard/office-manager';
+      case 'Agente Inmobiliario':
+        return '/dashboard/agent';
+      case 'Cliente':
+        return '/dashboard/client';
+      default:
+        return '/dashboard/client';
     }
-    return '/dashboard/client';
   };
 
   const handleSignOut = async () => {

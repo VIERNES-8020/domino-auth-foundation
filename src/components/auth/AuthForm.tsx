@@ -84,28 +84,37 @@ export default function AuthForm() {
     },
   });
 
-  // Función para obtener el rol del usuario desde la tabla user_roles
-  const getUserRole = async (userId: string): Promise<string | null> => {
-    
-    
+  // Función para obtener el rol del usuario desde profiles -> roles
+  const getUserRoleName = async (userId: string): Promise<string | null> => {
     try {
       console.log("Obteniendo rol para usuario:", userId);
       
-      const { data: roleData, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
+      // Obtener rol desde profiles.rol_id -> roles.nombre
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('rol_id, is_super_admin, roles(nombre)')
+        .eq('id', userId)
         .single();
       
-      if (error) {
-        console.warn("Error al obtener rol de user_roles:", error);
+      if (profileError) {
+        console.warn("Error al obtener perfil:", profileError);
         return null;
       }
       
-      console.log("Rol obtenido de user_roles:", roleData?.role);
-      return roleData?.role || null;
+      console.log("Datos del perfil:", profileData);
+      
+      // Si es super admin, retornar ese rol
+      if (profileData?.is_super_admin === true) {
+        return 'Super Administrador';
+      }
+      
+      // Obtener nombre del rol desde la relación
+      const roleName = (profileData?.roles as any)?.nombre;
+      console.log("Rol obtenido:", roleName);
+      
+      return roleName || null;
     } catch (err) {
-      console.error("Error en getUserRole:", err);
+      console.error("Error en getUserRoleName:", err);
       return null;
     }
   };
@@ -122,39 +131,35 @@ export default function AuthForm() {
     
     // Determine user role and redirect accordingly
     try {
-      // Check if super admin first
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_super_admin')
-        .eq('id', session.user.id)
-        .maybeSingle();
+      const roleName = await getUserRoleName(session.user.id);
+      console.log("Rol del usuario:", roleName);
       
-      console.log("Datos del perfil:", profileData);
-      
-      if (profileData?.is_super_admin === true) {
-        console.log("Redirigiendo Super Admin a /admin/dashboard");
-        navigate('/admin/dashboard');
-        return;
+      // Redirección según el rol
+      switch (roleName) {
+        case 'Super Administrador':
+          console.log("Redirigiendo Super Admin a /admin/dashboard");
+          navigate('/admin/dashboard');
+          break;
+        case 'Supervisor':
+          console.log("Redirigiendo Supervisor a /dashboard/supervisor");
+          navigate('/dashboard/supervisor');
+          break;
+        case 'Gerente de Oficina':
+          console.log("Redirigiendo Gerente de Oficina a /dashboard/office-manager");
+          navigate('/dashboard/office-manager');
+          break;
+        case 'Agente Inmobiliario':
+          console.log("Redirigiendo Agente a /dashboard/agent");
+          navigate('/dashboard/agent');
+          break;
+        case 'Cliente':
+          console.log("Redirigiendo Cliente a página principal");
+          navigate('/');
+          break;
+        default:
+          console.log("Sin rol específico, redirigiendo a página principal");
+          navigate('/');
       }
-      
-      // Check user role in user_roles table
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-      
-      console.log("Rol encontrado:", roleData?.role);
-      
-      if (roleData?.role === 'agent') {
-        console.log("Redirigiendo Agente a /dashboard/agent");
-        navigate('/dashboard/agent');
-        return;
-      }
-      
-      // Default redirect to home for clients
-      console.log("Redirigiendo Cliente a página principal");
-      navigate('/');
     } catch (error) {
       console.error("Error determining user role:", error);
       navigate('/');
