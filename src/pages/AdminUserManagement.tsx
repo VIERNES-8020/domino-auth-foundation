@@ -922,7 +922,7 @@ const AdminUserManagement = () => {
                       </FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        value={field.value}
                         disabled={rolesLoading}
                       >
                         <FormControl>
