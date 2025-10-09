@@ -84,6 +84,19 @@ export default function AuthForm() {
     },
   });
 
+  // Mapear roles de la base de datos a nombres de la aplicación
+  const mapDatabaseRoleToAppRole = (dbRole: string): string => {
+    const roleMapping: Record<string, string> = {
+      'SUPERADMIN': 'Super Administrador',
+      'SUPERVISIÓN': 'Supervisor',
+      'AGENTE': 'Agente Inmobiliario',
+      'ADMINISTRACIÓN': 'Gerente de Oficina',
+      'CONTABILIDAD': 'Contabilidad',
+    };
+    
+    return roleMapping[dbRole] || dbRole;
+  };
+
   // Función para obtener el rol del usuario desde profiles -> roles
   const getUserRoleName = async (userId: string): Promise<string | null> => {
     try {
@@ -108,11 +121,17 @@ export default function AuthForm() {
         return 'Super Administrador';
       }
       
-      // Obtener nombre del rol desde la relación
-      const roleName = (profileData?.roles as any)?.nombre;
-      console.log("Rol obtenido:", roleName);
+      // Obtener nombre del rol desde la relación y mapear
+      const dbRoleName = (profileData?.roles as any)?.nombre;
+      console.log("Rol obtenido de BD:", dbRoleName);
       
-      return roleName || null;
+      if (dbRoleName) {
+        const mappedRole = mapDatabaseRoleToAppRole(dbRoleName);
+        console.log("Rol mapeado:", mappedRole);
+        return mappedRole;
+      }
+      
+      return null;
     } catch (err) {
       console.error("Error en getUserRoleName:", err);
       return null;

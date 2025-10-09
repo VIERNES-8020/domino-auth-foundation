@@ -69,6 +69,19 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
     return () => subscription.unsubscribe();
   }, []);
 
+  // Mapear roles de la base de datos a nombres de la aplicación
+  const mapDatabaseRoleToAppRole = (dbRole: string): string => {
+    const roleMapping: Record<string, string> = {
+      'SUPERADMIN': 'Super Administrador',
+      'SUPERVISIÓN': 'Supervisor',
+      'AGENTE': 'Agente Inmobiliario',
+      'ADMINISTRACIÓN': 'Gerente de Oficina',
+      'CONTABILIDAD': 'Contabilidad',
+    };
+    
+    return roleMapping[dbRole] || dbRole;
+  };
+
   const fetchUserProfile = async (user: User) => {
     try {
       // Obtener perfil con rol desde profiles.rol_id -> roles
@@ -96,13 +109,14 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
       }
       
       // Obtener rol desde la relación con la tabla roles
-      const roleName = (profileData?.roles as any)?.nombre;
+      const dbRoleName = (profileData?.roles as any)?.nombre;
       
-      if (roleName) {
-        console.log("Rol del usuario:", roleName);
+      if (dbRoleName) {
+        const mappedRole = mapDatabaseRoleToAppRole(dbRoleName);
+        console.log("Rol del usuario (BD):", dbRoleName, "-> Mapeado a:", mappedRole);
         setProfile({ 
           id: user.id, 
-          role: roleName 
+          role: mappedRole 
         });
         return;
       }
