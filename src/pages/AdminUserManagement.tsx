@@ -27,6 +27,7 @@ import { Database } from "@/integrations/supabase/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { useFormErrorHandler, useApiErrorHandler } from "@/hooks/useErrorHandler";
+import { RolePermissionsManager } from "@/components/admin/RolePermissionsManager";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
@@ -75,6 +76,8 @@ const AdminUserManagement = () => {
     userName: '',
     userRole: ''
   });
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [corporateAssignmentsDialog, setCorporateAssignmentsDialog] = useState<{
     open: boolean;
     userId: string;
@@ -493,7 +496,31 @@ const AdminUserManagement = () => {
     });
   };
 
-  const handleViewAssignments = (userId: string, userName: string, userRole: string) => {
+  const handleViewAssignments = async (userId: string, userName: string, userRole: string) => {
+    // Load current role and permissions from database
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('rol_id')
+      .eq('id', userId)
+      .single();
+    
+    if (userProfile?.rol_id) {
+      setSelectedRoleId(userProfile.rol_id);
+      
+      // Load permissions for this role
+      const { data: rolePermisos } = await supabase
+        .from('rol_permisos')
+        .select('permiso_id')
+        .eq('rol_id', userProfile.rol_id);
+      
+      if (rolePermisos) {
+        setSelectedPermissions(rolePermisos.map(rp => rp.permiso_id));
+      }
+    } else {
+      setSelectedRoleId('');
+      setSelectedPermissions([]);
+    }
+    
     setAssignmentsDialog({
       open: true,
       userId,
@@ -1256,46 +1283,38 @@ const AdminUserManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Role Assignments Dialog */}
-      <Dialog open={assignmentsDialog.open} onOpenChange={(open) => setAssignmentsDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-2xl">
+      {/* Role Assignments Dialog - DYNAMIC */}
+      <Dialog open={assignmentsDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' });
+          setSelectedRoleId('');
+          setSelectedPermissions([]);
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5" />
-              Asignaciones de {assignmentsDialog.userName}
+              Gestión de Roles y Permisos - {assignmentsDialog.userName}
             </DialogTitle>
             <DialogDescription>
-              Permisos y funcionalidades asignadas al rol: <strong>{getRoleLabel(assignmentsDialog.userRole)}</strong>
+              Selecciona un rol y marca/desmarca los permisos correspondientes
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-              <Shield className="h-5 w-5 text-primary" />
-              <span className="font-medium">Rol Actual: {getRoleLabel(assignmentsDialog.userRole)}</span>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-semibold flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                Funcionalidades Asignadas:
-              </h4>
-              <ul className="space-y-2">
-                {getRoleAssignments(assignmentsDialog.userRole).map((assignment, index) => (
-                  <li key={index} className="flex items-center gap-2 p-2 bg-background border rounded">
-                    <div className="w-2 h-2 bg-primary rounded-full" />
-                    {assignment}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => setAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' })}>
-              Cerrar
-            </Button>
-          </div>
+          <RolePermissionsManager
+            userId={assignmentsDialog.userId}
+            selectedRoleId={selectedRoleId}
+            selectedPermissions={selectedPermissions}
+            onRoleChange={setSelectedRoleId}
+            onPermissionsChange={setSelectedPermissions}
+            onClose={() => {
+              setAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' });
+              setSelectedRoleId('');
+              setSelectedPermissions([]);
+              queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
+            }}
+          />
         </DialogContent>
       </Dialog>
 

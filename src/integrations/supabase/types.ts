@@ -454,6 +454,27 @@ export type Database = {
         }
         Relationships: []
       }
+      permisos: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agent_code: string | null
@@ -477,6 +498,7 @@ export type Database = {
           is_archived: boolean | null
           is_super_admin: boolean | null
           linkedin_url: string | null
+          rol_id: string | null
           title: string | null
           twitter_url: string | null
           updated_at: string
@@ -504,6 +526,7 @@ export type Database = {
           is_archived?: boolean | null
           is_super_admin?: boolean | null
           linkedin_url?: string | null
+          rol_id?: string | null
           title?: string | null
           twitter_url?: string | null
           updated_at?: string
@@ -531,12 +554,21 @@ export type Database = {
           is_archived?: boolean | null
           is_super_admin?: boolean | null
           linkedin_url?: string | null
+          rol_id?: string | null
           title?: string | null
           twitter_url?: string | null
           updated_at?: string
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_rol_id_fkey"
+            columns: ["rol_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       properties: {
         Row: {
@@ -815,6 +847,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rol_permisos: {
+        Row: {
+          permiso_id: string
+          rol_id: string
+        }
+        Insert: {
+          permiso_id: string
+          rol_id: string
+        }
+        Update: {
+          permiso_id?: string
+          rol_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rol_permisos_permiso_id_fkey"
+            columns: ["permiso_id"]
+            isOneToOne: false
+            referencedRelation: "permisos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rol_permisos_rol_id_fkey"
+            columns: ["rol_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
       }
       sale_closures: {
         Row: {
