@@ -100,6 +100,7 @@ export default function PropertyDetailPage() {
   const [availableAgents, setAvailableAgents] = useState<any[]>([]);
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [showContactConfirmation, setShowContactConfirmation] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,6 +117,25 @@ export default function PropertyDetailPage() {
     }
     loadToken();
     return () => { cancelled = true; };
+  }, []);
+
+  // Check user role
+  useEffect(() => {
+    async function checkUserRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("rol_id, roles(nombre)")
+          .eq("id", user.id)
+          .single();
+        
+        if (profileData?.roles) {
+          setUserRole((profileData.roles as any).nombre);
+        }
+      }
+    }
+    checkUserRole();
   }, []);
 
   useEffect(() => {
@@ -186,7 +206,7 @@ export default function PropertyDetailPage() {
 
     load();
     return () => { active = false; };
-  }, [id]);
+  }, [id, t]);
 
   usePageSEO({
     title: property?.title ? `${property.title} | DOMINIO` : `${t('property.viewDetails')} | DOMINIO`,
@@ -641,7 +661,7 @@ export default function PropertyDetailPage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-semibold text-primary">{t('property.clientReviews')}</h2>
-                {!property.concluded_status && (
+                {!property.concluded_status && userRole === 'Cliente' && (
                   <Button 
                     variant="outline" 
                     onClick={() => setShowReviewForm(true)}
@@ -741,14 +761,16 @@ export default function PropertyDetailPage() {
                       <p className="text-muted-foreground mb-4">
                         Sé el primero en dejar una reseña de esta propiedad
                       </p>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowReviewForm(true)}
-                        className="gap-2"
-                      >
-                        <Star className="h-4 w-4" />
-                        Escribir primera reseña
-                      </Button>
+                      {userRole === 'Cliente' && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowReviewForm(true)}
+                          className="gap-2"
+                        >
+                          <Star className="h-4 w-4" />
+                          Escribir primera reseña
+                        </Button>
+                      )}
                     </Card>
                   )}
                 </div>
