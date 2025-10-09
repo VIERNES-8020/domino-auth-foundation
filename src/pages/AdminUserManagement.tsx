@@ -39,7 +39,7 @@ const userFormSchema = z.object({
   corporate_phone: z.string().optional(),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  role: z.enum(["super_admin", "agent", "franchise_admin", "office_manager", "supervisor", "client"]),
+  rol_id: z.string().uuid("Debes seleccionar un rol válido").min(1, "Debes seleccionar un rol"),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -207,6 +207,20 @@ const AdminUserManagement = () => {
     enabled: !!currentUser && !loading,
   });
 
+  // Fetch roles from database
+  const { data: rolesFromDB = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("roles")
+        .select("id, nombre, descripcion")
+        .order("nombre");
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
@@ -215,7 +229,7 @@ const AdminUserManagement = () => {
       corporate_phone: "",
       email: "",
       password: "",
-      role: "agent",
+      rol_id: "",
     },
   });
 
@@ -247,7 +261,6 @@ const AdminUserManagement = () => {
           emailRedirectTo: undefined, // Disable email confirmation
           data: {
             full_name: cleanedValues.full_name,
-            role: cleanedValues.role,
           },
         },
       });
@@ -284,21 +297,17 @@ const AdminUserManagement = () => {
           throw new Error(`Error al crear perfil: ${profileError.message}`);
         }
 
-        console.log('Profile created, creating user role...');
-        console.log('Creating role:', cleanedValues.role, 'for user:', authData.user.id);
+        console.log('Profile created, updating with rol_id...');
         
-        // Create user role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert([{
-            user_id: authData.user.id,
-            role: cleanedValues.role as any,
-          }]);
+        // Update profile with rol_id
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ rol_id: cleanedValues.rol_id })
+          .eq("id", authData.user.id);
 
-        if (roleError) {
-          console.error('Role creation error:', roleError);
-          console.error('Attempted role value:', cleanedValues.role);
-          throw new Error(`Error al asignar rol "${cleanedValues.role}": ${roleError.message}`);
+        if (updateError) {
+          console.error('Error updating profile with rol_id:', updateError);
+          throw new Error(`Error al asignar rol: ${updateError.message}`);
         }
         
         console.log('User creation completed successfully');
@@ -307,7 +316,7 @@ const AdminUserManagement = () => {
       return authData;
     },
     onSuccess: () => {
-      toast.success(t('userCreatedSuccess') || 'Usuario creado exitosamente');
+      toast.success('✅ Usuario creado correctamente');
       queryClient.invalidateQueries({ queryKey: ["admin-all-users"] });
       setIsCreateModalOpen(false);
       form.reset();
@@ -905,20 +914,31 @@ const AdminUserManagement = () => {
 
                 <FormField
                   control={form.control}
-                  name="role"
+                  name="rol_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('admin.role')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>
+                        Rol <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={rolesLoading}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t('admin.selectRole')} />
+                            <SelectValue placeholder={rolesLoading ? "Cargando roles..." : "Selecciona un rol"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {getRoleLabel(role)}
+                          {rolesFromDB.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              <div className="flex flex-col">
+                                <span className="font-semibold">{role.nombre}</span>
+                                {role.descripcion && (
+                                  <span className="text-xs text-muted-foreground">{role.descripcion}</span>
+                                )}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
