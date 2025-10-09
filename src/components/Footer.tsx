@@ -13,7 +13,7 @@ const Footer = () => {
         </div>
         <nav aria-label={t('footer.links')} className="space-y-2">
           <Link className="story-link block" to="/propiedades">{t('nav.properties')}</Link>
-          <Link className="story-link block" to="/agentes">{t('nav.agents')}</Link>
+          <Link className="story-link block" to="/nuestros-agentes">{t('nav.agents')}</Link>
           <Link className="story-link block" to="/sobre-nosotros">{t('nav.about')}</Link>
           <Link className="story-link block" to="/contacto">{t('nav.contact')}</Link>
         </nav>
