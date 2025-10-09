@@ -253,7 +253,7 @@ const AdminUserManagement = () => {
       
       console.log('Creating user with values:', cleanedValues);
       
-      // Create user account with email confirmation disabled
+      // Create user account with all data in metadata for the trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanedValues.email,
         password: cleanedValues.password,
@@ -261,6 +261,9 @@ const AdminUserManagement = () => {
           emailRedirectTo: undefined, // Disable email confirmation
           data: {
             full_name: cleanedValues.full_name,
+            identity_card: cleanedValues.identity_card,
+            corporate_phone: cleanedValues.corporate_phone,
+            rol_id: cleanedValues.rol_id,
           },
         },
       });
@@ -280,39 +283,11 @@ const AdminUserManagement = () => {
         throw authError;
       }
 
-      if (authData.user) {
-        console.log('User created successfully, creating profile...');
-        
-        // Create profile using the secure function
-        const { error: profileError } = await supabase.rpc('create_user_profile', {
-          p_user_id: authData.user.id,
-          p_full_name: cleanedValues.full_name,
-          p_identity_card: cleanedValues.identity_card,
-          p_corporate_phone: cleanedValues.corporate_phone,
-          p_email: cleanedValues.email,
-        });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw new Error(`Error al crear perfil: ${profileError.message}`);
-        }
-
-        console.log('Profile created, updating with rol_id...');
-        
-        // Update profile with rol_id
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ rol_id: cleanedValues.rol_id })
-          .eq("id", authData.user.id);
-
-        if (updateError) {
-          console.error('Error updating profile with rol_id:', updateError);
-          throw new Error(`Error al asignar rol: ${updateError.message}`);
-        }
-        
-        console.log('User creation completed successfully');
+      if (!authData.user) {
+        throw new Error('No se pudo crear el usuario');
       }
 
+      console.log('User created successfully with trigger handling profile creation');
       return authData;
     },
     onSuccess: () => {
