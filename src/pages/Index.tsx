@@ -34,6 +34,15 @@ const Index = () => {
     if (userRole === 'Agente Inmobiliario' || userRole === 'agent') {
       return '/dashboard/agent';
     }
+    if (userRole === 'Supervisión (Auxiliar)') {
+      return '/dashboard/supervisor';
+    }
+    if (userRole === 'Administración (Encargado de Oficina)') {
+      return '/dashboard/office-manager';
+    }
+    if (userRole === 'Contabilidad') {
+      return '/dashboard/accounting';
+    }
     // Por defecto, clientes al panel de cliente
     return '/dashboard/client';
   };

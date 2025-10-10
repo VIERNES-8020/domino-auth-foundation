@@ -19,9 +19,9 @@ export default function Header() {
   const mapDatabaseRoleToAppRole = (dbRole: string): string => {
     const roleMapping: Record<string, string> = {
       'SUPERADMIN': 'Super Administrador',
-      'SUPERVISIÓN': 'Supervisor',
+      'SUPERVISIÓN': 'Supervisión (Auxiliar)',
       'AGENTE': 'Agente Inmobiliario',
-      'ADMINISTRACIÓN': 'Gerente de Oficina',
+      'ADMINISTRACIÓN': 'Administración (Encargado de Oficina)',
       'CONTABILIDAD': 'Contabilidad',
     };
     
@@ -66,10 +66,12 @@ export default function Header() {
     switch (userRole) {
       case 'Super Administrador':
         return '/admin/dashboard';
-      case 'Supervisor':
+      case 'Supervisión (Auxiliar)':
         return '/dashboard/supervisor';
-      case 'Gerente de Oficina':
+      case 'Administración (Encargado de Oficina)':
         return '/dashboard/office-manager';
+      case 'Contabilidad':
+        return '/dashboard/accounting';
       case 'Agente Inmobiliario':
         return '/dashboard/agent';
       case 'Cliente':

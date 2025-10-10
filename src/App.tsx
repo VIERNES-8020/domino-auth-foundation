@@ -84,9 +84,9 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
   const mapDatabaseRoleToAppRole = (dbRole: string): string => {
     const roleMapping: Record<string, string> = {
       'SUPERADMIN': 'Super Administrador',
-      'SUPERVISIÓN': 'Supervisor',
+      'SUPERVISIÓN': 'Supervisión (Auxiliar)',
       'AGENTE': 'Agente Inmobiliario',
-      'ADMINISTRACIÓN': 'Gerente de Oficina',
+      'ADMINISTRACIÓN': 'Administración (Encargado de Oficina)',
       'CONTABILIDAD': 'Contabilidad',
     };
     
@@ -294,7 +294,7 @@ export default function App() {
 
         <Route path="/dashboard/supervisor" element={
           <DashboardLayout>
-            <ProtectedRoute requiredRole="Supervisor">
+            <ProtectedRoute requiredRole="Supervisión (Auxiliar)">
               <SupervisorDashboard />
             </ProtectedRoute>
           </DashboardLayout>
@@ -302,16 +302,8 @@ export default function App() {
 
         <Route path="/dashboard/office-manager" element={
           <DashboardLayout>
-            <ProtectedRoute requiredRole="Gerente de Oficina">
+            <ProtectedRoute requiredRole="Administración (Encargado de Oficina)">
               <OfficeManagerDashboard />
-            </ProtectedRoute>
-          </DashboardLayout>
-        } />
-
-        <Route path="/dashboard/accounting" element={
-          <DashboardLayout>
-            <ProtectedRoute requiredRole="Contabilidad">
-              <AccountingDashboard />
             </ProtectedRoute>
           </DashboardLayout>
         } />
