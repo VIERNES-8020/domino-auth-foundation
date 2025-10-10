@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home, DollarSign } from "lucide-react";
 import { 
   Pagination,
   PaginationContent,
@@ -395,11 +395,12 @@ const AdminUserManagement = () => {
     "franchise_admin",
     "office_manager",
     "supervisor",
+    "accounting",
     "client",
   ];
 
   // Filter logic
-  const agentRoles = ["super_admin", "agent", "franchise_admin", "office_manager", "supervisor"];
+  const agentRoles = ["super_admin", "agent", "franchise_admin", "office_manager", "supervisor", "accounting"];
   const clientRoles = ["client"];
 
   const filteredUsers = users.filter(user => {
@@ -709,17 +710,26 @@ const AdminUserManagement = () => {
         "Gestión de leads",
         "Panel de agente"
       ],
+      accounting: [
+        "Ver reportes financieros",
+        "Acceso a datos de asesores",
+        "Comisiones generadas",
+        "Exportar reportes",
+        "Ingresos y egresos"
+      ],
       office_manager: [
-        "Gestión de oficina",
-        "Supervisión de agentes",
-        "Reportes de oficina",
-        "Coordinación de actividades"
+        "Gestión de oficina local",
+        "Aprobar inmuebles",
+        "Verificación de reuniones",
+        "Contabilidad de oficina",
+        "Tramitar solicitudes de bajas"
       ],
       supervisor: [
+        "Control de bajas de agentes",
+        "Aprobación/desaprobación",
         "Supervisión de equipo",
-        "Reportes de supervisión",
-        "Seguimiento de metas",
-        "Capacitación"
+        "Asignaciones",
+        "Historial de aprobaciones"
       ],
       client: [
         "Búsqueda de propiedades",
@@ -760,7 +770,9 @@ const AdminUserManagement = () => {
       case "supervisor":
         return "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-[0_4px_14px_0_rgba(59,130,246,0.35)] hover:shadow-[0_6px_20px_0_rgba(59,130,246,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "office_manager":
-        return "bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700 text-white border-0 shadow-[0_4px_14px_0_rgba(20,184,166,0.35)] hover:shadow-[0_6px_20px_0_rgba(20,184,166,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
+        return "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white border-0 shadow-[0_4px_14px_0_rgba(245,158,11,0.35)] hover:shadow-[0_6px_20px_0_rgba(245,158,11,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
+      case "accounting":
+        return "bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-700 text-white border-0 shadow-[0_4px_14px_0_rgba(99,102,241,0.35)] hover:shadow-[0_6px_20px_0_rgba(99,102,241,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "agent":
         return "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 text-white border-0 shadow-[0_4px_14px_0_rgba(16,185,129,0.35)] hover:shadow-[0_6px_20px_0_rgba(16,185,129,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "client":
@@ -780,6 +792,8 @@ const AdminUserManagement = () => {
         return <UserCheck className="h-3 w-3 mr-1.5" />;
       case "office_manager":
         return <Building2 className="h-3 w-3 mr-1.5" />;
+      case "accounting":
+        return <DollarSign className="h-3 w-3 mr-1.5" />;
       case "agent":
         return <Home className="h-3 w-3 mr-1.5" />;
       case "client":
