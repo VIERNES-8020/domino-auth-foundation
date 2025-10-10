@@ -27,6 +27,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
 import SupervisorDashboard from '@/pages/SupervisorDashboard';
 import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
+import AccountingDashboard from '@/pages/AccountingDashboard';
 import NotFound from '@/pages/NotFound';
 import AccessDenied from '@/pages/AccessDenied';
 
@@ -303,6 +304,22 @@ export default function App() {
           <DashboardLayout>
             <ProtectedRoute requiredRole="Gerente de Oficina">
               <OfficeManagerDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
+        <Route path="/dashboard/accounting" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Contabilidad">
+              <AccountingDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
+        <Route path="/dashboard/accounting" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Contabilidad">
+              <AccountingDashboard />
             </ProtectedRoute>
           </DashboardLayout>
         } />

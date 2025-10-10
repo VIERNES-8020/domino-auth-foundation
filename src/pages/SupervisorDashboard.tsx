@@ -1,125 +1,177 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Building, Home, FileText } from "lucide-react";
+import { UserCheck, UserX, Users, Bell, CheckCircle, XCircle, Clock, History } from "lucide-react";
 
-const SupervisorDashboard = () => {
-  const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
+export default function SupervisorDashboard() {
+  const [activeTab, setActiveTab] = useState("agentes");
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [archiveRequests, setArchiveRequests] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
-    document.title = "Panel de Supervisor - DOMINIO";
-
-    const fetchProfile = async () => {
+    document.title = "Panel de Supervisión - Dominio Inmobiliaria";
+    const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setProfile({
-          full_name: profileData?.full_name || "Supervisor",
-          email: user.email || "",
-        });
+        setUser(user);
+        await fetchProfile(user.id);
+        await fetchAgents();
       }
+      setLoading(false);
     };
-
-    fetchProfile();
+    getCurrentUser();
   }, []);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Panel de Supervisor</h1>
-          <p className="text-muted-foreground">
-            Bienvenido, {profile?.full_name || "Supervisor"}
-          </p>
-        </div>
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, roles(nombre)')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mi Perfil</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{profile?.full_name}</p>
-                <p className="text-xs text-muted-foreground">{profile?.email}</p>
-              </div>
-              <Button asChild className="mt-4 w-full" variant="outline">
-                <Link to="/contacto">Contactar Soporte</Link>
-              </Button>
-            </CardContent>
-          </Card>
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, roles(nombre)')
+        .not('agent_code', 'is', null)
+        .order('created_at', { ascending: false });
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Propiedades</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Supervisa las propiedades activas
-              </p>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/propiedades">Ver Propiedades</Link>
-              </Button>
-            </CardContent>
-          </Card>
+      if (error) throw error;
+      setAgents(data || []);
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+    }
+  };
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Agentes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Gestiona el equipo de agentes
-              </p>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/nuestros-agentes">Ver Agentes</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reportes</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Accede a reportes y estadísticas
-              </p>
-              <Button className="w-full" variant="outline" disabled>
-                Próximamente
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Portal Público</CardTitle>
-              <Home className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Visita el sitio web público
-              </p>
-              <Button asChild className="w-full">
-                <Link to="/">Ir al Portal</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      {/* Header */}
+      <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/80">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <img 
+                  src="/lovable-uploads/90b782af-a7b8-4f13-8cef-038ebfcb471d.png" 
+                  alt="Dominio Logo" 
+                  className="h-12 w-auto"
+                />
+              </Link>
+              <div className="border-l border-border pl-4">
+                <h1 className="text-2xl font-bold text-foreground">Panel de Supervisión</h1>
+                <p className="text-sm text-muted-foreground">
+                  Bienvenido, {profile?.full_name || user?.email}
+                </p>
+              </div>
+            </div>
+            
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/';
+              }}
+            >
+              Cerrar Sesión
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Agentes Activos</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {agents.filter(a => !a.is_archived).length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Agentes Inactivos</CardTitle>
+              <UserX className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {agents.filter(a => a.is_archived).length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Solicitudes Pendientes</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lista de Agentes</CardTitle>
+            <CardDescription>Control de estado de agentes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {agents.map((agent) => (
+                <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
+                      <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
+                    </div>
+                  </div>
+                  <Badge variant={agent.is_archived ? "destructive" : "default"}>
+                    {agent.is_archived ? 'Inactivo' : 'Activo'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
-};
-
-export default SupervisorDashboard;
+}

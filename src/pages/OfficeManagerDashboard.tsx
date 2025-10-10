@@ -1,140 +1,132 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Building, Home, FileText, DollarSign } from "lucide-react";
+import { Home, CheckCircle, Building2 } from "lucide-react";
 
-const OfficeManagerDashboard = () => {
-  const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
+export default function OfficeManagerDashboard() {
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [officeProperties, setOfficeProperties] = useState<any[]>([]);
 
   useEffect(() => {
-    document.title = "Panel de Gerente de Oficina - DOMINIO";
-
-    const fetchProfile = async () => {
+    document.title = "Panel de Administración - Dominio Inmobiliaria";
+    const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setProfile({
-          full_name: profileData?.full_name || "Gerente",
-          email: user.email || "",
-        });
+        setUser(user);
+        await fetchProfile(user.id);
       }
+      setLoading(false);
     };
-
-    fetchProfile();
+    getCurrentUser();
   }, []);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, roles(nombre), franchises(name)')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Panel de Gerente de Oficina</h1>
-          <p className="text-muted-foreground">
-            Bienvenido, {profile?.full_name || "Gerente"}
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mi Perfil</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{profile?.full_name}</p>
-                <p className="text-xs text-muted-foreground">{profile?.email}</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/80">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <img 
+                  src="/lovable-uploads/90b782af-a7b8-4f13-8cef-038ebfcb471d.png" 
+                  alt="Dominio Logo" 
+                  className="h-12 w-auto"
+                />
+              </Link>
+              <div className="border-l border-border pl-4">
+                <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.franchises?.name || 'Mi Oficina'} - {profile?.full_name || user?.email}
+                </p>
               </div>
-              <Button asChild className="mt-4 w-full" variant="outline">
-                <Link to="/contacto">Contactar Soporte</Link>
-              </Button>
-            </CardContent>
-          </Card>
+            </div>
+            
+            <Button
+              variant="ghost"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = '/';
+              }}
+            >
+              Cerrar Sesión
+            </Button>
+          </div>
+        </div>
+      </header>
 
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Gestión de Oficina</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Administra la oficina y sus recursos
-              </p>
-              <Button className="w-full" variant="outline" disabled>
-                Próximamente
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Agentes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Gestiona el equipo de agentes
-              </p>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/nuestros-agentes">Ver Agentes</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Propiedades</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Supervisa las propiedades de la oficina
-              </p>
-              <Button asChild className="w-full" variant="outline">
-                <Link to="/propiedades">Ver Propiedades</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comisiones</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Revisa comisiones y ventas
-              </p>
-              <Button className="w-full" variant="outline" disabled>
-                Próximamente
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Portal Público</CardTitle>
+              <CardTitle className="text-sm font-medium">Inmuebles Cargados</CardTitle>
               <Home className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Visita el sitio web público
-              </p>
-              <Button asChild className="w-full">
-                <Link to="/">Ir al Portal</Link>
-              </Button>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Mi Oficina</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm font-semibold">{profile?.franchises?.name || 'Sin asignar'}</div>
             </CardContent>
           </Card>
         </div>
-      </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Inmuebles de la Oficina</CardTitle>
+            <CardDescription>Gestiona las propiedades de tu oficina</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground py-8">
+              No hay inmuebles registrados
+            </p>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
-};
-
-export default OfficeManagerDashboard;
+}
