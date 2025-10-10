@@ -395,7 +395,7 @@ const AdminUserManagement = () => {
     "franchise_admin",
     "office_manager",
     "supervisor",
-    "accounting",
+    "accounting" as AppRole, // Temporary cast until types regenerate
     "client",
   ];
 

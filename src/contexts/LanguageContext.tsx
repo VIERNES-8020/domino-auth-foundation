@@ -80,8 +80,9 @@ const translations = {
     'role.super_admin': 'Super Administrador',
     'role.agent': 'Agente Inmobiliario',
     'role.franchise_admin': 'Administrador de Franquicia', 
-    'role.office_manager': 'Gerente de Oficina',
-    'role.supervisor': 'Supervisor',
+    'role.office_manager': 'Administración (Encargado de Oficina)',
+    'role.supervisor': 'Supervisión (Auxiliar)',
+    'role.accounting': 'Contabilidad',
     'role.client': 'Cliente',
     'role.none': 'Sin rol',
 
@@ -360,8 +361,9 @@ const translations = {
     'role.super_admin': 'Super Administrator',
     'role.agent': 'Real Estate Agent',
     'role.franchise_admin': 'Franchise Administrator', 
-    'role.office_manager': 'Office Manager',
-    'role.supervisor': 'Supervisor',
+    'role.office_manager': 'Administration (Office Manager)',
+    'role.supervisor': 'Supervision (Assistant)',
+    'role.accounting': 'Accounting',
     'role.client': 'Client',
     'role.none': 'No role',
 
