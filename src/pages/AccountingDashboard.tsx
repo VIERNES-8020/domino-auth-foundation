@@ -186,48 +186,75 @@ export default function AccountingDashboard() {
   const officeStats = groupSalesByOffice();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/80">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link to="/">
-                <img 
-                  src="/lovable-uploads/90b782af-a7b8-4f13-8cef-038ebfcb471d.png" 
-                  alt="Dominio Logo" 
-                  className="h-12 w-auto"
-                />
-              </Link>
-              <div className="border-l border-border pl-4">
-                <h1 className="text-2xl font-bold text-foreground">Panel de Contabilidad</h1>
-                <p className="text-sm text-muted-foreground">
-                  Bienvenido, {profile?.full_name || user?.email}
-                </p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+      <div className="container mx-auto px-4 py-6">
+        <div className="space-y-6">
+          {/* Modern Header Section */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-indigo-500/10 to-indigo-500/5 rounded-2xl border border-indigo-500/10 shadow-lg">
+            <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            <div className="relative p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    {profile?.avatar_url && (
+                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20">
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Foto de perfil"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full animate-pulse"></div>
+                      <h1 className="text-3xl lg:text-4xl font-bold text-indigo-600">
+                        Panel de Contabilidad
+                      </h1>
+                    </div>
+                  </div>
+                  {profile && (
+                    <div className="space-y-2">
+                      <p className="text-lg text-muted-foreground">
+                        Bienvenido, <span className="font-semibold text-indigo-600">{profile.full_name || user?.email}</span>
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm font-mono bg-indigo-500/5 border-indigo-500/20 text-indigo-600">
+                          Contabilidad
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {officeStats.length} Oficinas
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {agentRanking.length} Agentes
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap gap-3">
+                  <Button 
+                    onClick={handleExportReport}
+                    className="bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-600 hover:to-indigo-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Exportar Reporte
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/">Portal Principal</Link>
+                  </Button>
+                  <Button variant="outline" onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '/';
+                  }}>
+                    Cerrar Sesión
+                  </Button>
+                </div>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={handleExportReport}>
-                <Download className="h-4 w-4 mr-2" />
-                Exportar Reporte
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.href = '/';
-                }}
-              >
-                Cerrar Sesión
-              </Button>
-            </div>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+          {/* Main Content */}
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
@@ -427,7 +454,8 @@ export default function AccountingDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }
