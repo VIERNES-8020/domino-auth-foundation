@@ -207,7 +207,7 @@ export default function AgentPublicPage() {
                 No se pudo encontrar un agente con el código proporcionado.
               </p>
               <Button asChild>
-                <Link to="/agents">
+                <Link to="/nuestros-agentes">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Volver a Agentes
                 </Link>
@@ -226,7 +226,7 @@ export default function AgentPublicPage() {
         <div className="container mx-auto">
           <div className="mb-6">
             <Button variant="ghost" asChild className="mb-4">
-              <Link to="/agents">
+              <Link to="/nuestros-agentes">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Volver a Agentes
               </Link>
