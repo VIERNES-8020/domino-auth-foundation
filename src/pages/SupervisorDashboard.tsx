@@ -38,7 +38,7 @@ export default function SupervisorDashboard() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, roles(nombre)')
+        .select('*')
         .eq('id', userId)
         .single();
       

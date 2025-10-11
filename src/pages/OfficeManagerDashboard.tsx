@@ -29,7 +29,7 @@ export default function OfficeManagerDashboard() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, roles(nombre), franchises(name)')
+        .select('*')
         .eq('id', userId)
         .single();
       
