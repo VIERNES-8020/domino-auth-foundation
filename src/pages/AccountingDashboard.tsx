@@ -67,7 +67,7 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name),
           agent_vendedor:profiles!agent_vendedor_id(full_name)
         `)
-        .eq('status', 'approved');
+        .eq('status', 'validated');
 
       if (error) throw error;
       setSalesByOffice(data || []);
@@ -85,7 +85,7 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name, agent_code),
           agent_vendedor:profiles!agent_vendedor_id(full_name, agent_code)
         `)
-        .eq('status', 'approved')
+        .eq('status', 'validated')
         .order('closure_date', { ascending: false });
 
       if (error) throw error;
@@ -100,7 +100,7 @@ export default function AccountingDashboard() {
       const { data, error } = await supabase
         .from('sale_closures')
         .select('closure_price, currency')
-        .eq('status', 'approved');
+        .eq('status', 'validated');
 
       if (error) throw error;
       
@@ -118,11 +118,11 @@ export default function AccountingDashboard() {
 
   const fetchStats = async () => {
     try {
-      // Contar ventas aprobadas
+      // Contar ventas validadas
       const { count: salesCount } = await supabase
         .from('sale_closures')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'approved');
+        .eq('status', 'validated');
       
       setTotalSuccessfulSales(salesCount || 0);
 
@@ -165,13 +165,13 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name),
           agent_vendedor:profiles!agent_vendedor_id(full_name)
         `)
-        .eq('status', 'approved')
+        .eq('status', 'validated')
         .gte('closure_date', firstDayOfMonth.toISOString());
 
       if (error) throw error;
 
       if (!sales || sales.length === 0) {
-        toast.error('No hay ventas aprobadas este mes para exportar');
+        toast.error('No hay ventas validadas este mes para exportar');
         return;
       }
 
@@ -184,7 +184,7 @@ export default function AccountingDashboard() {
         'Agente Vendedor': sale.agent_vendedor?.full_name || 'N/A',
         'Monto Total': Number(sale.closure_price),
         'Tipo': sale.transaction_type,
-        'Estado': 'Aprobada'
+        'Estado': 'Validada'
       }));
 
       // Crear workbook y worksheet
@@ -357,7 +357,7 @@ export default function AccountingDashboard() {
                 ${financialReport.totalIncome.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
-                De ventas aprobadas
+                De ventas validadas
               </p>
             </CardContent>
           </Card>
@@ -396,7 +396,7 @@ export default function AccountingDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{totalSuccessfulSales}</div>
               <p className="text-xs text-muted-foreground">
-                Ventas aprobadas
+                Ventas validadas
               </p>
             </CardContent>
           </Card>
@@ -421,7 +421,7 @@ export default function AccountingDashboard() {
               <CardContent>
                 {officeStats.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No existen registros de ventas aprobadas.
+                    No existen cierres aprobados.
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -452,7 +452,7 @@ export default function AccountingDashboard() {
               <CardContent>
                 {agentCommissions.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No existen registros de ventas aprobadas.
+                    No existen cierres aprobados.
                   </p>
                 ) : (
                   <div className="space-y-4">
