@@ -22,8 +22,11 @@ export default function SupervisorDashboard() {
   const [archiveRequests, setArchiveRequests] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [editForm, setEditForm] = useState({ full_name: '', agent_code: '' });
+  const [statusChangeReason, setStatusChangeReason] = useState('');
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ agentId: string; newStatus: boolean } | null>(null);
 
   useEffect(() => {
     document.title = "Panel de Supervisión - Dominio Inmobiliaria";
@@ -69,20 +72,42 @@ export default function SupervisorDashboard() {
     }
   };
 
-  const toggleAgentStatus = async (agentId: string, currentStatus: boolean) => {
+  const openStatusModal = (agentId: string, currentStatus: boolean) => {
+    setPendingStatusChange({ agentId, newStatus: !currentStatus });
+    setStatusChangeReason('');
+    setStatusModalOpen(true);
+  };
+
+  const handleStatusChange = async () => {
+    if (!pendingStatusChange) return;
+    if (!statusChangeReason.trim()) {
+      toast.error('Por favor ingrese un motivo para el cambio');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_archived: !currentStatus })
-        .eq('id', agentId);
+        .update({ 
+          is_archived: pendingStatusChange.newStatus,
+          archive_reason: statusChangeReason.trim()
+        })
+        .eq('id', pendingStatusChange.agentId);
 
       if (error) throw error;
 
-      toast.success(!currentStatus ? 'Agente desactivado con éxito' : 'Agente activado con éxito');
+      const message = pendingStatusChange.newStatus 
+        ? `Agente desactivado por: ${statusChangeReason}`
+        : 'Agente activado con éxito';
+      
+      toast.success(message);
+      setStatusModalOpen(false);
+      setStatusChangeReason('');
+      setPendingStatusChange(null);
       await fetchAgents();
     } catch (error) {
-      console.error('Error toggling agent status:', error);
-      toast.error('Error al cambiar el estado del agente');
+      console.error('Error changing agent status:', error);
+      toast.error('No se pudo cambiar el estado del agente');
     }
   };
 
@@ -109,12 +134,12 @@ export default function SupervisorDashboard() {
 
       if (error) throw error;
 
-      toast.success('Agente actualizado con éxito');
+      toast.success('Agente actualizado correctamente');
       setEditModalOpen(false);
       await fetchAgents();
     } catch (error) {
       console.error('Error updating agent:', error);
-      toast.error('Error al actualizar el agente');
+      toast.error('No se pudo guardar los cambios');
     }
   };
 
@@ -261,7 +286,7 @@ export default function SupervisorDashboard() {
                         <Button
                           variant={agent.is_archived ? "default" : "destructive"}
                           size="sm"
-                          onClick={() => toggleAgentStatus(agent.id, agent.is_archived)}
+                          onClick={() => openStatusModal(agent.id, agent.is_archived)}
                         >
                           <Power className="h-4 w-4 mr-1" />
                           {agent.is_archived ? 'Activar' : 'Desactivar'}
@@ -312,6 +337,46 @@ export default function SupervisorDashboard() {
             </Button>
             <Button onClick={handleEditSubmit}>
               Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Change Modal */}
+      <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {pendingStatusChange?.newStatus ? 'Desactivar' : 'Activar'} Agente
+            </DialogTitle>
+            <DialogDescription>
+              Por favor ingrese el motivo del cambio de estado
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Motivo</Label>
+              <Textarea
+                id="reason"
+                value={statusChangeReason}
+                onChange={(e) => setStatusChangeReason(e.target.value)}
+                placeholder={pendingStatusChange?.newStatus 
+                  ? "Ej: inactividad prolongada" 
+                  : "Ej: reincorporación al equipo"}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setStatusModalOpen(false);
+              setStatusChangeReason('');
+              setPendingStatusChange(null);
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleStatusChange}>
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
