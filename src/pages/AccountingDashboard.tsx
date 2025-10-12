@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Users, Building2, Download, BarChart3 } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 export default function AccountingDashboard() {
   const [activeTab, setActiveTab] = useState("ventas");
@@ -15,6 +16,9 @@ export default function AccountingDashboard() {
   const [loading, setLoading] = useState(true);
   const [salesByOffice, setSalesByOffice] = useState<any[]>([]);
   const [agentCommissions, setAgentCommissions] = useState<any[]>([]);
+  const [totalSuccessfulSales, setTotalSuccessfulSales] = useState(0);
+  const [activeOffices, setActiveOffices] = useState(0);
+  const [activeAgents, setActiveAgents] = useState(0);
   const [financialReport, setFinancialReport] = useState<any>({
     totalIncome: 0,
     totalExpenses: 0,
@@ -31,6 +35,7 @@ export default function AccountingDashboard() {
         await fetchSalesByOffice();
         await fetchAgentCommissions();
         await fetchFinancialReport();
+        await fetchStats();
       }
       setLoading(false);
     };
@@ -111,9 +116,91 @@ export default function AccountingDashboard() {
     }
   };
 
-  const handleExportReport = () => {
-    toast.success('Exportando reporte...');
-    // Implementar lógica de exportación
+  const fetchStats = async () => {
+    try {
+      // Contar ventas aprobadas
+      const { count: salesCount } = await supabase
+        .from('sale_closures')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'approved');
+      
+      setTotalSuccessfulSales(salesCount || 0);
+
+      // Contar oficinas activas (franchises con ventas)
+      const { data: franchisesData } = await supabase
+        .from('franchises')
+        .select('id');
+      
+      setActiveOffices(franchisesData?.length || 0);
+
+      // Contar agentes activos (no archivados con código de agente)
+      const { count: agentsCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .not('agent_code', 'is', null)
+        .eq('is_archived', false);
+      
+      setActiveAgents(agentsCount || 0);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const handleExportReport = async () => {
+    try {
+      const now = new Date();
+      const month = now.toLocaleString('es', { month: 'long' });
+      const year = now.getFullYear();
+      
+      // Obtener ventas del mes actual
+      const firstDayOfMonth = new Date(year, now.getMonth(), 1);
+      const { data: sales, error } = await supabase
+        .from('sale_closures')
+        .select(`
+          id,
+          closure_date,
+          closure_price,
+          transaction_type,
+          properties(franchise_id, franchises(name)),
+          agent_captador:profiles!agent_captador_id(full_name),
+          agent_vendedor:profiles!agent_vendedor_id(full_name)
+        `)
+        .eq('status', 'approved')
+        .gte('closure_date', firstDayOfMonth.toISOString());
+
+      if (error) throw error;
+
+      if (!sales || sales.length === 0) {
+        toast.error('No hay ventas aprobadas este mes para exportar');
+        return;
+      }
+
+      // Preparar datos para Excel
+      const excelData = sales.map((sale: any) => ({
+        'ID Venta': sale.id.slice(0, 8),
+        'Fecha': new Date(sale.closure_date).toLocaleDateString('es'),
+        'Oficina': sale.properties?.franchises?.name || 'Sin oficina',
+        'Agente Captador': sale.agent_captador?.full_name || 'N/A',
+        'Agente Vendedor': sale.agent_vendedor?.full_name || 'N/A',
+        'Monto Total': Number(sale.closure_price),
+        'Tipo': sale.transaction_type,
+        'Estado': 'Aprobada'
+      }));
+
+      // Crear workbook y worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+
+      // Descargar archivo
+      const fileName = `Balance_Mensual_${month}_${year}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      toast.success('Reporte generado y descargado correctamente');
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast.error('Error al generar el reporte');
+    }
   };
 
   const calculateAgentRanking = () => {
@@ -222,10 +309,13 @@ export default function AccountingDashboard() {
                           Contabilidad
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
-                          {officeStats.length} Oficinas
+                          {activeOffices} Oficinas
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
-                          {agentRanking.length} Agentes
+                          {activeAgents} Agentes
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {totalSuccessfulSales} Ventas
                         </Badge>
                       </div>
                     </div>
@@ -256,7 +346,7 @@ export default function AccountingDashboard() {
 
           {/* Main Content */}
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
@@ -278,7 +368,7 @@ export default function AccountingDashboard() {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{officeStats.length}</div>
+              <div className="text-2xl font-bold">{activeOffices}</div>
               <p className="text-xs text-muted-foreground">
                 Oficinas activas
               </p>
@@ -291,9 +381,22 @@ export default function AccountingDashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{agentRanking.length}</div>
+              <div className="text-2xl font-bold">{activeAgents}</div>
               <p className="text-xs text-muted-foreground">
-                Con comisiones generadas
+                No archivados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ventas Exitosas</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalSuccessfulSales}</div>
+              <p className="text-xs text-muted-foreground">
+                Ventas aprobadas
               </p>
             </CardContent>
           </Card>
@@ -316,19 +419,25 @@ export default function AccountingDashboard() {
                 <CardDescription>Resumen de ventas por cada oficina</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {officeStats.map((office, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                      <div>
-                        <p className="font-semibold">{office.name}</p>
-                        <p className="text-sm text-muted-foreground">{office.salesCount} ventas</p>
+                {officeStats.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No existen registros de ventas aprobadas.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {officeStats.map((office, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div>
+                          <p className="font-semibold">{office.name}</p>
+                          <p className="text-sm text-muted-foreground">{office.salesCount} ventas</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">${office.totalSales.toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">${office.totalSales.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -341,33 +450,39 @@ export default function AccountingDashboard() {
                 <CardDescription>Detalle de comisiones por venta</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {agentCommissions.slice(0, 20).map((sale) => (
-                    <div key={sale.id} className="p-4 border border-border rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-semibold">Venta #{sale.id.slice(0, 8)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(sale.closure_date).toLocaleDateString()}
-                          </p>
+                {agentCommissions.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No existen registros de ventas aprobadas.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {agentCommissions.slice(0, 20).map((sale) => (
+                      <div key={sale.id} className="p-4 border border-border rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-semibold">Venta #{sale.id.slice(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(sale.closure_date).toLocaleDateString('es')}
+                            </p>
+                          </div>
+                          <Badge>{sale.transaction_type}</Badge>
                         </div>
-                        <Badge>{sale.transaction_type}</Badge>
+                        <div className="grid grid-cols-2 gap-4 mt-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Captador</p>
+                            <p className="font-medium">{sale.agent_captador?.full_name}</p>
+                            <p className="text-sm text-primary">${Number(sale.captador_amount || 0).toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Vendedor</p>
+                            <p className="font-medium">{sale.agent_vendedor?.full_name}</p>
+                            <p className="text-sm text-primary">${Number(sale.vendedor_amount || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 mt-3">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Captador</p>
-                          <p className="font-medium">{sale.agent_captador?.full_name}</p>
-                          <p className="text-sm text-primary">${Number(sale.captador_amount || 0).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Vendedor</p>
-                          <p className="font-medium">{sale.agent_vendedor?.full_name}</p>
-                          <p className="text-sm text-primary">${Number(sale.vendedor_amount || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -380,27 +495,33 @@ export default function AccountingDashboard() {
                 <CardDescription>Ranking por comisiones generadas</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {agentRanking.map((agent, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold">
-                          {index + 1}
+                {agentRanking.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No existen registros de ventas aprobadas.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {agentRanking.map((agent, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-semibold">{agent.name}</p>
+                            <p className="text-sm text-muted-foreground">Código: {agent.code}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold">{agent.name}</p>
-                          <p className="text-sm text-muted-foreground">Código: {agent.code}</p>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-primary">
+                            ${agent.totalCommission.toLocaleString()}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{agent.salesCount} ventas</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-primary">
-                          ${agent.totalCommission.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{agent.salesCount} ventas</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
