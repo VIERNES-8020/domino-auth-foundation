@@ -6,10 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCheck, UserX, Users, Bell, CheckCircle, XCircle, Clock, History } from "lucide-react";
+import { UserCheck, UserX, Users, Bell, CheckCircle, XCircle, Clock, History, Edit, Power } from "lucide-react";
 
 export default function SupervisorDashboard() {
   const [activeTab, setActiveTab] = useState("agentes");
@@ -19,6 +21,9 @@ export default function SupervisorDashboard() {
   const [agents, setAgents] = useState<any[]>([]);
   const [archiveRequests, setArchiveRequests] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ full_name: '', agent_code: '' });
 
   useEffect(() => {
     document.title = "Panel de Supervisión - Dominio Inmobiliaria";
@@ -53,7 +58,7 @@ export default function SupervisorDashboard() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, roles(nombre)')
+        .select('*')
         .not('agent_code', 'is', null)
         .order('created_at', { ascending: false });
 
@@ -61,6 +66,55 @@ export default function SupervisorDashboard() {
       setAgents(data || []);
     } catch (error) {
       console.error('Error fetching agents:', error);
+    }
+  };
+
+  const toggleAgentStatus = async (agentId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_archived: !currentStatus })
+        .eq('id', agentId);
+
+      if (error) throw error;
+
+      toast.success(!currentStatus ? 'Agente desactivado con éxito' : 'Agente activado con éxito');
+      await fetchAgents();
+    } catch (error) {
+      console.error('Error toggling agent status:', error);
+      toast.error('Error al cambiar el estado del agente');
+    }
+  };
+
+  const openEditModal = (agent: any) => {
+    setSelectedAgent(agent);
+    setEditForm({
+      full_name: agent.full_name || '',
+      agent_code: agent.agent_code || ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!selectedAgent) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editForm.full_name,
+          agent_code: editForm.agent_code
+        })
+        .eq('id', selectedAgent.id);
+
+      if (error) throw error;
+
+      toast.success('Agente actualizado con éxito');
+      setEditModalOpen(false);
+      await fetchAgents();
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      toast.error('Error al actualizar el agente');
     }
   };
 
@@ -177,27 +231,91 @@ export default function SupervisorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {agents.map((agent) => (
-                <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-6 w-6 text-primary" />
+              {agents.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No hay agentes registrados</p>
+              ) : (
+                agents.map((agent) => (
+                  <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
+                        <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
-                      <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={agent.is_archived ? "destructive" : "default"}>
+                        {agent.is_archived ? 'Inactivo' : 'Activo'}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditModal(agent)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant={agent.is_archived ? "default" : "destructive"}
+                          size="sm"
+                          onClick={() => toggleAgentStatus(agent.id, agent.is_archived)}
+                        >
+                          <Power className="h-4 w-4 mr-1" />
+                          {agent.is_archived ? 'Activar' : 'Desactivar'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant={agent.is_archived ? "destructive" : "default"}>
-                    {agent.is_archived ? 'Inactivo' : 'Activo'}
-                  </Badge>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
         </div>
       </div>
+
+      {/* Edit Agent Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Agente</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del agente
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nombre Completo</Label>
+              <Input
+                id="full_name"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                placeholder="Ingrese el nombre completo"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="agent_code">Código de Agente</Label>
+              <Input
+                id="agent_code"
+                value={editForm.agent_code}
+                onChange={(e) => setEditForm({ ...editForm, agent_code: e.target.value })}
+                placeholder="Ingrese el código"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEditSubmit}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
