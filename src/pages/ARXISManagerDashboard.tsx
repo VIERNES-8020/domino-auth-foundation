@@ -245,6 +245,9 @@ export default function ARXISManagerDashboard() {
       in_progress: { label: "En Progreso", variant: "default" },
       completed: { label: "Completado", variant: "secondary" },
       rejected: { label: "Rechazado", variant: "destructive" },
+      scheduled: { label: "Programado", variant: "outline" },
+      on_hold: { label: "En Pausa", variant: "outline" },
+      cancelled: { label: "Cancelado", variant: "destructive" },
     };
 
     const config = statusMap[status] || { label: status, variant: "outline" };
@@ -648,12 +651,20 @@ export default function ARXISManagerDashboard() {
                   <p className="text-base">{selectedRequest.phone || 'N/A'}</p>
                 </div>
                 <div>
+                  <p className="text-sm font-medium text-muted-foreground">WhatsApp</p>
+                  <p className="text-base">{selectedRequest.whatsapp || 'N/A'}</p>
+                </div>
+                <div>
                   <p className="text-sm font-medium text-muted-foreground">Tipo de Proyecto</p>
                   <p className="text-base">{getProjectTypeBadge(selectedRequest.country || 'N/A')}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Ciudad</p>
                   <p className="text-base">{selectedRequest.city || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">País</p>
+                  <p className="text-base">{selectedRequest.country || 'N/A'}</p>
                 </div>
               </div>
 
@@ -672,6 +683,17 @@ export default function ARXISManagerDashboard() {
                     alt="Plano o imagen del proyecto" 
                     className="w-full rounded-md border"
                   />
+                </div>
+              )}
+
+              {selectedRequest.cv_url && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">CV Adjunto</p>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={selectedRequest.cv_url} target="_blank" rel="noopener noreferrer">
+                      Descargar CV
+                    </a>
+                  </Button>
                 </div>
               )}
 
