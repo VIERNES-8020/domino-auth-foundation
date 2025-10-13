@@ -45,6 +45,7 @@ export default function AgentDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [assignedLeads, setAssignedLeads] = useState<any[]>([]);
   const [propertyVisits, setPropertyVisits] = useState<any[]>([]);
+  const [changeRequests, setChangeRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [respondingNotification, setRespondingNotification] = useState<any>(null);
   const [respondingLead, setRespondingLead] = useState<any>(null);
@@ -86,6 +87,7 @@ export default function AgentDashboard() {
         await fetchNotifications(user.id);
         await fetchAssignedLeads(user.id);
         await fetchPropertyVisits(user.id);
+        await fetchChangeRequests(user.id);
       }
       setLoading(false);
     };
@@ -203,6 +205,49 @@ export default function AgentDashboard() {
     }
   };
 
+  const fetchChangeRequests = async (agentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('property_change_requests')
+        .select('*, properties(title, property_code)')
+        .eq('agent_id', agentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setChangeRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching change requests:', error);
+    }
+  };
+
+  const requestPropertyChange = async (
+    propertyId: string,
+    requestType: 'edit' | 'archive' | 'delete' | 'assign',
+    requestData?: any
+  ) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('property_change_requests')
+        .insert({
+          agent_id: user.id,
+          property_id: propertyId,
+          request_type: requestType,
+          request_data: requestData || {},
+          status: 'pending'
+        });
+
+      if (error) throw error;
+      
+      toast.success('Solicitud enviada al administrador');
+      await fetchChangeRequests(user.id);
+    } catch (error: any) {
+      console.error('Error creating change request:', error);
+      toast.error('Error al enviar la solicitud');
+    }
+  };
+
   const handlePropertySubmit = async (propertyData: any) => {
     if (!user) return;
     
@@ -212,45 +257,9 @@ export default function AgentDashboard() {
       console.log("Property data received:", propertyData);
       
       if (editingProperty) {
-        const { data: currentProperty, error: fetchError } = await supabase
-          .from('properties')
-          .select('edit_count')
-          .eq('id', editingProperty.id)
-          .single();
-
-        if (fetchError) throw fetchError;
-
-        const { error } = await supabase
-          .from('properties')
-          .update({
-            title: propertyData.title,
-            description: propertyData.description,
-            price: parseFloat(propertyData.price),
-            price_currency: propertyData.currency,
-            property_type: propertyData.property_type,
-            bedrooms: propertyData.bedrooms ? parseInt(propertyData.bedrooms) : null,
-            bathrooms: propertyData.bathrooms ? parseInt(propertyData.bathrooms) : null,
-            area_m2: propertyData.area ? parseFloat(propertyData.area) : null,
-            constructed_area_m2: propertyData.constructed_area_m2 ? parseFloat(propertyData.constructed_area_m2) : null,
-            address: propertyData.address,
-            geolocation: propertyData.latitude && propertyData.longitude 
-              ? `POINT(${propertyData.longitude} ${propertyData.latitude})` 
-              : null,
-            tags: propertyData.features,
-            image_urls: propertyData.image_urls,
-            video_url: propertyData.video_url,
-            plans_url: propertyData.plans_url,
-            edit_count: (currentProperty?.edit_count || 0) + 1
-          })
-          .eq('id', editingProperty.id)
-          .eq('agent_id', user.id);
-
-        if (error) {
-          console.error("Error actualizando propiedad:", error);
-          throw error;
-        }
-        console.log("Propiedad actualizada exitosamente");
-        toast.success('Propiedad actualizada exitosamente');
+        // Crear solicitud de edición
+        await requestPropertyChange(editingProperty.id, 'edit', propertyData);
+        toast.success('Solicitud de edición enviada al administrador');
       } else {
         console.log("Creando nueva propiedad con datos:", {
           title: propertyData.title,
@@ -322,24 +331,15 @@ export default function AgentDashboard() {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('properties')
-        .update({ 
-          is_archived: isArchived,
-          archive_reason: justification
-        })
-        .eq('id', propertyId)
-        .eq('agent_id', user.id);
-
-      if (error) throw error;
+      // Crear solicitud de archivo
+      await requestPropertyChange(propertyId, 'archive', { 
+        is_archived: isArchived,
+        archive_reason: justification 
+      });
       
-      toast.success(isArchived ? 'Propiedad archivada exitosamente' : 'Propiedad desarchivada exitosamente');
-      
-      await fetchProperties(user.id);
       setArchivingProperty(null);
     } catch (error: any) {
-      console.error('Error archiving property:', error);
-      toast.error('Error al archivar la propiedad');
+      console.error('Error requesting archive:', error);
     }
   };
 
@@ -347,23 +347,12 @@ export default function AgentDashboard() {
     if (!user || !deletingProperty) return;
     
     try {
-      const { error } = await supabase
-        .from('properties')
-        .delete()
-        .eq('id', deletingProperty.id)
-        .eq('agent_id', user.id);
-
-      if (error) throw error;
+      // Crear solicitud de eliminación
+      await requestPropertyChange(deletingProperty.id, 'delete', { reason });
       
-      console.log(`Property deleted: ${deletingProperty.title}, Reason: ${reason}`);
-      
-      toast.success('Propiedad eliminada exitosamente');
-      
-      await fetchProperties(user.id);
       setDeletingProperty(null);
     } catch (error: any) {
-      console.error('Error deleting property:', error);
-      toast.error('Error al eliminar la propiedad');
+      console.error('Error requesting delete:', error);
     }
   };
 
@@ -703,35 +692,19 @@ export default function AgentDashboard() {
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from('properties')
-        .update({ 
-          agent_id: targetAgent.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', assigningProperty.id)
-        .eq('agent_id', user.id);
-
-      if (updateError) {
-        console.error('Error assigning property:', updateError);
-        toast.error('Error al asignar la propiedad');
-        return;
-      }
-
-      toast.success(
-        `Propiedad asignada exitosamente a ${targetAgent.full_name} (${agentCode})`,
-        {
-          description: `ID: ${assigningProperty.property_code || assigningProperty.id} - Motivo: ${reason}`,
-          duration: 5000
-        }
-      );
+      // Crear solicitud de asignación
+      await requestPropertyChange(assigningProperty.id, 'assign', {
+        target_agent_id: targetAgent.id,
+        target_agent_name: targetAgent.full_name,
+        target_agent_code: agentCode,
+        reason
+      });
       
-      await fetchProperties(user.id);
       setAssigningProperty(null);
       
     } catch (error: any) {
       console.error('Error in handleAssignProperty:', error);
-      toast.error('Error al asignar la propiedad: ' + error.message);
+      toast.error('Error al enviar solicitud de asignación: ' + error.message);
     }
   };
 
@@ -904,6 +877,21 @@ export default function AgentDashboard() {
                     <div className="flex items-center gap-2">
                       <CheckSquare className="h-4 w-4" />
                       Características
+                    </div>
+                  </TabsTrigger>
+
+                  <TabsTrigger 
+                    value="solicitudes" 
+                    className="relative px-6 py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary hover:bg-white/50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Mis Solicitudes
+                      {changeRequests.filter(r => r.status === 'pending').length > 0 && (
+                        <Badge variant="default" className="ml-1 text-xs px-1.5 py-0.5">
+                          {changeRequests.filter(r => r.status === 'pending').length}
+                        </Badge>
+                      )}
                     </div>
                   </TabsTrigger>
 
@@ -1431,6 +1419,89 @@ export default function AgentDashboard() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="solicitudes" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Mis Solicitudes de Cambio
+                    </CardTitle>
+                    <CardDescription>
+                      Revisa el estado de tus solicitudes de edición, archivo, asignación y eliminación de propiedades
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {changeRequests.length === 0 ? (
+                      <div className="text-center py-12 space-y-4">
+                        <CheckCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                        <h3 className="text-lg font-medium text-muted-foreground">
+                          No hay solicitudes
+                        </h3>
+                        <p className="text-muted-foreground max-w-sm mx-auto">
+                          Tus solicitudes de cambios aparecerán aquí una vez que las envíes.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {changeRequests.map((request) => (
+                          <div key={request.id} className="p-4 border rounded-lg space-y-2">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="font-medium flex items-center gap-2">
+                                  {request.request_type === 'edit' && <Edit className="h-4 w-4" />}
+                                  {request.request_type === 'archive' && <Archive className="h-4 w-4" />}
+                                  {request.request_type === 'delete' && <Trash className="h-4 w-4" />}
+                                  {request.request_type === 'assign' && <UserCheck className="h-4 w-4" />}
+                                  Solicitud de {
+                                    request.request_type === 'edit' ? 'Edición' :
+                                    request.request_type === 'archive' ? 'Archivo' :
+                                    request.request_type === 'delete' ? 'Eliminación' :
+                                    'Asignación'
+                                  }
+                                </div>
+                                <div className="text-sm text-muted-foreground mt-1">
+                                  Propiedad: {request.properties?.title}
+                                  {request.properties?.property_code && (
+                                    <Badge variant="outline" className="ml-2 text-xs">
+                                      {request.properties.property_code}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {new Date(request.created_at).toLocaleString('es-ES', { 
+                                    dateStyle: 'medium', 
+                                    timeStyle: 'short' 
+                                  })}
+                                </div>
+                              </div>
+                              <Badge 
+                                variant={
+                                  request.status === 'pending' ? 'default' :
+                                  request.status === 'approved' ? 'default' :
+                                  'destructive'
+                                }
+                                className={
+                                  request.status === 'approved' ? 'bg-green-500' : ''
+                                }
+                              >
+                                {request.status === 'pending' ? 'Pendiente' :
+                                 request.status === 'approved' ? 'Aprobada' :
+                                 'Rechazada'}
+                              </Badge>
+                            </div>
+                            {request.status === 'rejected' && request.rejection_reason && (
+                              <div className="mt-2 p-2 bg-destructive/10 rounded text-sm text-destructive">
+                                <strong>Razón del rechazo:</strong> {request.rejection_reason}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </CardContent>
