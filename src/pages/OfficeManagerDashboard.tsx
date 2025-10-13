@@ -235,7 +235,7 @@ export default function OfficeManagerDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/property/${property.id}`}>
+                        <Link to={`/propiedad/${property.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           Ver
                         </Link>
