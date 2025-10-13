@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { UserCheck, UserX, Users, Bell, CheckCircle, XCircle, Clock, History, Edit, Power } from "lucide-react";
+import { UserCheck, UserX, Users, Bell, CheckCircle, XCircle, Clock, History, Edit, Power, Home, UserPlus } from "lucide-react";
+import AssignPropertyModal from "@/components/AssignPropertyModal";
 
 export default function SupervisorDashboard() {
   const [activeTab, setActiveTab] = useState("agentes");
@@ -19,14 +20,18 @@ export default function SupervisorDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<any[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
   const [archiveRequests, setArchiveRequests] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [editForm, setEditForm] = useState({ full_name: '', agent_code: '' });
   const [statusChangeReason, setStatusChangeReason] = useState('');
   const [pendingStatusChange, setPendingStatusChange] = useState<{ agentId: string; newStatus: boolean } | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
     document.title = "Panel de Supervisión - Dominio Inmobiliaria";
@@ -35,7 +40,7 @@ export default function SupervisorDashboard() {
       if (user) {
         setUser(user);
         await fetchProfile(user.id);
-        await fetchAgents();
+        await Promise.all([fetchAgents(), fetchProperties()]);
       }
       setLoading(false);
     };
@@ -69,6 +74,25 @@ export default function SupervisorDashboard() {
       setAgents(data || []);
     } catch (error) {
       console.error('Error fetching agents:', error);
+    }
+  };
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles!properties_agent_id_fkey(full_name, agent_code)
+        `)
+        .eq('status', 'approved')
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
     }
   };
 
@@ -140,6 +164,70 @@ export default function SupervisorDashboard() {
     } catch (error) {
       console.error('Error updating agent:', error);
       toast.error('No se pudo guardar los cambios');
+    }
+  };
+
+  const openAssignModal = (property: any) => {
+    setSelectedProperty(property);
+    setAssignModalOpen(true);
+  };
+
+  const handleAssignProperty = async (agentCode: string, reason: string) => {
+    if (!selectedProperty || !user) return;
+
+    setIsAssigning(true);
+    try {
+      // Find the agent by code
+      const { data: targetAgent, error: agentError } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('agent_code', agentCode)
+        .single();
+
+      if (agentError || !targetAgent) {
+        toast.error('No se encontró un agente con ese código');
+        return;
+      }
+
+      // Create the assignment record
+      const { error: assignError } = await supabase
+        .from('property_assignments')
+        .insert({
+          property_id: selectedProperty.id,
+          from_agent_id: selectedProperty.agent_id,
+          to_agent_id: targetAgent.id,
+          reason: reason
+        });
+
+      if (assignError) throw assignError;
+
+      // Update the property's agent
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ agent_id: targetAgent.id })
+        .eq('id', selectedProperty.id);
+
+      if (updateError) throw updateError;
+
+      // Create notification for the new agent
+      await supabase
+        .from('agent_notifications')
+        .insert({
+          from_agent_id: user.id,
+          to_agent_id: targetAgent.id,
+          property_id: selectedProperty.id,
+          message: `Se te ha asignado la propiedad: ${selectedProperty.title}. Motivo: ${reason}`
+        });
+
+      toast.success(`Propiedad asignada exitosamente a ${targetAgent.full_name}`);
+      setAssignModalOpen(false);
+      setSelectedProperty(null);
+      await fetchProperties();
+    } catch (error: any) {
+      console.error('Error assigning property:', error);
+      toast.error('Error al asignar la propiedad: ' + error.message);
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -228,6 +316,18 @@ export default function SupervisorDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Propiedades Activas</CardTitle>
+              <Home className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {properties.length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Agentes Inactivos</CardTitle>
               <UserX className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -237,68 +337,115 @@ export default function SupervisorDashboard() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Solicitudes Pendientes</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-            </CardContent>
-          </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Agentes</CardTitle>
-            <CardDescription>Control de estado de agentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {agents.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No hay agentes registrados</p>
-              ) : (
-                agents.map((agent) => (
-                  <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Users className="h-6 w-6 text-primary" />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="agentes">Agentes</TabsTrigger>
+            <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="agentes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista de Agentes</CardTitle>
+                <CardDescription>Control de estado de agentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {agents.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No hay agentes registrados</p>
+                  ) : (
+                    agents.map((agent) => (
+                      <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
+                            <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant={agent.is_archived ? "destructive" : "default"}>
+                            {agent.is_archived ? 'Inactivo' : 'Activo'}
+                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditModal(agent)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant={agent.is_archived ? "default" : "destructive"}
+                              size="sm"
+                              onClick={() => openStatusModal(agent.id, agent.is_archived)}
+                            >
+                              <Power className="h-4 w-4 mr-1" />
+                              {agent.is_archived ? 'Activar' : 'Desactivar'}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
-                        <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={agent.is_archived ? "destructive" : "default"}>
-                        {agent.is_archived ? 'Inactivo' : 'Activo'}
-                      </Badge>
-                      <div className="flex items-center gap-2">
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="propiedades">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestión de Propiedades</CardTitle>
+                <CardDescription>Asigna propiedades a diferentes agentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {properties.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No hay propiedades disponibles</p>
+                  ) : (
+                    properties.map((property) => (
+                      <div key={property.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Home className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold">{property.title}</p>
+                            <p className="text-sm text-muted-foreground">{property.address}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-xs">
+                                {property.property_type}
+                              </Badge>
+                              {property.profiles && (
+                                <span className="text-xs text-muted-foreground">
+                                  Agente: {property.profiles.full_name} ({property.profiles.agent_code})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openEditModal(agent)}
+                          onClick={() => openAssignModal(property)}
                         >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Editar
-                        </Button>
-                        <Button
-                          variant={agent.is_archived ? "default" : "destructive"}
-                          size="sm"
-                          onClick={() => openStatusModal(agent.id, agent.is_archived)}
-                        >
-                          <Power className="h-4 w-4 mr-1" />
-                          {agent.is_archived ? 'Activar' : 'Desactivar'}
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Asignar
                         </Button>
                       </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
         </div>
       </div>
 
@@ -381,6 +528,18 @@ export default function SupervisorDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assign Property Modal */}
+      <AssignPropertyModal
+        isOpen={assignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedProperty(null);
+        }}
+        onAssign={handleAssignProperty}
+        property={selectedProperty}
+        isLoading={isAssigning}
+      />
     </div>
   );
 }
