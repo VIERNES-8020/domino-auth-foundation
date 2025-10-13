@@ -142,7 +142,7 @@ const AdminUserManagement = () => {
     queryFn: async () => {
       console.log('Fetching users with profiles...');
       
-      // Get all profiles with complete data
+      // Get all profiles with complete data INCLUDING rol_id and role name
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select(`
@@ -163,7 +163,12 @@ const AdminUserManagement = () => {
           assigned_corporate_email,
           assignment_date,
           is_archived,
-          archive_reason
+          archive_reason,
+          rol_id,
+          roles:rol_id (
+            id,
+            nombre
+          )
         `)
         .order("created_at", { ascending: false });
 
@@ -174,32 +179,30 @@ const AdminUserManagement = () => {
 
       console.log('Profiles fetched:', profiles);
 
-      // Get user roles and combine with profile data
-      const usersWithRoles = await Promise.all(
-        profiles.map(async (profile) => {
-          try {
-            // Get user role from user_roles table
-            const { data: roleData } = await supabase
-              .from("user_roles")
-              .select("role")
-              .eq("user_id", profile.id)
-              .maybeSingle();
+      // Map role nombres to role keys
+      const roleNameToKey: Record<string, string> = {
+        'SUPER ADMINISTRADOR': 'super_admin',
+        'AGENTE INMOBILIARIO': 'agent',
+        'ARXIS': 'arxis_admin',
+        'ADMINISTRACIÓN': 'office_manager',
+        'SUPERVISIÓN': 'supervisor',
+        'CONTABILIDAD': 'accounting',
+        'CLIENTE': 'client',
+      };
 
-            console.log(`Role for user ${profile.id}:`, roleData);
-
-            return {
-              ...profile,
-              role: roleData?.role || "client",
-            };
-          } catch (error) {
-            console.error(`Error getting role for user ${profile.id}:`, error);
-            return {
-              ...profile,
-              role: "client",
-            };
-          }
-        })
-      );
+      // Transform to include role as a key
+      const usersWithRoles = profiles.map((profile: any) => {
+        const roleName = profile.roles?.nombre || 'CLIENTE';
+        const roleKey = roleNameToKey[roleName] || 'client';
+        
+        console.log(`User ${profile.id}: rol_id=${profile.rol_id}, nombre=${roleName}, key=${roleKey}`);
+        
+        return {
+          ...profile,
+          role: roleKey,
+          rol_nombre: roleName,
+        };
+      });
 
       console.log('Users with roles:', usersWithRoles);
       return usersWithRoles;
@@ -321,57 +324,50 @@ const AdminUserManagement = () => {
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
       console.log('Updating role for user:', userId, 'to role:', newRole);
       
-      // First, check if a role already exists for this user
-      const { data: existingRole, error: selectError } = await supabase
-        .from("user_roles")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
+      // Map role keys to role nombres
+      const roleKeyToName: Record<string, string> = {
+        'super_admin': 'SUPER ADMINISTRADOR',
+        'agent': 'AGENTE INMOBILIARIO',
+        'arxis_admin': 'ARXIS',
+        'office_manager': 'ADMINISTRACIÓN',
+        'supervisor': 'SUPERVISIÓN',
+        'accounting': 'CONTABILIDAD',
+        'client': 'CLIENTE',
+      };
 
-      if (selectError) {
-        console.error('Error checking existing role:', selectError);
-        throw selectError;
+      const roleName = roleKeyToName[newRole];
+      if (!roleName) {
+        throw new Error(`Rol no reconocido: ${newRole}`);
       }
 
-      console.log('Existing role:', existingRole);
-
-      if (existingRole) {
-        // Update existing role
-        console.log('Updating existing role...');
-        const { data, error } = await supabase
-          .from("user_roles")
-          .update({ role: newRole as any })
-          .eq("user_id", userId)
-          .select();
-        
-        if (error) {
-          console.error('Error updating role:', error);
-          throw error;
-        }
-        console.log('Role updated successfully:', data);
-      } else {
-        // Insert new role
-        console.log('Inserting new role...');
-        const { data, error } = await supabase
-          .from("user_roles")
-          .insert([{ user_id: userId, role: newRole as any }])
-          .select();
-        
-        if (error) {
-          console.error('Error inserting role:', error);
-          throw error;
-        }
-        console.log('Role inserted successfully:', data);
-      }
-
-      // Verify the update worked
-      const { data: verifyRole } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
+      // Get the role ID from the roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from("roles")
+        .select("id")
+        .eq("nombre", roleName)
         .single();
+
+      if (roleError || !roleData) {
+        console.error('Error getting role ID:', roleError);
+        throw new Error(`No se encontró el rol: ${roleName}`);
+      }
+
+      console.log('Role ID found:', roleData.id, 'for role:', roleName);
+
+      // Update the profile with the new rol_id
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ rol_id: roleData.id })
+        .eq("id", userId)
+        .select();
       
-      console.log('Role verification after update:', verifyRole);
+      if (error) {
+        console.error('Error updating profile role:', error);
+        throw error;
+      }
+      
+      console.log('Profile role updated successfully:', data);
+      return data;
     },
     onSuccess: (_, variables) => {
       console.log('Role mutation successful, invalidating queries...');
