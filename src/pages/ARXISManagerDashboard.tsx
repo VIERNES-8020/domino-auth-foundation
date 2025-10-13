@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { HardHat, FileText, CheckCircle, Clock, AlertCircle, Download } from "lucide-react";
+import { HardHat, FileText, CheckCircle, Clock, AlertCircle, Trash2, Plus } from "lucide-react";
 
 export default function ARXISManagerDashboard() {
   const [activeTab, setActiveTab] = useState("proyectos");
@@ -18,6 +18,11 @@ export default function ARXISManagerDashboard() {
   const [arxisRequests, setArxisRequests] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  
+  // Proyectos, reportes y mantenimientos
+  const [arxisProjects, setArxisProjects] = useState<any[]>([]);
+  const [technicalReports, setTechnicalReports] = useState<any[]>([]);
+  const [maintenances, setMaintenances] = useState<any[]>([]);
 
   // Estadísticas
   const [activeProjects, setActiveProjects] = useState(0);
@@ -33,6 +38,9 @@ export default function ARXISManagerDashboard() {
         setUser(user);
         await fetchProfile(user.id);
         await fetchArxisRequests();
+        await fetchArxisProjects();
+        await fetchTechnicalReports();
+        await fetchMaintenances();
         await fetchStats();
       }
       setLoading(false);
@@ -69,6 +77,48 @@ export default function ARXISManagerDashboard() {
     }
   };
 
+  const fetchArxisProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('arxis_projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setArxisProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching ARXIS projects:', error);
+    }
+  };
+
+  const fetchTechnicalReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('arxis_technical_reports')
+        .select('*, arxis_projects(title)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTechnicalReports(data || []);
+    } catch (error) {
+      console.error('Error fetching technical reports:', error);
+    }
+  };
+
+  const fetchMaintenances = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('arxis_maintenances')
+        .select('*, arxis_projects(title)')
+        .order('scheduled_date', { ascending: true });
+
+      if (error) throw error;
+      setMaintenances(data || []);
+    } catch (error) {
+      console.error('Error fetching maintenances:', error);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       // Solicitudes pendientes
@@ -79,11 +129,29 @@ export default function ARXISManagerDashboard() {
       
       setPendingRequests(pendingCount || 0);
 
-      // Para los proyectos activos, completados y mantenimientos
-      // Estos datos vendrían de tablas específicas de ARXIS cuando se implementen
-      setActiveProjects(0);
-      setCompletedProjects(0);
-      setScheduledMaintenances(0);
+      // Proyectos activos
+      const { count: activeCount } = await supabase
+        .from('arxis_projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'in_progress');
+      
+      setActiveProjects(activeCount || 0);
+
+      // Proyectos completados
+      const { count: completedCount } = await supabase
+        .from('arxis_projects')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'completed');
+      
+      setCompletedProjects(completedCount || 0);
+
+      // Mantenimientos programados
+      const { count: maintenanceCount } = await supabase
+        .from('arxis_maintenances')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'scheduled');
+      
+      setScheduledMaintenances(maintenanceCount || 0);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -92,6 +160,64 @@ export default function ARXISManagerDashboard() {
   const handleViewRequest = (request: any) => {
     setSelectedRequest(request);
     setViewDialogOpen(true);
+  };
+
+  const handleConvertToProject = async (request: any) => {
+    try {
+      const { error } = await supabase
+        .from('arxis_projects')
+        .insert({
+          title: `Proyecto - ${request.full_name}`,
+          description: request.message,
+          project_type: request.country || 'Nuevo',
+          client_name: request.full_name,
+          client_email: request.email,
+          client_phone: request.phone,
+          location: request.city,
+          status: 'in_progress',
+          created_by: user.id
+        });
+
+      if (error) throw error;
+
+      // Actualizar estado de la solicitud a completado
+      await supabase
+        .from('franchise_applications')
+        .update({ status: 'completed' })
+        .eq('id', request.id);
+
+      toast.success('Solicitud convertida en proyecto activo');
+      await fetchArxisRequests();
+      await fetchArxisProjects();
+      await fetchStats();
+      setViewDialogOpen(false);
+    } catch (error) {
+      console.error('Error converting to project:', error);
+      toast.error('Error al convertir en proyecto');
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta solicitud? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('franchise_applications')
+        .delete()
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast.success('Solicitud eliminada correctamente');
+      await fetchArxisRequests();
+      await fetchStats();
+      setViewDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      toast.error('Error al eliminar solicitud');
+    }
   };
 
   const handleUpdateStatus = async (requestId: string, newStatus: string) => {
@@ -281,12 +407,45 @@ export default function ARXISManagerDashboard() {
                   <CardDescription>Lista de obras en ejecución con su estado actual</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay proyectos activos en este momento.
-                  </p>
-                  <p className="text-center text-sm text-muted-foreground">
-                    Los proyectos aparecerán aquí cuando se conviertan solicitudes en obras.
-                  </p>
+                  {arxisProjects.filter(p => p.status === 'in_progress').length === 0 ? (
+                    <>
+                      <p className="text-center text-muted-foreground py-8">
+                        No hay proyectos activos en este momento.
+                      </p>
+                      <p className="text-center text-sm text-muted-foreground">
+                        Los proyectos aparecerán aquí cuando se conviertan solicitudes en obras.
+                      </p>
+                    </>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Ubicación</TableHead>
+                          <TableHead>Fecha Inicio</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {arxisProjects.filter(p => p.status === 'in_progress').map((project) => (
+                          <TableRow key={project.id}>
+                            <TableCell className="font-medium">{project.title}</TableCell>
+                            <TableCell>{project.client_name}</TableCell>
+                            <TableCell>{getProjectTypeBadge(project.project_type)}</TableCell>
+                            <TableCell>{project.location || 'N/A'}</TableCell>
+                            <TableCell>
+                              {new Date(project.start_date).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default">En progreso</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -326,13 +485,22 @@ export default function ARXISManagerDashboard() {
                             <TableCell>{request.city || 'N/A'}</TableCell>
                             <TableCell>{getStatusBadge(request.status)}</TableCell>
                             <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewRequest(request)}
-                              >
-                                Ver detalles
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewRequest(request)}
+                                >
+                                  Ver detalles
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteRequest(request.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -351,12 +519,49 @@ export default function ARXISManagerDashboard() {
                   <CardDescription>Documentos y avances de obra</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay reportes técnicos disponibles.
-                  </p>
-                  <p className="text-center text-sm text-muted-foreground">
-                    Los reportes aparecerán aquí cuando se carguen desde los proyectos activos.
-                  </p>
+                  {technicalReports.length === 0 ? (
+                    <>
+                      <p className="text-center text-muted-foreground py-8">
+                        No hay reportes técnicos disponibles.
+                      </p>
+                      <p className="text-center text-sm text-muted-foreground">
+                        Los reportes aparecerán aquí cuando se carguen desde los proyectos activos.
+                      </p>
+                    </>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Proyecto</TableHead>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Documento</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {technicalReports.map((report) => (
+                          <TableRow key={report.id}>
+                            <TableCell className="font-medium">{report.title}</TableCell>
+                            <TableCell>{report.arxis_projects?.title || 'N/A'}</TableCell>
+                            <TableCell>
+                              {new Date(report.report_date).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell>
+                              {report.document_url ? (
+                                <Button size="sm" variant="outline" asChild>
+                                  <a href={report.document_url} target="_blank" rel="noopener noreferrer">
+                                    Ver documento
+                                  </a>
+                                </Button>
+                              ) : (
+                                'Sin documento'
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -369,12 +574,43 @@ export default function ARXISManagerDashboard() {
                   <CardDescription>Fechas y responsables de mantenimientos</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-center text-muted-foreground py-8">
-                    No hay mantenimientos programados.
-                  </p>
-                  <p className="text-center text-sm text-muted-foreground">
-                    Los mantenimientos programados aparecerán aquí.
-                  </p>
+                  {maintenances.filter(m => m.status === 'scheduled').length === 0 ? (
+                    <>
+                      <p className="text-center text-muted-foreground py-8">
+                        No hay mantenimientos programados.
+                      </p>
+                      <p className="text-center text-sm text-muted-foreground">
+                        Los mantenimientos programados aparecerán aquí.
+                      </p>
+                    </>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Título</TableHead>
+                          <TableHead>Proyecto</TableHead>
+                          <TableHead>Fecha Programada</TableHead>
+                          <TableHead>Asignado a</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {maintenances.filter(m => m.status === 'scheduled').map((maintenance) => (
+                          <TableRow key={maintenance.id}>
+                            <TableCell className="font-medium">{maintenance.title}</TableCell>
+                            <TableCell>{maintenance.arxis_projects?.title || 'N/A'}</TableCell>
+                            <TableCell>
+                              {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES')}
+                            </TableCell>
+                            <TableCell>{maintenance.assigned_to || 'Sin asignar'}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">Programado</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -439,28 +675,36 @@ export default function ARXISManagerDashboard() {
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-4 flex-wrap">
+                <Button
+                  onClick={() => handleConvertToProject(selectedRequest)}
+                  disabled={selectedRequest.status === 'completed'}
+                  style={{ backgroundColor: '#C76C33' }}
+                  className="text-white hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Convertir en Proyecto
+                </Button>
                 <Button
                   onClick={() => handleUpdateStatus(selectedRequest.id, 'in_progress')}
                   disabled={selectedRequest.status === 'in_progress'}
-                  style={{ backgroundColor: '#C76C33' }}
-                  className="text-white hover:opacity-90"
+                  variant="outline"
                 >
                   Marcar en Progreso
                 </Button>
                 <Button
-                  onClick={() => handleUpdateStatus(selectedRequest.id, 'completed')}
-                  disabled={selectedRequest.status === 'completed'}
-                  variant="outline"
-                >
-                  Marcar Completado
-                </Button>
-                <Button
                   onClick={() => handleUpdateStatus(selectedRequest.id, 'rejected')}
                   disabled={selectedRequest.status === 'rejected'}
-                  variant="destructive"
+                  variant="outline"
                 >
                   Rechazar
+                </Button>
+                <Button
+                  onClick={() => handleDeleteRequest(selectedRequest.id)}
+                  variant="destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar
                 </Button>
               </div>
             </div>

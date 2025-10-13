@@ -221,6 +221,148 @@ export type Database = {
         }
         Relationships: []
       }
+      arxis_maintenances: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          project_id: string | null
+          scheduled_date: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          scheduled_date: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string | null
+          scheduled_date?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arxis_maintenances_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "arxis_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arxis_projects: {
+        Row: {
+          budget: number | null
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          location: string | null
+          project_type: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          project_type: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          project_type?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      arxis_technical_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          document_url: string | null
+          id: string
+          project_id: string | null
+          report_date: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          document_url?: string | null
+          id?: string
+          project_id?: string | null
+          report_date?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          document_url?: string | null
+          id?: string
+          project_id?: string | null
+          report_date?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arxis_technical_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "arxis_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_reviews: {
         Row: {
           agent_id: string
