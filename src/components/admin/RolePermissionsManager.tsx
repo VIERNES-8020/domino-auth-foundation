@@ -82,6 +82,7 @@ export function RolePermissionsManager({
     const loadRolePermissions = async () => {
       if (!selectedRoleId) {
         onPermissionsChange([]);
+        setLoadingPermissions(false);
         return;
       }
 
@@ -99,13 +100,14 @@ export function RolePermissionsManager({
       } catch (error: any) {
         console.error('Error cargando permisos del rol:', error);
         toast.error('Error al cargar permisos del rol');
+        onPermissionsChange([]);
       } finally {
         setLoadingPermissions(false);
       }
     };
 
     loadRolePermissions();
-  }, [selectedRoleId]);
+  }, [selectedRoleId, onPermissionsChange]);
 
   const handleSave = async () => {
     if (!selectedRoleId) {
