@@ -61,8 +61,9 @@ const Index = () => {
             <Link to={getSmartPanelLink()}>
               {userRole === 'admin' || userRole === 'Super Administrador' 
                 ? "Ir al Panel de Admin" 
-                : "Ir al Panel del Agente"
-                : "Ir ak Panel del Contador"}
+                : userRole === 'Contabilidad'
+                ? "Ir al Panel del Contador"
+                : "Ir al Panel del Agente"}
             </Link>
           </Button>
           <Button variant="outline" asChild>
