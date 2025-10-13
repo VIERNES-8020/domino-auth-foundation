@@ -412,7 +412,7 @@ export default function OfficeManagerDashboard() {
       .filter(c => c.transaction_type === "anticretico")
       .reduce((sum, c) => sum + parseFloat(c.closure_price || 0), 0);
 
-    reportData.push({});
+    reportData.push({} as any);
     reportData.push({
       "Fecha": "TOTALES POR TIPO",
       "Tipo de Inmueble": "",
@@ -1027,6 +1027,7 @@ export default function OfficeManagerDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </div>
   );
