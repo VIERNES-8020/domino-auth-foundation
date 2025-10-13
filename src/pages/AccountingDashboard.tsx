@@ -160,8 +160,9 @@ export default function AccountingDashboard() {
           id,
           closure_date,
           closure_price,
-          transaction_type,
-          properties(franchise_id, franchises(name)),
+          currency,
+          status,
+          properties(title),
           agent_captador:profiles!agent_captador_id(full_name),
           agent_vendedor:profiles!agent_vendedor_id(full_name)
         `)
@@ -175,24 +176,33 @@ export default function AccountingDashboard() {
         return;
       }
 
-      // Preparar datos para Excel
+      // Preparar datos para Excel según los requisitos
       const excelData = sales.map((sale: any) => ({
-        'ID Venta': sale.id.slice(0, 8),
-        'Fecha': new Date(sale.closure_date).toLocaleDateString('es'),
-        'Oficina': sale.properties?.franchises?.name || 'Sin oficina',
+        'Fecha': new Date(sale.closure_date).toLocaleDateString('es-ES'),
+        'Propiedad': sale.properties?.title || 'N/A',
         'Agente Captador': sale.agent_captador?.full_name || 'N/A',
         'Agente Vendedor': sale.agent_vendedor?.full_name || 'N/A',
-        'Monto Total': Number(sale.closure_price),
-        'Tipo': sale.transaction_type,
-        'Estado': 'Validada'
+        'Precio Cierre': `${sale.currency || 'USD'} ${Number(sale.closure_price).toLocaleString()}`,
+        'Estado': sale.status || 'validado'
       }));
 
       // Crear workbook y worksheet
       const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Ajustar ancho de columnas
+      ws['!cols'] = [
+        { wch: 12 }, // Fecha
+        { wch: 30 }, // Propiedad
+        { wch: 25 }, // Agente Captador
+        { wch: 25 }, // Agente Vendedor
+        { wch: 18 }, // Precio Cierre
+        { wch: 15 }  // Estado
+      ];
+      
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+      XLSX.utils.book_append_sheet(wb, ws, 'Ventas Validadas');
 
-      // Descargar archivo
+      // Descargar archivo con formato especificado
       const fileName = `Balance_Mensual_${month}_${year}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
@@ -421,7 +431,7 @@ export default function AccountingDashboard() {
               <CardContent>
                 {officeStats.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No existen cierres aprobados.
+                    No existen cierres validados.
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -452,7 +462,7 @@ export default function AccountingDashboard() {
               <CardContent>
                 {agentCommissions.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No existen cierres aprobados.
+                    No existen cierres validados.
                   </p>
                 ) : (
                   <div className="space-y-4">
