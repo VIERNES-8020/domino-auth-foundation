@@ -28,6 +28,7 @@ import ClientDashboard from '@/pages/ClientDashboard';
 import SupervisorDashboard from '@/pages/SupervisorDashboard';
 import OfficeManagerDashboard from '@/pages/OfficeManagerDashboard';
 import AccountingDashboard from '@/pages/AccountingDashboard';
+import ARXISManagerDashboard from '@/pages/ARXISManagerDashboard';
 import NotFound from '@/pages/NotFound';
 import AccessDenied from '@/pages/AccessDenied';
 
@@ -88,6 +89,7 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
       'AGENTE': 'Agente Inmobiliario',
       'ADMINISTRACIÓN': 'Administración (Encargado de Oficina)',
       'CONTABILIDAD': 'Contabilidad',
+      'ARXIS': 'Administrador de ARXIS',
     };
     
     return roleMapping[dbRole] || dbRole;
@@ -312,6 +314,14 @@ export default function App() {
           <DashboardLayout>
             <ProtectedRoute requiredRole="Contabilidad">
               <AccountingDashboard />
+            </ProtectedRoute>
+          </DashboardLayout>
+        } />
+
+        <Route path="/dashboard/arxis" element={
+          <DashboardLayout>
+            <ProtectedRoute requiredRole="Administrador de ARXIS">
+              <ARXISManagerDashboard />
             </ProtectedRoute>
           </DashboardLayout>
         } />

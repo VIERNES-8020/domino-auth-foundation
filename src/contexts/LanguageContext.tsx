@@ -79,7 +79,7 @@ const translations = {
     // Role Translations
     'role.super_admin': 'Super Administrador',
     'role.agent': 'Agente Inmobiliario',
-    'role.franchise_admin': 'Administrador de Franquicia', 
+    'role.arxis_admin': 'Administrador de ARXIS', 
     'role.office_manager': 'Administración (Encargado de Oficina)',
     'role.supervisor': 'Supervisión (Auxiliar)',
     'role.accounting': 'Contabilidad',
@@ -360,7 +360,7 @@ const translations = {
     // Role Translations
     'role.super_admin': 'Super Administrator',
     'role.agent': 'Real Estate Agent',
-    'role.franchise_admin': 'Franchise Administrator', 
+    'role.arxis_admin': 'ARXIS Administrator', 
     'role.office_manager': 'Administration (Office Manager)',
     'role.supervisor': 'Supervision (Assistant)',
     'role.accounting': 'Accounting',
@@ -632,7 +632,7 @@ const translations = {
     // Role Translations
     'role.super_admin': 'Super Administrateur',
     'role.agent': 'Agent Immobilier',
-    'role.franchise_admin': 'Administrateur de Franchise',
+    'role.arxis_admin': 'Administrateur ARXIS',
     'role.office_manager': 'Directeur de Bureau',
     'role.supervisor': 'Superviseur',
     'role.client': 'Client',
@@ -865,7 +865,7 @@ const translations = {
     // Role Translations
     'role.super_admin': 'Super Administrator',
     'role.agent': 'Immobilienmakler',
-    'role.franchise_admin': 'Franchise Administrator',
+    'role.arxis_admin': 'ARXIS Administrator',
     'role.office_manager': 'Büroleiter',
     'role.supervisor': 'Supervisor',
     'role.client': 'Kunde',
@@ -1098,7 +1098,7 @@ const translations = {
     // Role Translations
     'role.super_admin': 'Super Administrador',
     'role.agent': 'Corretor de Imóveis',
-    'role.franchise_admin': 'Administrador de Franquia',
+    'role.arxis_admin': 'Administrador ARXIS',
     'role.office_manager': 'Gerente de Escritório',
     'role.supervisor': 'Supervisor',
     'role.client': 'Cliente',
@@ -1331,7 +1331,7 @@ const translations = {
     // Role Translations
     'role.super_admin': '超級管理員',
     'role.agent': '房地產代理人',
-    'role.franchise_admin': '加盟管理員',
+    'role.arxis_admin': 'ARXIS管理員',
     'role.office_manager': '辦公室經理',
     'role.supervisor': '主管',
     'role.client': '客戶',

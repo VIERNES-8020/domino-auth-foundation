@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home, DollarSign } from "lucide-react";
+import { Users, Plus, Edit, Archive, Filter, UserCheck, Shield, Building, Eye, Search, Phone, Mail, Crown, Building2, Home, DollarSign, HardHat } from "lucide-react";
 import { 
   Pagination,
   PaginationContent,
@@ -392,7 +392,7 @@ const AdminUserManagement = () => {
   const roles: AppRole[] = [
     "super_admin",
     "agent", 
-    "franchise_admin",
+    "arxis_admin" as AppRole, // Administrador de ARXIS
     "office_manager",
     "supervisor",
     "accounting" as AppRole, // Temporary cast until types regenerate
@@ -400,7 +400,7 @@ const AdminUserManagement = () => {
   ];
 
   // Filter logic
-  const agentRoles = ["super_admin", "agent", "franchise_admin", "office_manager", "supervisor", "accounting"];
+  const agentRoles = ["super_admin", "agent", "arxis_admin", "office_manager", "supervisor", "accounting"];
   const clientRoles = ["client"];
 
   const filteredUsers = users.filter(user => {
@@ -697,11 +697,12 @@ const AdminUserManagement = () => {
         "Acceso a reportes avanzados",
         "Control de franquicias"
       ],
-      franchise_admin: [
-        "Administración de franquicia",
-        "Gestión de agentes de la franquicia",
-        "Reportes de franquicia",
-        "Configuración de franquicia"
+      arxis_admin: [
+        "Acceso completo a módulos de Proyectos ARXIS",
+        "Gestión de Solicitudes ARXIS",
+        "Acceso a Reportes Técnicos",
+        "Lectura de datos de propiedades",
+        "Lectura de datos de clientes"
       ],
       agent: [
         "Gestión de propiedades",
@@ -746,7 +747,7 @@ const AdminUserManagement = () => {
     switch (role) {
       case "super_admin":
         return "destructive";
-      case "franchise_admin":
+      case "arxis_admin":
         return "default";
       case "supervisor":
         return "secondary";
@@ -765,8 +766,8 @@ const AdminUserManagement = () => {
     switch (role) {
       case "super_admin":
         return "bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white border-0 shadow-[0_4px_14px_0_rgba(239,68,68,0.35)] hover:shadow-[0_6px_20px_0_rgba(239,68,68,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
-      case "franchise_admin":
-        return "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white border-0 shadow-[0_4px_14px_0_rgba(147,51,234,0.35)] hover:shadow-[0_6px_20px_0_rgba(147,51,234,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
+      case "arxis_admin":
+        return "bg-gradient-to-br from-[#C76C33] via-[#B85F2D] to-[#A95527] text-white border-0 shadow-[0_4px_14px_0_rgba(199,108,51,0.35)] hover:shadow-[0_6px_20px_0_rgba(199,108,51,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "supervisor":
         return "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white border-0 shadow-[0_4px_14px_0_rgba(59,130,246,0.35)] hover:shadow-[0_6px_20px_0_rgba(59,130,246,0.45)] hover:scale-105 font-bold tracking-wide transition-all duration-300 backdrop-blur-sm";
       case "office_manager":
@@ -786,8 +787,8 @@ const AdminUserManagement = () => {
     switch (role) {
       case "super_admin":
         return <Crown className="h-3 w-3 mr-1.5" />;
-      case "franchise_admin":
-        return <Shield className="h-3 w-3 mr-1.5" />;
+      case "arxis_admin":
+        return <HardHat className="h-3 w-3 mr-1.5" />;
       case "supervisor":
         return <UserCheck className="h-3 w-3 mr-1.5" />;
       case "office_manager":
