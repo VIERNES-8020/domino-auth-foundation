@@ -3069,6 +3069,10 @@ export type Database = {
         }
         Returns: string
       }
+      user_has_role_by_name: {
+        Args: { _role_name: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
