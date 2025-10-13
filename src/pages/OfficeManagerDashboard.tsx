@@ -44,16 +44,38 @@ export default function OfficeManagerDashboard() {
 
   const fetchProperties = async () => {
     try {
-      const { data, error } = await supabase
+      // Primero obtenemos las propiedades
+      const { data: properties, error: propertiesError } = await supabase
         .from('properties')
-        .select('*, profiles!properties_agent_id_fkey(full_name, agent_code)')
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      setOfficeProperties(data || []);
+      if (propertiesError) throw propertiesError;
+
+      // Luego obtenemos la información de los agentes
+      if (properties && properties.length > 0) {
+        const agentIds = [...new Set(properties.map(p => p.agent_id))];
+        const { data: agents, error: agentsError } = await supabase
+          .from('profiles')
+          .select('id, full_name, agent_code')
+          .in('id', agentIds);
+        
+        if (agentsError) throw agentsError;
+
+        // Combinamos los datos
+        const enrichedProperties = properties.map(property => ({
+          ...property,
+          profiles: agents?.find(agent => agent.id === property.agent_id)
+        }));
+
+        setOfficeProperties(enrichedProperties);
+      } else {
+        setOfficeProperties([]);
+      }
     } catch (error) {
       console.error('Error fetching properties:', error);
       toast.error('Error al cargar las propiedades');
+      setOfficeProperties([]);
     }
   };
 
