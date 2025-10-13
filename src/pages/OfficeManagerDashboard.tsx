@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Home, CheckCircle, Building2 } from "lucide-react";
+import { Home, CheckCircle, Building2, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function OfficeManagerDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -19,6 +20,7 @@ export default function OfficeManagerDashboard() {
       if (user) {
         setUser(user);
         await fetchProfile(user.id);
+        await fetchProperties();
       }
       setLoading(false);
     };
@@ -39,6 +41,41 @@ export default function OfficeManagerDashboard() {
       console.error('Error fetching profile:', error);
     }
   };
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*, profiles!properties_agent_id_fkey(full_name, agent_code)')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setOfficeProperties(data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      toast.error('Error al cargar las propiedades');
+    }
+  };
+
+  const handleUpdatePropertyStatus = async (propertyId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ status: newStatus })
+        .eq('id', propertyId);
+
+      if (error) throw error;
+      
+      toast.success(`Propiedad ${newStatus === 'approved' ? 'aprobada' : 'rechazada'} exitosamente`);
+      await fetchProperties();
+    } catch (error) {
+      console.error('Error updating property status:', error);
+      toast.error('Error al actualizar el estado de la propiedad');
+    }
+  };
+
+  const approvedProperties = officeProperties.filter(p => p.status === 'approved');
+  const pendingProperties = officeProperties.filter(p => p.status === 'pending');
 
   if (loading) {
     return (
@@ -113,7 +150,7 @@ export default function OfficeManagerDashboard() {
               <Home className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{approvedProperties.length}</div>
             </CardContent>
           </Card>
 
@@ -123,7 +160,7 @@ export default function OfficeManagerDashboard() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{pendingProperties.length}</div>
             </CardContent>
           </Card>
 
@@ -144,9 +181,68 @@ export default function OfficeManagerDashboard() {
             <CardDescription>Gestiona las propiedades de tu oficina</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-muted-foreground py-8">
-              No hay inmuebles registrados
-            </p>
+            {officeProperties.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No hay inmuebles registrados
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {officeProperties.map((property) => (
+                  <div
+                    key={property.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{property.title}</h3>
+                        <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
+                          {property.status === 'approved' ? 'Aprobado' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {property.address}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="text-muted-foreground">
+                          Agente: {property.profiles?.full_name || 'N/A'}
+                        </span>
+                        <span className="text-muted-foreground">
+                          Código: {property.property_code || 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/property/${property.id}`}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
+                        </Link>
+                      </Button>
+                      {property.status === 'pending' && (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleUpdatePropertyStatus(property.id, 'approved')}
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Aprobar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleUpdatePropertyStatus(property.id, 'rejected')}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Rechazar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
         </div>
