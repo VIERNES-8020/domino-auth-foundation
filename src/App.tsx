@@ -84,23 +84,27 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
   // Mapear roles de la base de datos a nombres de la aplicación
   const mapDatabaseRoleToAppRole = (dbRole: string): string => {
     const roleMapping: Record<string, string> = {
-      'SUPERADMIN': 'Super Administrador',
+      'SUPER ADMINISTRADOR': 'Super Administrador',
       'SUPERVISIÓN': 'Supervisión (Auxiliar)',
-      'AGENTE': 'Agente Inmobiliario',
+      'AGENTE INMOBILIARIO': 'Agente Inmobiliario',
       'ADMINISTRACIÓN': 'Administración (Encargado de Oficina)',
       'CONTABILIDAD': 'Contabilidad',
       'ARXIS': 'Administrador de ARXIS',
+      'CLIENTE': 'Cliente',
     };
     
-    return roleMapping[dbRole] || dbRole;
+    console.log('Mapeando rol de BD:', dbRole, '-> Rol de app:', roleMapping[dbRole] || dbRole);
+    return roleMapping[dbRole] || 'Cliente';
   };
 
   const fetchUserProfile = async (user: User) => {
     try {
+      console.log('Fetching profile for user:', user.id);
+      
       // Obtener perfil con rol desde profiles.rol_id -> roles
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, is_super_admin, full_name, rol_id, roles(nombre)')
+        .select('id, is_super_admin, full_name, rol_id, roles:rol_id(id, nombre)')
         .eq('id', user.id)
         .single();
       
@@ -114,6 +118,7 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
       
       // Si es super admin, ese es su rol principal
       if (profileData?.is_super_admin === true) {
+        console.log('Usuario es Super Admin');
         setProfile({ 
           id: profileData.id, 
           role: 'Super Administrador' 
@@ -122,7 +127,10 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
       }
       
       // Obtener rol desde la relación con la tabla roles
-      const dbRoleName = (profileData?.roles as any)?.nombre;
+      const rolesData = profileData?.roles as any;
+      const dbRoleName = rolesData?.nombre;
+      
+      console.log('Rol desde BD:', { rol_id: profileData?.rol_id, rolesData, dbRoleName });
       
       if (dbRoleName) {
         const mappedRole = mapDatabaseRoleToAppRole(dbRoleName);
@@ -170,6 +178,24 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
   }
 
   if (requiredRole && profile?.role !== requiredRole) {
+    // Auto-redirect to correct dashboard based on role
+    const roleToDashboard: Record<string, string> = {
+      'Super Administrador': '/admin/dashboard',
+      'Agente Inmobiliario': '/dashboard/agent',
+      'Supervisión (Auxiliar)': '/dashboard/supervisor',
+      'Administración (Encargado de Oficina)': '/dashboard/office-manager',
+      'Contabilidad': '/dashboard/accounting',
+      'Administrador de ARXIS': '/dashboard/arxis',
+      'Cliente': '/dashboard/client',
+    };
+    
+    const correctDashboard = roleToDashboard[profile.role];
+    console.log('Role mismatch. User role:', profile.role, 'Required:', requiredRole, 'Redirecting to:', correctDashboard);
+    
+    if (correctDashboard) {
+      return <Navigate to={correctDashboard} replace />;
+    }
+    
     return <AccessDenied />;
   }
 
