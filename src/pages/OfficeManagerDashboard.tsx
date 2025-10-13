@@ -12,6 +12,7 @@ export default function OfficeManagerDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [officeProperties, setOfficeProperties] = useState<any[]>([]);
+  const [changeRequests, setChangeRequests] = useState<any[]>([]);
 
   useEffect(() => {
     document.title = "Panel de Administración - Dominio Inmobiliaria";
@@ -21,6 +22,7 @@ export default function OfficeManagerDashboard() {
         setUser(user);
         await fetchProfile(user.id);
         await fetchProperties();
+        await fetchChangeRequests();
       }
       setLoading(false);
     };
@@ -96,8 +98,136 @@ export default function OfficeManagerDashboard() {
     }
   };
 
+  const fetchChangeRequests = async () => {
+    try {
+      // Primero obtenemos las solicitudes
+      const { data: requests, error: requestsError } = await supabase
+        .from('property_change_requests')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (requestsError) throw requestsError;
+
+      if (requests && requests.length > 0) {
+        // Obtenemos las propiedades relacionadas
+        const propertyIds = [...new Set(requests.map(r => r.property_id))];
+        const { data: properties, error: propertiesError } = await supabase
+          .from('properties')
+          .select('id, title, property_code, address')
+          .in('id', propertyIds);
+        
+        if (propertiesError) throw propertiesError;
+
+        // Obtenemos los agentes relacionados
+        const agentIds = [...new Set(requests.map(r => r.agent_id))];
+        const { data: agents, error: agentsError } = await supabase
+          .from('profiles')
+          .select('id, full_name, agent_code')
+          .in('id', agentIds);
+        
+        if (agentsError) throw agentsError;
+
+        // Combinamos los datos
+        const enrichedRequests = requests.map(request => ({
+          ...request,
+          properties: properties?.find(p => p.id === request.property_id),
+          profiles: agents?.find(a => a.id === request.agent_id)
+        }));
+
+        setChangeRequests(enrichedRequests);
+      } else {
+        setChangeRequests([]);
+      }
+    } catch (error) {
+      console.error('Error fetching change requests:', error);
+      toast.error('Error al cargar las solicitudes');
+      setChangeRequests([]);
+    }
+  };
+
+  const handleApproveRequest = async (request: any) => {
+    try {
+      // Primero aprobar la solicitud
+      const { error: updateError } = await supabase
+        .from('property_change_requests')
+        .update({
+          status: 'approved',
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString()
+        })
+        .eq('id', request.id);
+
+      if (updateError) throw updateError;
+
+      // Ejecutar la acción según el tipo de solicitud
+      if (request.request_type === 'archive') {
+        const { error } = await supabase
+          .from('properties')
+          .update({
+            is_archived: true,
+            archive_reason: request.request_data?.reason || 'Archivado'
+          })
+          .eq('id', request.property_id);
+        if (error) throw error;
+      } else if (request.request_type === 'delete') {
+        const { error } = await supabase
+          .from('properties')
+          .delete()
+          .eq('id', request.property_id);
+        if (error) throw error;
+      } else if (request.request_type === 'edit') {
+        const { error } = await supabase
+          .from('properties')
+          .update(request.request_data)
+          .eq('id', request.property_id);
+        if (error) throw error;
+      }
+
+      toast.success('Solicitud aprobada exitosamente');
+      await fetchChangeRequests();
+      await fetchProperties();
+    } catch (error) {
+      console.error('Error approving request:', error);
+      toast.error('Error al aprobar la solicitud');
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string, reason: string) => {
+    try {
+      const { error } = await supabase
+        .from('property_change_requests')
+        .update({
+          status: 'rejected',
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+          rejection_reason: reason
+        })
+        .eq('id', requestId);
+
+      if (error) throw error;
+
+      toast.success('Solicitud rechazada');
+      await fetchChangeRequests();
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      toast.error('Error al rechazar la solicitud');
+    }
+  };
+
+  const getRequestTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      edit: 'Editar',
+      archive: 'Archivar',
+      assign: 'Asignar',
+      delete: 'Eliminar'
+    };
+    return labels[type] || type;
+  };
+
   const approvedProperties = officeProperties.filter(p => p.status === 'approved');
   const pendingProperties = officeProperties.filter(p => p.status === 'pending');
+  const pendingRequestsCount = changeRequests.length;
 
   if (loading) {
     return (
@@ -165,7 +295,7 @@ export default function OfficeManagerDashboard() {
               </div>
             </div>
           </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Inmuebles Cargados</CardTitle>
@@ -178,11 +308,21 @@ export default function OfficeManagerDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+              <CardTitle className="text-sm font-medium">Pendientes Aprobar</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingProperties.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Solicitudes Agentes</CardTitle>
+              <CheckCircle className="h-4 w-4 text-amber-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">{pendingRequestsCount}</div>
             </CardContent>
           </Card>
 
@@ -196,6 +336,65 @@ export default function OfficeManagerDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Solicitudes de Cambios de Agentes */}
+        {changeRequests.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Solicitudes de Agentes</CardTitle>
+              <CardDescription>Revisa y aprueba las solicitudes de cambios de los agentes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {changeRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20"
+                  >
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                          {getRequestTypeLabel(request.request_type)}
+                        </Badge>
+                        <h3 className="font-semibold">{request.properties?.title}</h3>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>Código: {request.properties?.property_code}</p>
+                        <p>Agente: {request.profiles?.full_name} ({request.profiles?.agent_code})</p>
+                        <p>Dirección: {request.properties?.address}</p>
+                        {request.request_data?.reason && (
+                          <p className="text-xs italic">Motivo: {request.request_data.reason}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleApproveRequest(request)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Aprobar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          const reason = prompt('Motivo del rechazo:');
+                          if (reason) handleRejectRequest(request.id, reason);
+                        }}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Rechazar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
