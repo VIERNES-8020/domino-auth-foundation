@@ -67,7 +67,7 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name),
           agent_vendedor:profiles!agent_vendedor_id(full_name)
         `)
-        .ilike('status', '%validado%');
+        .eq('status', 'validated');
 
       if (error) throw error;
       setSalesByOffice(data || []);
@@ -85,7 +85,7 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name, agent_code),
           agent_vendedor:profiles!agent_vendedor_id(full_name, agent_code)
         `)
-        .ilike('status', '%validado%')
+        .eq('status', 'validated')
         .order('closure_date', { ascending: false });
 
       if (error) throw error;
@@ -100,7 +100,7 @@ export default function AccountingDashboard() {
       const { data, error } = await supabase
         .from('sale_closures')
         .select('closure_price, currency')
-        .ilike('status', '%validado%');
+        .eq('status', 'validated');
 
       if (error) throw error;
       
@@ -122,7 +122,7 @@ export default function AccountingDashboard() {
       const { count: salesCount } = await supabase
         .from('sale_closures')
         .select('*', { count: 'exact', head: true })
-        .ilike('status', '%validado%');
+        .eq('status', 'validated');
       
       setTotalSuccessfulSales(salesCount || 0);
 
@@ -166,7 +166,7 @@ export default function AccountingDashboard() {
           agent_captador:profiles!agent_captador_id(full_name),
           agent_vendedor:profiles!agent_vendedor_id(full_name)
         `)
-        .ilike('status', '%validado%')
+        .eq('status', 'validated')
         .gte('closure_date', firstDayOfMonth.toISOString());
 
       if (error) throw error;
