@@ -195,7 +195,9 @@ export default function AdminSaleClosuresSection() {
   };
 
   const totalClosures = closures.length;
-  const totalSales = closures.reduce((sum, c) => sum + parseFloat(c.closure_price || 0), 0);
+  const totalSales = closures
+    .filter((c) => c.status === "validated")
+    .reduce((sum, c) => sum + parseFloat(c.closure_price || 0), 0);
   const pendingCount = closures.filter((c) => c.status === "pending").length;
   const validatedCount = closures.filter((c) => c.status === "validated").length;
   const rejectedCount = closures.filter((c) => c.status === "rejected").length;
