@@ -48,11 +48,13 @@ import AboutPageManagement from "@/components/admin/AboutPageManagement";
 import WatermarkManagement from "@/components/admin/WatermarkManagement";
 import AdminSaleClosuresSection from "@/components/admin/AdminSaleClosuresSection";
 import AdminUserManagement from "@/pages/AdminUserManagement";
-import ARXISManagerDashboard from "@/pages/ARXISManagerDashboard";
+import ARXISContent from "@/components/admin/ARXISContent";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import DocumentFileUpload from "@/components/DocumentFileUpload";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { HardHat } from "lucide-react";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -63,6 +65,33 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
   const [completedArxisProjects, setCompletedArxisProjects] = useState(0);
+  
+  // ARXIS Dashboard States
+  const [arxisRequests, setArxisRequests] = useState<any[]>([]);
+  const [arxisProjects, setArxisProjects] = useState<any[]>([]);
+  const [technicalReports, setTechnicalReports] = useState<any[]>([]);
+  const [maintenances, setMaintenances] = useState<any[]>([]);
+  const [activeArxisProjects, setActiveArxisProjects] = useState(0);
+  const [pendingArxisRequests, setPendingArxisRequests] = useState(0);
+  const [scheduledMaintenances, setScheduledMaintenances] = useState(0);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [projectToComplete, setProjectToComplete] = useState<any>(null);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportDocumentUrls, setReportDocumentUrls] = useState<string[]>([]);
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [reportDetailOpen, setReportDetailOpen] = useState(false);
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
+  const [maintenanceTitle, setMaintenanceTitle] = useState('');
+  const [maintenanceDescription, setMaintenanceDescription] = useState('');
+  const [maintenanceDate, setMaintenanceDate] = useState('');
+  const [maintenanceTime, setMaintenanceTime] = useState('');
+  const [maintenanceAssignedTo, setMaintenanceAssignedTo] = useState('');
+  const [maintenanceProjectId, setMaintenanceProjectId] = useState<string | null>(null);
   const [franchiseApplicationFilter, setFranchiseApplicationFilter] = useState<string>('all');
   const [selectedFranchiseApplication, setSelectedFranchiseApplication] = useState<any>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -1779,7 +1808,7 @@ export default function AdminDashboard() {
 
             {/* ARXIS Dashboard Tab */}
             <TabsContent value="arxis" className="space-y-6 mt-6">
-              <ARXISManagerDashboard />
+              <ARXISContent userId={currentUser?.id || ''} />
             </TabsContent>
 
             {/* Reports Tab */}
