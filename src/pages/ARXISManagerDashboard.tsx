@@ -36,6 +36,15 @@ export default function ARXISManagerDashboard() {
   const [reportDetailOpen, setReportDetailOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
   
+  // Estado para el formulario de mantenimiento
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
+  const [maintenanceTitle, setMaintenanceTitle] = useState('');
+  const [maintenanceDescription, setMaintenanceDescription] = useState('');
+  const [maintenanceDate, setMaintenanceDate] = useState('');
+  const [maintenanceTime, setMaintenanceTime] = useState('');
+  const [maintenanceAssignedTo, setMaintenanceAssignedTo] = useState('');
+  const [maintenanceProjectId, setMaintenanceProjectId] = useState<string | null>(null);
+  
   // Proyectos, reportes y mantenimientos
   const [arxisProjects, setArxisProjects] = useState<any[]>([]);
   const [technicalReports, setTechnicalReports] = useState<any[]>([]);
@@ -305,6 +314,48 @@ export default function ARXISManagerDashboard() {
     } catch (error) {
       console.error('Error completing project:', error);
       toast.error('Error al finalizar proyecto');
+    }
+  };
+
+  const handleCreateMaintenance = async () => {
+    if (!maintenanceTitle.trim() || !maintenanceDescription.trim() || !maintenanceDate || !maintenanceTime) {
+      toast.error('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    try {
+      const scheduledDateTime = new Date(`${maintenanceDate}T${maintenanceTime}`);
+      
+      const { error } = await supabase
+        .from('arxis_maintenances')
+        .insert({
+          title: maintenanceTitle,
+          description: maintenanceDescription,
+          scheduled_date: scheduledDateTime.toISOString(),
+          assigned_to: maintenanceAssignedTo || null,
+          project_id: maintenanceProjectId,
+          status: 'scheduled',
+          created_by: user.id
+        });
+
+      if (error) throw error;
+
+      toast.success('✅ Mantenimiento creado exitosamente');
+      
+      // Limpiar formulario
+      setMaintenanceTitle('');
+      setMaintenanceDescription('');
+      setMaintenanceDate('');
+      setMaintenanceTime('');
+      setMaintenanceAssignedTo('');
+      setMaintenanceProjectId(null);
+      setMaintenanceDialogOpen(false);
+      
+      await fetchMaintenances();
+      await fetchStats();
+    } catch (error) {
+      console.error('Error creating maintenance:', error);
+      toast.error('Error al crear mantenimiento');
     }
   };
 
@@ -704,8 +755,19 @@ export default function ARXISManagerDashboard() {
             <TabsContent value="mantenimientos">
               <Card>
                 <CardHeader>
-                  <CardTitle>Mantenimientos Programados</CardTitle>
-                  <CardDescription>Trabajos de mantenimiento solicitados por clientes</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>Mantenimientos Programados</CardTitle>
+                      <CardDescription>Trabajos de mantenimiento solicitados por clientes</CardDescription>
+                    </div>
+                    <Button 
+                      onClick={() => setMaintenanceDialogOpen(true)}
+                      className="bg-[#C76C33] hover:bg-[#C76C33]/90"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nuevo Mantenimiento
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {maintenances.length === 0 ? (
@@ -895,7 +957,7 @@ export default function ARXISManagerDashboard() {
 
       {/* Complete Project Dialog */}
       <Dialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Finalizar Proyecto y Crear Reporte Técnico</DialogTitle>
             <DialogDescription>
@@ -904,7 +966,7 @@ export default function ARXISManagerDashboard() {
           </DialogHeader>
 
           {projectToComplete && (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <div className="p-4 bg-muted rounded-lg">
                 <p className="text-sm font-medium">Proyecto: {projectToComplete.title}</p>
                 <p className="text-sm text-muted-foreground">Cliente: {projectToComplete.client_name}</p>
@@ -968,6 +1030,114 @@ export default function ARXISManagerDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Maintenance Dialog */}
+      <Dialog open={maintenanceDialogOpen} onOpenChange={setMaintenanceDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Mantenimiento</DialogTitle>
+            <DialogDescription>
+              Programa un trabajo de mantenimiento
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pb-4">
+            <div className="space-y-2">
+              <Label htmlFor="maintenance-title">Título del Mantenimiento *</Label>
+              <Input
+                id="maintenance-title"
+                value={maintenanceTitle}
+                onChange={(e) => setMaintenanceTitle(e.target.value)}
+                placeholder="Ej: Revisión de instalaciones eléctricas"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maintenance-description">Descripción del Trabajo *</Label>
+              <Textarea
+                id="maintenance-description"
+                value={maintenanceDescription}
+                onChange={(e) => setMaintenanceDescription(e.target.value)}
+                placeholder="Describe el trabajo de mantenimiento a realizar..."
+                rows={4}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-date">Fecha *</Label>
+                <Input
+                  id="maintenance-date"
+                  type="date"
+                  value={maintenanceDate}
+                  onChange={(e) => setMaintenanceDate(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenance-time">Hora *</Label>
+                <Input
+                  id="maintenance-time"
+                  type="time"
+                  value={maintenanceTime}
+                  onChange={(e) => setMaintenanceTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maintenance-assigned">Persona Responsable</Label>
+              <Input
+                id="maintenance-assigned"
+                value={maintenanceAssignedTo}
+                onChange={(e) => setMaintenanceAssignedTo(e.target.value)}
+                placeholder="Nombre del técnico o responsable"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maintenance-project">Proyecto Relacionado (opcional)</Label>
+              <select
+                id="maintenance-project"
+                value={maintenanceProjectId || ''}
+                onChange={(e) => setMaintenanceProjectId(e.target.value || null)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Sin proyecto asociado</option>
+                {arxisProjects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={handleCreateMaintenance}
+                className="bg-[#C76C33] hover:bg-[#C76C33]/90"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Crear Mantenimiento
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMaintenanceDialogOpen(false);
+                  setMaintenanceTitle('');
+                  setMaintenanceDescription('');
+                  setMaintenanceDate('');
+                  setMaintenanceTime('');
+                  setMaintenanceAssignedTo('');
+                  setMaintenanceProjectId(null);
+                }}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
