@@ -976,7 +976,7 @@ export default function AdminDashboard() {
               <TabsTrigger 
                 value="arxis" 
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = '/arxis-manager/dashboard'}
+                onClick={() => window.location.href = '/dashboard/arxis'}
               >
                 <TrendingUp className="h-4 w-4" />
                 ARXIS
