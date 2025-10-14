@@ -162,38 +162,38 @@ export default function ARXISManagerDashboard() {
     setViewDialogOpen(true);
   };
 
-  const handleConvertToProject = async (request: any) => {
+  const handleAcceptProject = async (request: any) => {
     try {
       const { error } = await supabase
         .from('arxis_projects')
         .insert({
-          title: `Proyecto - ${request.full_name}`,
-          description: request.message,
+          title: `${request.country || 'Proyecto'} - ${request.full_name}`,
+          description: request.message || 'Proyecto aceptado desde solicitud de servicio',
           project_type: request.country || 'Nuevo',
           client_name: request.full_name,
           client_email: request.email,
-          client_phone: request.phone,
-          location: request.city,
+          client_phone: request.phone || request.whatsapp,
+          location: `${request.city || 'N/A'}, ${request.country || 'N/A'}`,
           status: 'in_progress',
           created_by: user.id
         });
 
       if (error) throw error;
 
-      // Actualizar estado de la solicitud a completado
+      // Actualizar estado de la solicitud a aprobado
       await supabase
         .from('franchise_applications')
-        .update({ status: 'completed' })
+        .update({ status: 'approved' })
         .eq('id', request.id);
 
-      toast.success('Solicitud convertida en proyecto activo');
+      toast.success('✅ Proyecto aceptado y movido a Proyectos Activos');
       await fetchArxisRequests();
       await fetchArxisProjects();
       await fetchStats();
       setViewDialogOpen(false);
     } catch (error) {
-      console.error('Error converting to project:', error);
-      toast.error('Error al convertir en proyecto');
+      console.error('Error accepting project:', error);
+      toast.error('Error al aceptar el proyecto');
     }
   };
 
@@ -242,6 +242,7 @@ export default function ARXISManagerDashboard() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       pending: { label: "Pendiente", variant: "outline" },
+      approved: { label: "Aprobado", variant: "secondary" },
       in_progress: { label: "En Progreso", variant: "default" },
       completed: { label: "Completado", variant: "secondary" },
       rejected: { label: "Rechazado", variant: "destructive" },
@@ -518,8 +519,8 @@ export default function ARXISManagerDashboard() {
             <TabsContent value="reportes">
               <Card>
                 <CardHeader>
-                  <CardTitle>Reportes Técnicos</CardTitle>
-                  <CardDescription>Documentos y avances de obra</CardDescription>
+                  <CardTitle>Reportes Técnicos - Proyectos Finalizados</CardTitle>
+                  <CardDescription>Trabajos completados con éxito</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {technicalReports.length === 0 ? (
@@ -528,42 +529,51 @@ export default function ARXISManagerDashboard() {
                         No hay reportes técnicos disponibles.
                       </p>
                       <p className="text-center text-sm text-muted-foreground">
-                        Los reportes aparecerán aquí cuando se carguen desde los proyectos activos.
+                        Los reportes de proyectos finalizados aparecerán aquí.
                       </p>
                     </>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Título</TableHead>
-                          <TableHead>Proyecto</TableHead>
-                          <TableHead>Fecha</TableHead>
-                          <TableHead>Documento</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {technicalReports.map((report) => (
-                          <TableRow key={report.id}>
-                            <TableCell className="font-medium">{report.title}</TableCell>
-                            <TableCell>{report.arxis_projects?.title || 'N/A'}</TableCell>
-                            <TableCell>
-                              {new Date(report.report_date).toLocaleDateString('es-ES')}
-                            </TableCell>
-                            <TableCell>
-                              {report.document_url ? (
-                                <Button size="sm" variant="outline" asChild>
+                    <div className="space-y-4">
+                      {technicalReports.map((report) => (
+                        <Card key={report.id} className="border-green-200 bg-green-50/30">
+                          <CardContent className="pt-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <Badge className="bg-green-600 hover:bg-green-700">
+                                    ✅ Proyecto Finalizado con Éxito
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    {new Date(report.report_date).toLocaleDateString('es-ES', { 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </Badge>
+                                </div>
+                                <h3 className="font-semibold text-lg text-green-900">{report.title}</h3>
+                                {report.arxis_projects?.title && (
+                                  <p className="text-sm text-muted-foreground">
+                                    🏗️ Proyecto: <span className="font-medium">{report.arxis_projects.title}</span>
+                                  </p>
+                                )}
+                                <div className="border-l-4 border-green-500 pl-4 py-2 bg-white/50 rounded-r">
+                                  <p className="text-sm font-medium text-muted-foreground mb-1">Trabajo Realizado:</p>
+                                  <p className="text-sm">{report.description}</p>
+                                </div>
+                              </div>
+                              {report.document_url && (
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 shrink-0" asChild>
                                   <a href={report.document_url} target="_blank" rel="noopener noreferrer">
-                                    Ver documento
+                                    📄 Ver Informe Completo
                                   </a>
                                 </Button>
-                              ) : (
-                                'Sin documento'
                               )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -574,45 +584,71 @@ export default function ARXISManagerDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Mantenimientos Programados</CardTitle>
-                  <CardDescription>Fechas y responsables de mantenimientos</CardDescription>
+                  <CardDescription>Trabajos de mantenimiento solicitados por clientes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {maintenances.filter(m => m.status === 'scheduled').length === 0 ? (
+                  {maintenances.length === 0 ? (
                     <>
                       <p className="text-center text-muted-foreground py-8">
                         No hay mantenimientos programados.
                       </p>
                       <p className="text-center text-sm text-muted-foreground">
-                        Los mantenimientos programados aparecerán aquí.
+                        Los mantenimientos solicitados aparecerán aquí.
                       </p>
                     </>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Título</TableHead>
-                          <TableHead>Proyecto</TableHead>
-                          <TableHead>Fecha Programada</TableHead>
-                          <TableHead>Asignado a</TableHead>
-                          <TableHead>Estado</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {maintenances.filter(m => m.status === 'scheduled').map((maintenance) => (
-                          <TableRow key={maintenance.id}>
-                            <TableCell className="font-medium">{maintenance.title}</TableCell>
-                            <TableCell>{maintenance.arxis_projects?.title || 'N/A'}</TableCell>
-                            <TableCell>
-                              {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES')}
-                            </TableCell>
-                            <TableCell>{maintenance.assigned_to || 'Sin asignar'}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">Programado</Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <div className="space-y-4">
+                      {maintenances.map((maintenance) => (
+                        <Card key={maintenance.id} className="border-blue-200">
+                          <CardContent className="pt-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant={
+                                    maintenance.status === 'completed' ? 'secondary' : 
+                                    maintenance.status === 'in_progress' ? 'default' : 
+                                    'outline'
+                                  }>
+                                    {maintenance.status === 'scheduled' && '📋 Programado'}
+                                    {maintenance.status === 'in_progress' && '⚙️ En Progreso'}
+                                    {maintenance.status === 'completed' && '✅ Completado'}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    📅 {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES', { 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </Badge>
+                                </div>
+
+                                <h3 className="font-semibold text-lg">{maintenance.title}</h3>
+
+                                {maintenance.arxis_projects?.title && (
+                                  <p className="text-sm text-muted-foreground">
+                                    🏗️ Proyecto relacionado: <span className="font-medium">{maintenance.arxis_projects.title}</span>
+                                  </p>
+                                )}
+
+                                <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50/50 rounded-r">
+                                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                                    Descripción del Mantenimiento a Realizar:
+                                  </p>
+                                  <p className="text-sm">{maintenance.description}</p>
+                                </div>
+
+                                {maintenance.assigned_to && (
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <span className="font-medium text-muted-foreground">👤 Asignado a:</span>
+                                    <span className="font-semibold">{maintenance.assigned_to}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -699,13 +735,12 @@ export default function ARXISManagerDashboard() {
 
               <div className="flex gap-2 pt-4 flex-wrap">
                 <Button
-                  onClick={() => handleConvertToProject(selectedRequest)}
-                  disabled={selectedRequest.status === 'completed'}
-                  style={{ backgroundColor: '#C76C33' }}
-                  className="text-white hover:opacity-90"
+                  onClick={() => handleAcceptProject(selectedRequest)}
+                  disabled={selectedRequest.status === 'approved' || selectedRequest.status === 'completed'}
+                  className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Convertir en Proyecto
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Aceptar Proyecto
                 </Button>
                 <Button
                   onClick={() => handleUpdateStatus(selectedRequest.id, 'in_progress')}
