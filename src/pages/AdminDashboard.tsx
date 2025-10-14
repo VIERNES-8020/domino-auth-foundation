@@ -48,6 +48,7 @@ import AboutPageManagement from "@/components/admin/AboutPageManagement";
 import WatermarkManagement from "@/components/admin/WatermarkManagement";
 import AdminSaleClosuresSection from "@/components/admin/AdminSaleClosuresSection";
 import AdminUserManagement from "@/pages/AdminUserManagement";
+import ARXISManagerDashboard from "@/pages/ARXISManagerDashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -976,7 +977,6 @@ export default function AdminDashboard() {
               <TabsTrigger 
                 value="arxis" 
                 className="flex items-center gap-2"
-                onClick={() => window.location.href = '/dashboard/arxis'}
               >
                 <TrendingUp className="h-4 w-4" />
                 ARXIS
@@ -1775,6 +1775,11 @@ export default function AdminDashboard() {
 
             <TabsContent value="marca-agua" className="space-y-6 mt-6">
               <WatermarkManagement />
+            </TabsContent>
+
+            {/* ARXIS Dashboard Tab */}
+            <TabsContent value="arxis" className="space-y-6 mt-6">
+              <ARXISManagerDashboard />
             </TabsContent>
 
             {/* Reports Tab */}
