@@ -6,6 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { HardHat, FileText, CheckCircle, Clock, AlertCircle, Trash2, Plus } from "lucide-react";
@@ -18,6 +22,14 @@ export default function ARXISManagerDashboard() {
   const [arxisRequests, setArxisRequests] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<any>(null);
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [projectToComplete, setProjectToComplete] = useState<any>(null);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportDocumentUrl, setReportDocumentUrl] = useState('');
   
   // Proyectos, reportes y mantenimientos
   const [arxisProjects, setArxisProjects] = useState<any[]>([]);
@@ -220,6 +232,77 @@ export default function ARXISManagerDashboard() {
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('arxis_projects')
+        .delete()
+        .eq('id', projectToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Proyecto eliminado correctamente');
+      await fetchArxisProjects();
+      await fetchStats();
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Error al eliminar proyecto');
+    }
+  };
+
+  const handleCompleteProject = async () => {
+    if (!projectToComplete) return;
+
+    if (!reportTitle.trim() || !reportDescription.trim()) {
+      toast.error('Por favor completa el título y descripción del reporte');
+      return;
+    }
+
+    try {
+      // Crear el reporte técnico
+      const { error: reportError } = await supabase
+        .from('arxis_technical_reports')
+        .insert({
+          title: reportTitle,
+          description: reportDescription,
+          document_url: reportDocumentUrl || null,
+          project_id: projectToComplete.id,
+          created_by: user.id,
+          report_date: new Date().toISOString()
+        });
+
+      if (reportError) throw reportError;
+
+      // Actualizar el estado del proyecto a completado
+      const { error: updateError } = await supabase
+        .from('arxis_projects')
+        .update({ status: 'completed', end_date: new Date().toISOString() })
+        .eq('id', projectToComplete.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('✅ Proyecto finalizado y reporte técnico creado');
+      
+      // Limpiar formulario
+      setReportTitle('');
+      setReportDescription('');
+      setReportDocumentUrl('');
+      setCompleteDialogOpen(false);
+      setProjectToComplete(null);
+      
+      await fetchArxisProjects();
+      await fetchTechnicalReports();
+      await fetchStats();
+    } catch (error) {
+      console.error('Error completing project:', error);
+      toast.error('Error al finalizar proyecto');
+    }
+  };
+
   const handleUpdateStatus = async (requestId: string, newStatus: string) => {
     try {
       const { error } = await supabase
@@ -263,7 +346,7 @@ export default function ARXISManagerDashboard() {
       'Asesoría técnica': '📐 Asesoría'
     };
 
-    return typeMap[type] || type;
+    return typeMap[type] || '🏗️ ' + type;
   };
 
   if (loading) {
@@ -429,7 +512,7 @@ export default function ARXISManagerDashboard() {
                           <TableHead>Tipo</TableHead>
                           <TableHead>Ubicación</TableHead>
                           <TableHead>Fecha Inicio</TableHead>
-                          <TableHead>Estado</TableHead>
+                          <TableHead>Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -443,7 +526,30 @@ export default function ARXISManagerDashboard() {
                               {new Date(project.start_date).toLocaleDateString('es-ES')}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="default">En progreso</Badge>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => {
+                                    setProjectToComplete(project);
+                                    setReportTitle(`Reporte - ${project.title}`);
+                                    setCompleteDialogOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Finalizar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setProjectToDelete(project);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -472,7 +578,6 @@ export default function ARXISManagerDashboard() {
                         <TableRow>
                           <TableHead>Fecha</TableHead>
                           <TableHead>Cliente</TableHead>
-                          <TableHead>Tipo de Proyecto</TableHead>
                           <TableHead>Ubicación</TableHead>
                           <TableHead>Estado</TableHead>
                           <TableHead>Acciones</TableHead>
@@ -484,9 +589,7 @@ export default function ARXISManagerDashboard() {
                             <TableCell>
                               {new Date(request.created_at).toLocaleDateString('es-ES')}
                             </TableCell>
-                            <TableCell className="font-medium">{request.full_name}</TableCell>
-                            <TableCell>{getProjectTypeBadge(request.country || 'N/A')}</TableCell>
-                            <TableCell>{request.city || 'N/A'}</TableCell>
+                          <TableCell>{request.city || 'N/A'}, {request.country || 'N/A'}</TableCell>
                             <TableCell>{getStatusBadge(request.status)}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
@@ -687,20 +790,8 @@ export default function ARXISManagerDashboard() {
                   <p className="text-base">{selectedRequest.phone || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">WhatsApp</p>
-                  <p className="text-base">{selectedRequest.whatsapp || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Tipo de Proyecto</p>
-                  <p className="text-base">{getProjectTypeBadge(selectedRequest.country || 'N/A')}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Ciudad</p>
-                  <p className="text-base">{selectedRequest.city || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">País</p>
-                  <p className="text-base">{selectedRequest.country || 'N/A'}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Ciudad/País</p>
+                  <p className="text-base">{selectedRequest.city || 'N/A'}, {selectedRequest.country || 'N/A'}</p>
                 </div>
               </div>
 
@@ -768,6 +859,104 @@ export default function ARXISManagerDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Complete Project Dialog */}
+      <Dialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Finalizar Proyecto y Crear Reporte Técnico</DialogTitle>
+            <DialogDescription>
+              Completa la información del proyecto finalizado
+            </DialogDescription>
+          </DialogHeader>
+
+          {projectToComplete && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm font-medium">Proyecto: {projectToComplete.title}</p>
+                <p className="text-sm text-muted-foreground">Cliente: {projectToComplete.client_name}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="report-title">Título del Reporte *</Label>
+                <Input
+                  id="report-title"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                  placeholder="Ej: Reporte Final - Construcción Exitosa"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="report-description">Trabajo Realizado * </Label>
+                <Textarea
+                  id="report-description"
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Describe detalladamente el trabajo realizado, resultados obtenidos, y cualquier información relevante..."
+                  rows={6}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="report-document">URL del Documento (opcional)</Label>
+                <Input
+                  id="report-document"
+                  value={reportDocumentUrl}
+                  onChange={(e) => setReportDocumentUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Puedes agregar un enlace a un documento, PDF o informe completo
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={handleCompleteProject}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Finalizar Proyecto y Guardar Reporte
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCompleteDialogOpen(false);
+                    setReportTitle('');
+                    setReportDescription('');
+                    setReportDocumentUrl('');
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar Proyecto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el proyecto
+              {projectToDelete && `: "${projectToDelete.title}"`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setProjectToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
