@@ -89,7 +89,9 @@ export default function SaleClosuresSection({ agentId, isSuperAdmin = false }: S
   };
 
   const totalClosures = closures.length;
-  const totalSales = closures.reduce((sum, c) => sum + parseFloat(c.closure_price || 0), 0);
+  const totalSales = closures
+    .filter((c) => c.status === "validated")
+    .reduce((sum, c) => sum + parseFloat(c.closure_price || 0), 0);
 
   return (
     <div className="space-y-4">
