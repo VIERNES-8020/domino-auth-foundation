@@ -44,8 +44,13 @@ export default function ARXISContent({ userId }: { userId: string }) {
   const [maintenanceProjectId, setMaintenanceProjectId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    console.log('ARXISContent mounted with userId:', userId);
+    if (userId) {
+      fetchAllData();
+    } else {
+      console.warn('ARXISContent: No userId provided');
+    }
+  }, [userId]);
 
   const fetchAllData = async () => {
     await Promise.all([
@@ -59,11 +64,16 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
   const fetchArxisRequests = async () => {
     try {
+      console.log('Fetching ARXIS requests...');
       const { data, error } = await supabase
         .from('franchise_applications')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('Error in fetchArxisRequests:', error);
+        throw error;
+      }
+      console.log('ARXIS requests fetched:', data?.length || 0);
       setArxisRequests(data || []);
     } catch (error) {
       console.error('Error fetching ARXIS requests:', error);
@@ -72,11 +82,16 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
   const fetchArxisProjects = async () => {
     try {
+      console.log('Fetching ARXIS projects...');
       const { data, error } = await supabase
         .from('arxis_projects')
         .select('*')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('Error in fetchArxisProjects:', error);
+        throw error;
+      }
+      console.log('ARXIS projects fetched:', data?.length || 0);
       setArxisProjects(data || []);
     } catch (error) {
       console.error('Error fetching ARXIS projects:', error);
@@ -111,12 +126,15 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
   const fetchStats = async () => {
     try {
+      console.log('Fetching ARXIS stats...');
       const [pendingRes, activeRes, completedRes, maintenanceRes] = await Promise.all([
         supabase.from('franchise_applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('arxis_projects').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
         supabase.from('arxis_projects').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
         supabase.from('arxis_maintenances').select('*', { count: 'exact', head: true }).eq('status', 'scheduled')
       ]);
+      
+      console.log('Stats fetched - Pending:', pendingRes.count, 'Active:', activeRes.count, 'Completed:', completedRes.count, 'Maintenances:', maintenanceRes.count);
       
       setPendingRequests(pendingRes.count || 0);
       setActiveProjects(activeRes.count || 0);

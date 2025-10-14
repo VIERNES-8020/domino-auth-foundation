@@ -1808,7 +1808,15 @@ export default function AdminDashboard() {
 
             {/* ARXIS Dashboard Tab */}
             <TabsContent value="arxis" className="space-y-6 mt-6">
-              <ARXISContent userId={currentUser?.id || ''} />
+              {currentUser?.id ? (
+                <ARXISContent userId={currentUser.id} key={currentUser.id} />
+              ) : (
+                <Card>
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    Cargando información de ARXIS...
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Reports Tab */}
