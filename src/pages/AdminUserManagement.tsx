@@ -1196,7 +1196,7 @@ const AdminUserManagement = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-5 text-center">
-                            <div className="w-full min-w-[160px] max-w-[180px] mx-auto">
+                            <div className="w-full min-w-[180px] max-w-[200px] mx-auto">
                               <Select
                                 value={user.role}
                                 onValueChange={(newRole) => handleRoleChange(user.id, newRole, user.role, user.full_name || 'Usuario sin nombre')}
@@ -1204,18 +1204,18 @@ const AdminUserManagement = () => {
                               >
                                 <SelectTrigger className="w-full h-auto text-xs border-0 bg-transparent hover:bg-muted/20 transition-all duration-200 p-0">
                                   <SelectValue>
-                                     <div className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap border-2 transition-all duration-200 ${getRoleBadgeStyles(user.role)}`}>
+                                     <div className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold border-2 transition-all duration-200 w-[180px] justify-start ${getRoleBadgeStyles(user.role)}`}>
                                        {getRoleIcon(user.role)}
-                                       <span>{getRoleLabel(user.role)}</span>
+                                       <span className="truncate flex-1 text-left">{getRoleLabel(user.role)}</span>
                                      </div>
                                   </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent className="z-50 bg-background border shadow-xl min-w-[200px]">
                                   {roles.map((role) => (
                                     <SelectItem key={role} value={role} className="text-xs hover:bg-muted/50 focus:bg-muted/50 cursor-pointer p-3">
-                                       <div className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap border-2 ${getRoleBadgeStyles(role)}`}>
+                                       <div className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold border-2 w-[180px] justify-start ${getRoleBadgeStyles(role)}`}>
                                          {getRoleIcon(role)}
-                                         <span>{getRoleLabel(role)}</span>
+                                         <span className="truncate flex-1 text-left">{getRoleLabel(role)}</span>
                                        </div>
                                     </SelectItem>
                                   ))}
