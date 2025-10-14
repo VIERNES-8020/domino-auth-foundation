@@ -167,9 +167,9 @@ export default function ARXISManagerDashboard() {
       const { error } = await supabase
         .from('arxis_projects')
         .insert({
-          title: `${request.country || 'Proyecto'} - ${request.full_name}`,
+          title: `Proyecto - ${request.full_name}`,
           description: request.message || 'Proyecto aceptado desde solicitud de servicio',
-          project_type: request.country || 'Nuevo',
+          project_type: 'Nuevo',
           client_name: request.full_name,
           client_email: request.email,
           client_phone: request.phone || request.whatsapp,
