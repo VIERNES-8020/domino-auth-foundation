@@ -61,6 +61,7 @@ export default function AdminDashboard() {
   const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [franchiseApplications, setFranchiseApplications] = useState<any[]>([]);
+  const [completedArxisProjects, setCompletedArxisProjects] = useState(0);
   const [franchiseApplicationFilter, setFranchiseApplicationFilter] = useState<string>('all');
   const [selectedFranchiseApplication, setSelectedFranchiseApplication] = useState<any>(null);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -217,13 +218,17 @@ export default function AdminDashboard() {
         Promise.race([
           supabase.from('listing_leads').select('*').order('created_at', { ascending: false }).limit(50),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Leads timeout')), 8000))
+        ]),
+        Promise.race([
+          supabase.from('arxis_projects').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('ARXIS projects timeout')), 8000))
         ])
       ];
 
       const results = await Promise.allSettled(fetchPromises);
       
       // Process results
-      const [propertiesResult, usersResult, rolesResult, franchisesResult, messagesResult, notificationsResult, applicationsResult, leadsResult] = results;
+      const [propertiesResult, usersResult, rolesResult, franchisesResult, messagesResult, notificationsResult, applicationsResult, leadsResult, arxisProjectsResult] = results;
       
       if (propertiesResult.status === 'fulfilled') {
         setProperties((propertiesResult.value as any)?.data || []);
@@ -328,6 +333,13 @@ export default function AdminDashboard() {
         setListingLeads([]);
       }
 
+      if (arxisProjectsResult.status === 'fulfilled') {
+        setCompletedArxisProjects((arxisProjectsResult.value as any)?.count || 0);
+      } else {
+        console.error('ARXIS projects fetch failed:', arxisProjectsResult.reason);
+        setCompletedArxisProjects(0);
+      }
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Error cargando datos del dashboard. Reintentando...');
@@ -341,6 +353,7 @@ export default function AdminDashboard() {
       setNotifications([]);
       setFranchiseApplications([]);
       setListingLeads([]);
+      setCompletedArxisProjects(0);
     } finally {
       setLoading(false);
     }
@@ -960,9 +973,13 @@ export default function AdminDashboard() {
                 <UserCheck className="h-4 w-4" />
                 Agentes / Staff
               </TabsTrigger>
-              <TabsTrigger value="franquicias" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="arxis" 
+                className="flex items-center gap-2"
+                onClick={() => window.location.href = '/arxis-manager/dashboard'}
+              >
                 <TrendingUp className="h-4 w-4" />
-                Franquicias
+                ARXIS
               </TabsTrigger>
               <TabsTrigger value="mensajes" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -1786,8 +1803,8 @@ export default function AdminDashboard() {
                         <p className="text-sm text-purple-600">Usuarios</p>
                       </div>
                       <div className="text-center p-4 bg-orange-50 rounded-lg">
-                        <div className="text-2xl font-bold text-orange-700">{franchises.length}</div>
-                        <p className="text-sm text-orange-600">Franquicias</p>
+                        <div className="text-2xl font-bold text-orange-700">{completedArxisProjects}</div>
+                        <p className="text-sm text-orange-600">Proyectos Finalizados</p>
                       </div>
                     </div>
                   </CardContent>
