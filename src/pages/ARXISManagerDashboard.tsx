@@ -736,7 +736,7 @@ export default function ARXISManagerDashboard() {
               <div className="flex gap-2 pt-4 flex-wrap">
                 <Button
                   onClick={() => handleAcceptProject(selectedRequest)}
-                  disabled={selectedRequest.status === 'approved' || selectedRequest.status === 'completed'}
+                  disabled={selectedRequest.status === 'approved'}
                   className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
