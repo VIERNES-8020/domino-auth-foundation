@@ -83,11 +83,15 @@ const AdminUserManagement = () => {
     userId: string;
     userName: string;
     userRole: string;
+    userRoleName: string;
+    userPermissions: Array<{ id: string; nombre: string; descripcion?: string }>;
   }>({
     open: false,
     userId: '',
     userName: '',
-    userRole: ''
+    userRole: '',
+    userRoleName: '',
+    userPermissions: []
   });
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
@@ -511,14 +515,69 @@ const AdminUserManagement = () => {
   };
 
   const handleViewCorporateAssignments = async (userId: string, userName: string, userRole: string) => {
-    // Force refresh data before opening dialog
-    await queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
-    setCorporateAssignmentsDialog({
-      open: true,
-      userId,
-      userName,
-      userRole
-    });
+    try {
+      // Get user profile with role information
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          rol_id,
+          roles:rol_id (
+            id,
+            nombre
+          )
+        `)
+        .eq('id', userId)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        toast.error('Error al cargar información del usuario');
+        return;
+      }
+
+      let permissions: Array<{ id: string; nombre: string; descripcion?: string }> = [];
+      let roleName = 'Sin Rol Asignado';
+
+      if (userProfile?.rol_id) {
+        roleName = userProfile.roles?.nombre || 'Sin Rol Asignado';
+        
+        // Get permissions for this role
+        const { data: rolePermisos, error: permisosError } = await supabase
+          .from('rol_permisos')
+          .select(`
+            permiso_id,
+            permisos:permiso_id (
+              id,
+              nombre,
+              descripcion
+            )
+          `)
+          .eq('rol_id', userProfile.rol_id);
+        
+        if (permisosError) {
+          console.error('Error fetching permissions:', permisosError);
+        } else if (rolePermisos) {
+          permissions = rolePermisos
+            .map(rp => rp.permisos)
+            .filter(p => p !== null) as Array<{ id: string; nombre: string; descripcion?: string }>;
+        }
+      }
+
+      // Force refresh data before opening dialog
+      await queryClient.refetchQueries({ queryKey: ["admin-all-users"] });
+      
+      setCorporateAssignmentsDialog({
+        open: true,
+        userId,
+        userName,
+        userRole,
+        userRoleName: roleName,
+        userPermissions: permissions
+      });
+    } catch (error) {
+      console.error('Error in handleViewCorporateAssignments:', error);
+      toast.error('Error al cargar asignaciones');
+    }
   };
 
   const handleArchiveUser = (userId: string, userName: string) => {
@@ -1169,23 +1228,21 @@ const AdminUserManagement = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
                                 className="h-8 w-8 p-0 hover:bg-primary/10 rounded-lg flex items-center justify-center"
-                                title="Ver asignaciones de rol"
+                                title="Ver asignaciones corporativas"
                               >
                                 <Eye className="h-4 w-4 text-primary" />
                               </Button>
-                              {(user.role === 'agent' || agentRoles.includes(user.role)) && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewCorporateAssignments(user.id, user.full_name || 'Usuario', user.role)}
-                                  className="h-8 w-8 p-0 hover:bg-blue-100 rounded-lg flex items-center justify-center"
-                                  title="Ver asignaciones corporativas"
-                                >
-                                  <Building className="h-4 w-4 text-blue-600" />
-                                </Button>
-                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAssignments(user.id, user.full_name || 'Usuario', user.role)}
+                                className="h-8 w-8 p-0 hover:bg-blue-100 rounded-lg flex items-center justify-center"
+                                title="Gestionar roles y permisos"
+                              >
+                                <Shield className="h-4 w-4 text-blue-600" />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1325,22 +1382,33 @@ const AdminUserManagement = () => {
       </Dialog>
 
       {/* Corporate Assignments Dialog */}
-      <Dialog open={corporateAssignmentsDialog.open} onOpenChange={(open) => setCorporateAssignmentsDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={corporateAssignmentsDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setCorporateAssignmentsDialog({ 
+            open: false, 
+            userId: '', 
+            userName: '', 
+            userRole: '',
+            userRoleName: '',
+            userPermissions: []
+          });
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Asignaciones de {corporateAssignmentsDialog.userName}
             </DialogTitle>
             <DialogDescription>
-              Permisos y funcionalidades asignadas al rol: <strong>Agente Inmobiliario</strong>
+              Permisos y funcionalidades asignadas al rol: <strong>{corporateAssignmentsDialog.userRoleName}</strong>
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
               <UserCheck className="h-5 w-5 text-primary" />
-              <span className="font-medium">Rol Actual: Agente Inmobiliario</span>
+              <span className="font-medium">Rol Actual: {corporateAssignmentsDialog.userRoleName}</span>
             </div>
             
             <div className="space-y-2">
@@ -1348,28 +1416,27 @@ const AdminUserManagement = () => {
                 <Building className="h-4 w-4" />
                 Funcionalidades Asignadas:
               </h4>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2 p-2 bg-background border rounded">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  Gestión de propiedades
-                </li>
-                <li className="flex items-center gap-2 p-2 bg-background border rounded">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  Atención a clientes
-                </li>
-                <li className="flex items-center gap-2 p-2 bg-background border rounded">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  Programación de visitas
-                </li>
-                <li className="flex items-center gap-2 p-2 bg-background border rounded">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  Gestión de leads
-                </li>
-                <li className="flex items-center gap-2 p-2 bg-background border rounded">
-                  <div className="w-2 h-2 bg-primary rounded-full" />
-                  Panel de agente
-                </li>
-              </ul>
+              {corporateAssignmentsDialog.userPermissions.length > 0 ? (
+                <ul className="space-y-2">
+                  {corporateAssignmentsDialog.userPermissions.map((permission) => (
+                    <li key={permission.id} className="flex flex-col gap-1 p-3 bg-background border rounded hover:border-primary/50 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
+                        <span className="font-medium">{permission.nombre}</span>
+                      </div>
+                      {permission.descripcion && (
+                        <span className="text-xs text-muted-foreground ml-4 pl-2 border-l-2 border-muted">
+                          {permission.descripcion}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="p-4 border rounded-lg bg-muted/20 text-center">
+                  <p className="text-sm text-muted-foreground">No hay permisos asignados a este rol</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1412,7 +1479,14 @@ const AdminUserManagement = () => {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button onClick={() => setCorporateAssignmentsDialog({ open: false, userId: '', userName: '', userRole: '' })}>
+            <Button onClick={() => setCorporateAssignmentsDialog({ 
+              open: false, 
+              userId: '', 
+              userName: '', 
+              userRole: '',
+              userRoleName: '',
+              userPermissions: []
+            })}>
               Cerrar
             </Button>
           </div>
