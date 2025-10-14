@@ -292,8 +292,8 @@ export default function SuccessCounters() {
           
           <CounterCard
             icon={Building2}
-            title="Franquicias Activas"
-            subtitle="En toda Bolivia"
+            title="Éxitos Recientes"
+            subtitle="Propiedades vendidas, alquiladas o en anticrético"
             value={counters.activeFranchises}
             color="bg-green-600"
             onClick={() => handleCardClick('franchises')}
@@ -354,7 +354,7 @@ export default function SuccessCounters() {
       <Dialog open={showFranchisesModal} onOpenChange={setShowFranchisesModal}>
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Franquicias Activas</DialogTitle>
+            <DialogTitle>Éxitos Recientes</DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[500px] pr-4">
             {franchises.length === 0 ? (
