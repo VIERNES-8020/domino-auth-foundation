@@ -121,24 +121,27 @@ export default function SuccessCounters() {
     try {
       const { data } = await supabase
         .from('properties')
-        .select(`
-          id,
-          title,
-          property_type,
-          address,
-          profiles!properties_agent_id_fkey(full_name)
-        `)
+        .select('property_type')
         .eq('status', 'approved')
-        .eq('is_archived', false)
-        .limit(50);
+        .eq('is_archived', false);
 
-      setProperties(data?.map(p => ({
-        id: p.id,
-        title: p.title,
-        property_type: p.property_type || 'N/A',
-        address: p.address,
-        agent_name: (p.profiles as any)?.full_name || 'Sin asignar'
-      })) || []);
+      const typeMap = new Map<string, number>();
+      data?.forEach(prop => {
+        if (prop.property_type) {
+          const type = prop.property_type;
+          typeMap.set(type, (typeMap.get(type) || 0) + 1);
+        }
+      });
+
+      const typeArray = Array.from(typeMap.entries()).map(([type, count]) => ({
+        id: type,
+        title: '',
+        property_type: type,
+        address: '',
+        count
+      })).sort((a, b) => b.count - a.count);
+
+      setProperties(typeArray as any);
     } catch (error) {
       console.error('Error fetching properties:', error);
     }
@@ -350,16 +353,15 @@ export default function SuccessCounters() {
             ) : (
               <div className="space-y-3">
                 {properties.map((prop) => (
-                  <Card key={prop.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{prop.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{prop.address}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="secondary">{getPropertyTypeLabel(prop.property_type)}</Badge>
-                          <Badge variant="outline">Agente: {prop.agent_name}</Badge>
-                        </div>
+                  <Card key={prop.property_type} className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <HomeIcon className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-lg">{getPropertyTypeLabel(prop.property_type)}</h3>
                       </div>
+                      <Badge variant="secondary" className="text-lg px-4 py-1">
+                        {(prop as any).count} {(prop as any).count === 1 ? 'propiedad' : 'propiedades'}
+                      </Badge>
                     </div>
                   </Card>
                 ))}
