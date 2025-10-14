@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { HardHat, FileText, CheckCircle, Clock, AlertCircle, Trash2, Plus } from "lucide-react";
+import { HardHat, FileText, CheckCircle, Clock, AlertCircle, Trash2, Plus, Eye, Upload, X } from "lucide-react";
+import DocumentFileUpload from "@/components/DocumentFileUpload";
 
 export default function ARXISManagerDashboard() {
   const [activeTab, setActiveTab] = useState("proyectos");
@@ -29,7 +30,11 @@ export default function ARXISManagerDashboard() {
   const [projectToComplete, setProjectToComplete] = useState<any>(null);
   const [reportTitle, setReportTitle] = useState('');
   const [reportDescription, setReportDescription] = useState('');
-  const [reportDocumentUrl, setReportDocumentUrl] = useState('');
+  const [reportDocumentUrls, setReportDocumentUrls] = useState<string[]>([]);
+  
+  // Estado para el modal de vista detallada de reportes
+  const [reportDetailOpen, setReportDetailOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
   
   // Proyectos, reportes y mantenimientos
   const [arxisProjects, setArxisProjects] = useState<any[]>([]);
@@ -269,7 +274,7 @@ export default function ARXISManagerDashboard() {
         .insert({
           title: reportTitle,
           description: reportDescription,
-          document_url: reportDocumentUrl || null,
+          document_url: reportDocumentUrls.length > 0 ? reportDocumentUrls[0] : null,
           project_id: projectToComplete.id,
           created_by: user.id,
           report_date: new Date().toISOString()
@@ -290,7 +295,7 @@ export default function ARXISManagerDashboard() {
       // Limpiar formulario
       setReportTitle('');
       setReportDescription('');
-      setReportDocumentUrl('');
+      setReportDocumentUrls([]);
       setCompleteDialogOpen(false);
       setProjectToComplete(null);
       
@@ -636,7 +641,7 @@ export default function ARXISManagerDashboard() {
                       </p>
                     </>
                   ) : (
-                    <div className="space-y-4">
+                     <div className="space-y-4">
                       {technicalReports.map((report) => (
                         <Card key={report.id} className="border-green-200 bg-green-50/30">
                           <CardContent className="pt-6">
@@ -662,16 +667,29 @@ export default function ARXISManagerDashboard() {
                                 )}
                                 <div className="border-l-4 border-green-500 pl-4 py-2 bg-white/50 rounded-r">
                                   <p className="text-sm font-medium text-muted-foreground mb-1">Trabajo Realizado:</p>
-                                  <p className="text-sm">{report.description}</p>
+                                  <p className="text-sm line-clamp-2">{report.description}</p>
                                 </div>
                               </div>
-                              {report.document_url && (
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700 shrink-0" asChild>
-                                  <a href={report.document_url} target="_blank" rel="noopener noreferrer">
-                                    📄 Ver Informe Completo
-                                  </a>
+                              <div className="flex gap-2 shrink-0">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedReport(report);
+                                    setReportDetailOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Ver Detalles
                                 </Button>
-                              )}
+                                {report.document_url && (
+                                  <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
+                                    <a href={report.document_url} target="_blank" rel="noopener noreferrer">
+                                      📄 Documento
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -700,7 +718,7 @@ export default function ARXISManagerDashboard() {
                       </p>
                     </>
                   ) : (
-                    <div className="space-y-4">
+                     <div className="space-y-4">
                       {maintenances.map((maintenance) => (
                         <Card key={maintenance.id} className="border-blue-200">
                           <CardContent className="pt-6">
@@ -718,9 +736,16 @@ export default function ARXISManagerDashboard() {
                                   </Badge>
                                   <Badge variant="outline">
                                     📅 {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES', { 
+                                      weekday: 'long',
                                       year: 'numeric', 
                                       month: 'long', 
                                       day: 'numeric' 
+                                    })}
+                                  </Badge>
+                                  <Badge variant="outline">
+                                    🕐 {new Date(maintenance.scheduled_date).toLocaleTimeString('es-ES', { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit'
                                     })}
                                   </Badge>
                                 </div>
@@ -733,19 +758,27 @@ export default function ARXISManagerDashboard() {
                                   </p>
                                 )}
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                  {maintenance.assigned_to && (
+                                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
+                                      <span className="font-medium text-muted-foreground">👤 Responsable:</span>
+                                      <span className="font-semibold">{maintenance.assigned_to}</span>
+                                    </div>
+                                  )}
+                                  {maintenance.arxis_projects?.location && (
+                                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
+                                      <span className="font-medium text-muted-foreground">📍 Ubicación:</span>
+                                      <span className="font-semibold">{maintenance.arxis_projects.location}</span>
+                                    </div>
+                                  )}
+                                </div>
+
                                 <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50/50 rounded-r">
                                   <p className="text-sm font-medium text-muted-foreground mb-1">
-                                    Descripción del Mantenimiento a Realizar:
+                                    Descripción del Mantenimiento:
                                   </p>
                                   <p className="text-sm">{maintenance.description}</p>
                                 </div>
-
-                                {maintenance.assigned_to && (
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <span className="font-medium text-muted-foreground">👤 Asignado a:</span>
-                                    <span className="font-semibold">{maintenance.assigned_to}</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -899,16 +932,18 @@ export default function ARXISManagerDashboard() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="report-document">URL del Documento (opcional)</Label>
-                <Input
-                  id="report-document"
-                  value={reportDocumentUrl}
-                  onChange={(e) => setReportDocumentUrl(e.target.value)}
-                  placeholder="https://..."
+                <Label>Documentos/Fotos del Reporte (opcional)</Label>
+                <DocumentFileUpload
+                  files={reportDocumentUrls}
+                  onFilesChange={setReportDocumentUrls}
+                  type="voucher"
+                  maxFiles={5}
+                  maxSizeMB={10}
+                  bucket="sale-documents"
+                  label="Subir Fotos o Documentos"
+                  description="Sube imágenes del proyecto finalizado o documentos PDF (máx. 5 archivos)"
+                  agentId={user?.id || 'system'}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Puedes agregar un enlace a un documento, PDF o informe completo
-                </p>
               </div>
 
               <div className="flex gap-2 pt-4">
@@ -925,7 +960,7 @@ export default function ARXISManagerDashboard() {
                     setCompleteDialogOpen(false);
                     setReportTitle('');
                     setReportDescription('');
-                    setReportDocumentUrl('');
+                    setReportDocumentUrls([]);
                   }}
                 >
                   Cancelar
@@ -957,6 +992,109 @@ export default function ARXISManagerDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Report Detail Dialog */}
+      <Dialog open={reportDetailOpen} onOpenChange={setReportDetailOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles del Reporte Técnico</DialogTitle>
+            <DialogDescription>
+              Información completa del proyecto finalizado
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedReport && (
+            <div className="space-y-6">
+              {/* Encabezado */}
+              <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className="bg-green-600 hover:bg-green-700">
+                    ✅ Proyecto Completado con Éxito
+                  </Badge>
+                  <Badge variant="outline">
+                    {new Date(selectedReport.report_date).toLocaleDateString('es-ES', { 
+                      weekday: 'long',
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </Badge>
+                </div>
+                <h3 className="text-xl font-bold text-green-900">{selectedReport.title}</h3>
+              </div>
+
+              {/* Información del Proyecto */}
+              {selectedReport.arxis_projects && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-lg">Información del Proyecto</h4>
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Proyecto</p>
+                      <p className="text-base font-semibold">{selectedReport.arxis_projects.title}</p>
+                    </div>
+                    {selectedReport.arxis_projects.client_name && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Cliente</p>
+                        <p className="text-base">{selectedReport.arxis_projects.client_name}</p>
+                      </div>
+                    )}
+                    {selectedReport.arxis_projects.location && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Ubicación</p>
+                        <p className="text-base">{selectedReport.arxis_projects.location}</p>
+                      </div>
+                    )}
+                    {selectedReport.arxis_projects.project_type && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Tipo de Proyecto</p>
+                        <p className="text-base">{getProjectTypeBadge(selectedReport.arxis_projects.project_type)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Trabajo Realizado */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-lg">Trabajo Realizado</h4>
+                <div className="p-4 bg-white border border-green-200 rounded-lg">
+                  <p className="text-base whitespace-pre-wrap">{selectedReport.description}</p>
+                </div>
+              </div>
+
+              {/* Documento Adjunto */}
+              {selectedReport.document_url && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-lg">Documento/Foto Adjunta</h4>
+                  {selectedReport.document_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                    <div className="border rounded-lg overflow-hidden">
+                      <img 
+                        src={selectedReport.document_url} 
+                        alt="Documento del reporte" 
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  ) : (
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
+                      <a href={selectedReport.document_url} target="_blank" rel="noopener noreferrer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Descargar Documento Completo
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Botón Cerrar */}
+              <div className="flex justify-end pt-4">
+                <Button onClick={() => setReportDetailOpen(false)}>
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
