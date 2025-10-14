@@ -70,10 +70,12 @@ export default function SuccessCounters() {
           .eq('status', 'approved')
           .eq('is_archived', false);
 
-        // Fetch active franchises count
+        // Fetch successful properties count (sold, rented, or anticresis)
         const { count: franchisesCount } = await supabase
-          .from('franchises')
-          .select('*', { count: 'exact', head: true });
+          .from('properties')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_archived', true)
+          .not('concluded_status', 'is', null);
 
         // Fetch unique cities count
         const { data: cityData } = await supabase
@@ -145,13 +147,30 @@ export default function SuccessCounters() {
   const fetchFranchisesDetails = async () => {
     try {
       const { data } = await supabase
-        .from('franchises')
-        .select('id, name, description')
+        .from('properties')
+        .select(`
+          id,
+          title,
+          property_type,
+          address,
+          concluded_status,
+          concluded_at,
+          profiles!properties_agent_id_fkey(full_name)
+        `)
+        .eq('is_archived', true)
+        .not('concluded_status', 'is', null)
+        .order('concluded_at', { ascending: false })
         .limit(50);
 
-      setFranchises(data || []);
+      setProperties(data?.map(p => ({
+        id: p.id,
+        title: p.title,
+        property_type: p.property_type || 'N/A',
+        address: p.address,
+        agent_name: (p.profiles as any)?.full_name || 'Sin asignar'
+      })) || []);
     } catch (error) {
-      console.error('Error fetching franchises:', error);
+      console.error('Error fetching successful properties:', error);
     }
   };
 
@@ -350,23 +369,30 @@ export default function SuccessCounters() {
         </DialogContent>
       </Dialog>
 
-      {/* Franchises Modal */}
+      {/* Successful Properties Modal */}
       <Dialog open={showFranchisesModal} onOpenChange={setShowFranchisesModal}>
         <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>Éxitos Recientes</DialogTitle>
           </DialogHeader>
           <ScrollArea className="h-[500px] pr-4">
-            {franchises.length === 0 ? (
+            {properties.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No hay datos disponibles</p>
             ) : (
               <div className="space-y-3">
-                {franchises.map((franchise) => (
-                  <Card key={franchise.id} className="p-4">
-                    <h3 className="font-semibold text-lg">{franchise.name}</h3>
-                    {franchise.description && (
-                      <p className="text-sm text-muted-foreground mt-2">{franchise.description}</p>
-                    )}
+                {properties.map((prop) => (
+                  <Card key={prop.id} className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{prop.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{prop.address}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary">{getPropertyTypeLabel(prop.property_type)}</Badge>
+                          <Badge variant="outline">Agente: {prop.agent_name}</Badge>
+                          <Badge variant="default">Exitoso</Badge>
+                        </div>
+                      </div>
+                    </div>
                   </Card>
                 ))}
               </div>
