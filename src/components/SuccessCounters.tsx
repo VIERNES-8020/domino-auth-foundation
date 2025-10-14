@@ -1,73 +1,109 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, Home, Key } from "lucide-react";
+import { Building2, MapPin, Briefcase, Home as HomeIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CounterData {
-  ventaLeads: number;
-  alquilerLeads: number;
-  anticrieticoLeads: number;
-  ventaConcluded: number;
-  alquilerConcluded: number;
-  anticreticoConcluded: number;
+  activeProperties: number;
+  activeFranchises: number;
+  uniqueCities: number;
+  arxisProjects: number;
+}
+
+interface PropertyDetail {
+  id: string;
+  title: string;
+  property_type: string;
+  address: string;
+  agent_name?: string;
+}
+
+interface FranchiseDetail {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface CityDetail {
+  city: string;
+  count: number;
+}
+
+interface ArxisProject {
+  id: string;
+  title: string;
+  status: string;
+  end_date?: string;
 }
 
 export default function SuccessCounters() {
   const [counters, setCounters] = useState<CounterData>({
-    ventaLeads: 0,
-    alquilerLeads: 0,
-    anticrieticoLeads: 0,
-    ventaConcluded: 0,
-    alquilerConcluded: 0,
-    anticreticoConcluded: 0
+    activeProperties: 0,
+    activeFranchises: 0,
+    uniqueCities: 0,
+    arxisProjects: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Modal states
+  const [showPropertiesModal, setShowPropertiesModal] = useState(false);
+  const [showFranchisesModal, setShowFranchisesModal] = useState(false);
+  const [showCitiesModal, setShowCitiesModal] = useState(false);
+  const [showArxisModal, setShowArxisModal] = useState(false);
+  
+  // Detail data
+  const [properties, setProperties] = useState<PropertyDetail[]>([]);
+  const [franchises, setFranchises] = useState<FranchiseDetail[]>([]);
+  const [cities, setCities] = useState<CityDetail[]>([]);
+  const [arxisProjects, setArxisProjects] = useState<ArxisProject[]>([]);
 
   useEffect(() => {
     const fetchCounters = async () => {
       try {
-        // Fetch listing leads counts
-        const { data: ventaLeads } = await supabase
-          .from('listing_leads')
-          .select('id', { count: 'exact', head: true })
-          .eq('request_type', 'venta');
-
-        const { data: alquilerLeads } = await supabase
-          .from('listing_leads')
-          .select('id', { count: 'exact', head: true })
-          .eq('request_type', 'alquiler');
-
-        const { data: anticrieticoLeads } = await supabase
-          .from('listing_leads')
-          .select('id', { count: 'exact', head: true })
-          .eq('request_type', 'anticretico');
-
-        // Fetch concluded properties counts
-        const { data: ventaConcluded } = await supabase
+        // Fetch active properties count
+        const { count: activePropsCount } = await supabase
           .from('properties')
-          .select('id', { count: 'exact', head: true })
-          .eq('transaction_type', 'venta')
-          .eq('concluded_status', 'vendida');
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'approved')
+          .eq('is_archived', false);
 
-        const { data: alquilerConcluded } = await supabase
-          .from('properties')
-          .select('id', { count: 'exact', head: true })
-          .eq('transaction_type', 'alquiler')
-          .eq('concluded_status', 'alquilada');
+        // Fetch active franchises count
+        const { count: franchisesCount } = await supabase
+          .from('franchises')
+          .select('*', { count: 'exact', head: true });
 
-        const { data: anticreticoConcluded } = await supabase
+        // Fetch unique cities count
+        const { data: cityData } = await supabase
           .from('properties')
-          .select('id', { count: 'exact', head: true })
-          .eq('transaction_type', 'anticretico')
-          .eq('concluded_status', 'concluida');
+          .select('address')
+          .eq('status', 'approved')
+          .eq('is_archived', false);
+
+        const uniqueCitiesSet = new Set<string>();
+        cityData?.forEach(prop => {
+          if (prop.address) {
+            const parts = prop.address.split(',');
+            if (parts.length > 1) {
+              const city = parts[parts.length - 2].trim();
+              uniqueCitiesSet.add(city);
+            }
+          }
+        });
+
+        // Fetch ARXIS completed projects count
+        const { count: arxisCount } = await supabase
+          .from('arxis_projects')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'completed');
 
         setCounters({
-          ventaLeads: ventaLeads?.length || 0,
-          alquilerLeads: alquilerLeads?.length || 0,
-          anticrieticoLeads: anticrieticoLeads?.length || 0,
-          ventaConcluded: ventaConcluded?.length || 0,
-          alquilerConcluded: alquilerConcluded?.length || 0,
-          anticreticoConcluded: anticreticoConcluded?.length || 0
+          activeProperties: activePropsCount || 0,
+          activeFranchises: franchisesCount || 0,
+          uniqueCities: uniqueCitiesSet.size,
+          arxisProjects: arxisCount || 0
         });
       } catch (error) {
         console.error('Error fetching counters:', error);
@@ -79,22 +115,131 @@ export default function SuccessCounters() {
     fetchCounters();
   }, []);
 
+  const fetchPropertiesDetails = async () => {
+    try {
+      const { data } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          title,
+          property_type,
+          address,
+          profiles!properties_agent_id_fkey(full_name)
+        `)
+        .eq('status', 'approved')
+        .eq('is_archived', false)
+        .limit(50);
+
+      setProperties(data?.map(p => ({
+        id: p.id,
+        title: p.title,
+        property_type: p.property_type || 'N/A',
+        address: p.address,
+        agent_name: (p.profiles as any)?.full_name || 'Sin asignar'
+      })) || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
+
+  const fetchFranchisesDetails = async () => {
+    try {
+      const { data } = await supabase
+        .from('franchises')
+        .select('id, name, description')
+        .limit(50);
+
+      setFranchises(data || []);
+    } catch (error) {
+      console.error('Error fetching franchises:', error);
+    }
+  };
+
+  const fetchCitiesDetails = async () => {
+    try {
+      const { data } = await supabase
+        .from('properties')
+        .select('address')
+        .eq('status', 'approved')
+        .eq('is_archived', false);
+
+      const cityMap = new Map<string, number>();
+      data?.forEach(prop => {
+        if (prop.address) {
+          const parts = prop.address.split(',');
+          if (parts.length > 1) {
+            const city = parts[parts.length - 2].trim();
+            cityMap.set(city, (cityMap.get(city) || 0) + 1);
+          }
+        }
+      });
+
+      const cityArray = Array.from(cityMap.entries()).map(([city, count]) => ({
+        city,
+        count
+      })).sort((a, b) => b.count - a.count);
+
+      setCities(cityArray);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    }
+  };
+
+  const fetchArxisDetails = async () => {
+    try {
+      const { data } = await supabase
+        .from('arxis_projects')
+        .select('id, title, status, end_date')
+        .eq('status', 'completed')
+        .order('end_date', { ascending: false })
+        .limit(50);
+
+      setArxisProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching ARXIS projects:', error);
+    }
+  };
+
+  const handleCardClick = async (type: 'properties' | 'franchises' | 'cities' | 'arxis') => {
+    switch (type) {
+      case 'properties':
+        await fetchPropertiesDetails();
+        setShowPropertiesModal(true);
+        break;
+      case 'franchises':
+        await fetchFranchisesDetails();
+        setShowFranchisesModal(true);
+        break;
+      case 'cities':
+        await fetchCitiesDetails();
+        setShowCitiesModal(true);
+        break;
+      case 'arxis':
+        await fetchArxisDetails();
+        setShowArxisModal(true);
+        break;
+    }
+  };
+
   const CounterCard = ({ 
     icon: Icon, 
     title, 
     subtitle,
-    solicitudes, 
-    concluidas, 
-    color 
+    value, 
+    color,
+    onClick
   }: {
     icon: any;
     title: string;
     subtitle: string;
-    solicitudes: number;
-    concluidas: number;
+    value: number;
     color: string;
+    onClick: () => void;
   }) => (
-    <Card className="hover:shadow-lg transition-shadow duration-300 border-2 hover:border-primary/50">
+    <Card 
+      className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50 cursor-pointer hover:scale-[1.02]"
+      onClick={onClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
           <div className={`p-3 rounded-full ${color}`}>
@@ -103,19 +248,8 @@ export default function SuccessCounters() {
           <div className="flex-1">
             <h3 className="font-bold text-lg text-foreground mb-1">{title}</h3>
             <p className="text-sm text-muted-foreground mb-3">{subtitle}</p>
-            <div className="space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Clientes interesados:</span>
-                <span className="font-semibold text-primary text-lg">
-                  {isLoading ? "..." : solicitudes.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Transacciones exitosas:</span>
-                <span className="font-bold text-green-600 text-lg">
-                  {isLoading ? "..." : concluidas.toLocaleString()}
-                </span>
-              </div>
+            <div className="text-3xl font-bold text-primary">
+              {isLoading ? "..." : value.toLocaleString()}
             </div>
           </div>
         </div>
@@ -123,45 +257,185 @@ export default function SuccessCounters() {
     </Card>
   );
 
+  const getPropertyTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      'casa': 'Casa',
+      'departamento': 'Departamento',
+      'terreno': 'Terreno',
+      'oficina': 'Oficina',
+      'local_comercial': 'Local Comercial'
+    };
+    return types[type] || type;
+  };
+
   return (
-    <div className="mb-8">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Nuestros Resultados Hablan por Sí Mismos
-        </h2>
-        <p className="text-muted-foreground">
-          Miles de familias bolivianas confían en nosotros para sus transacciones inmobiliarias
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <CounterCard
-          icon={TrendingUp}
-          title="Ventas"
-          subtitle="Propiedades en venta"
-          solicitudes={counters.ventaLeads}
-          concluidas={counters.ventaConcluded}
-          color="bg-orange-500"
-        />
+    <>
+      <div className="mb-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Números que Hablan por Sí Solos
+          </h2>
+          <p className="text-muted-foreground">
+            Datos en tiempo real de nuestra plataforma inmobiliaria
+          </p>
+        </div>
         
-        <CounterCard
-          icon={Home}
-          title="Alquileres"
-          subtitle="Propiedades en alquiler"
-          solicitudes={counters.alquilerLeads}
-          concluidas={counters.alquilerConcluded}
-          color="bg-blue-500"
-        />
-        
-        <CounterCard
-          icon={Key}
-          title="Anticréticos"
-          subtitle="Propiedades en anticrético"
-          solicitudes={counters.anticrieticoLeads}
-          concluidas={counters.anticreticoConcluded}
-          color="bg-green-600"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CounterCard
+            icon={HomeIcon}
+            title="Propiedades Activas"
+            subtitle="Disponibles ahora"
+            value={counters.activeProperties}
+            color="bg-blue-500"
+            onClick={() => handleCardClick('properties')}
+          />
+          
+          <CounterCard
+            icon={Building2}
+            title="Franquicias Activas"
+            subtitle="En toda Bolivia"
+            value={counters.activeFranchises}
+            color="bg-green-600"
+            onClick={() => handleCardClick('franchises')}
+          />
+          
+          <CounterCard
+            icon={MapPin}
+            title="Ciudades"
+            subtitle="Con presencia"
+            value={counters.uniqueCities}
+            color="bg-orange-500"
+            onClick={() => handleCardClick('cities')}
+          />
+          
+          <CounterCard
+            icon={Briefcase}
+            title="ARXIS"
+            subtitle="Proyectos completados"
+            value={counters.arxisProjects}
+            color="bg-purple-600"
+            onClick={() => handleCardClick('arxis')}
+          />
+        </div>
       </div>
-    </div>
+
+      {/* Properties Modal */}
+      <Dialog open={showPropertiesModal} onOpenChange={setShowPropertiesModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Propiedades Activas</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] pr-4">
+            {properties.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay datos disponibles</p>
+            ) : (
+              <div className="space-y-3">
+                {properties.map((prop) => (
+                  <Card key={prop.id} className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{prop.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{prop.address}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="secondary">{getPropertyTypeLabel(prop.property_type)}</Badge>
+                          <Badge variant="outline">Agente: {prop.agent_name}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Franchises Modal */}
+      <Dialog open={showFranchisesModal} onOpenChange={setShowFranchisesModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Franquicias Activas</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] pr-4">
+            {franchises.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay datos disponibles</p>
+            ) : (
+              <div className="space-y-3">
+                {franchises.map((franchise) => (
+                  <Card key={franchise.id} className="p-4">
+                    <h3 className="font-semibold text-lg">{franchise.name}</h3>
+                    {franchise.description && (
+                      <p className="text-sm text-muted-foreground mt-2">{franchise.description}</p>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cities Modal */}
+      <Dialog open={showCitiesModal} onOpenChange={setShowCitiesModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Ciudades con Propiedades</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] pr-4">
+            {cities.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay datos disponibles</p>
+            ) : (
+              <div className="space-y-3">
+                {cities.map((city) => (
+                  <Card key={city.city} className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-lg">{city.city}</h3>
+                      </div>
+                      <Badge variant="secondary" className="text-lg px-4 py-1">
+                        {city.count} {city.count === 1 ? 'propiedad' : 'propiedades'}
+                      </Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* ARXIS Projects Modal */}
+      <Dialog open={showArxisModal} onOpenChange={setShowArxisModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Proyectos ARXIS Completados</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] pr-4">
+            {arxisProjects.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay datos disponibles</p>
+            ) : (
+              <div className="space-y-3">
+                {arxisProjects.map((project) => (
+                  <Card key={project.id} className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{project.title}</h3>
+                        {project.end_date && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Finalizado: {new Date(project.end_date).toLocaleDateString('es-BO')}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="secondary">Completado</Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

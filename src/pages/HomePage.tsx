@@ -12,6 +12,7 @@ import { ArrowRight } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import PropertyCard from "@/components/PropertyCard";
+import SuccessCounters from "@/components/SuccessCounters";
 
 // SEO helpers
 function usePageSEO(options: { title: string; description: string; canonicalPath?: string }) {
@@ -380,44 +381,10 @@ export default function HomePage() {
         </Tabs>
       </section>
 
-      {/* Metrics Section */}
+      {/* Metrics Section - Dynamic Counters */}
       <main>
         <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
-          <h2 id="metrics-heading" className="text-2xl font-semibold mb-6 text-center">{t('stats.title')}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 animate-fade-in">
-            <Link to="/propiedades" aria-label="Ver propiedades" className="block group">
-              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-                  <div className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalProperties.toLocaleString()}+</div>
-                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t('stats.properties')}</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/propiedades" aria-label="Ver franquicias" className="block group">
-              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-3 sm:p-4 md:p-6 text-center">
-                  <div className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalFranchises}</div>
-                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t('stats.franchises')}</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/propiedades" aria-label="Ver ciudades" className="block group">
-              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.totalCities}</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.cities')}</p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link to="/propiedades" aria-label="Ver ventas mensuales" className="block group">
-              <Card className="shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:shadow-[var(--shadow-elegant)] hover:border-primary hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary">
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold tracking-tight transition-colors group-hover:text-primary">{realMetrics.monthlySales}+</div>
-                  <p className="mt-1 text-sm text-muted-foreground">{t('stats.sales')}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
+          <SuccessCounters />
         </section>
       </main>
 
