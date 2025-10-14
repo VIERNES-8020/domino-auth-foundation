@@ -86,6 +86,7 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
     const roleMapping: Record<string, string> = {
       'SUPER ADMINISTRADOR': 'Super Administrador',
       'SUPERVISIÓN': 'Supervisión (Auxiliar)',
+      'AGENTE': 'Agente Inmobiliario',
       'AGENTE INMOBILIARIO': 'Agente Inmobiliario',
       'ADMINISTRACIÓN': 'Administración (Encargado de Oficina)',
       'CONTABILIDAD': 'Contabilidad',
