@@ -186,7 +186,7 @@ const AdminUserManagement = () => {
       // Map role nombres to role keys
       const roleNameToKey: Record<string, string> = {
         'SUPER ADMINISTRADOR': 'super_admin',
-        'AGENTE INMOBILIARIO': 'agent',
+        'AGENTE': 'agent',
         'ARXIS': 'arxis_admin',
         'ADMINISTRACIÓN': 'office_manager',
         'SUPERVISIÓN': 'supervisor',
@@ -331,7 +331,7 @@ const AdminUserManagement = () => {
       // Map role keys to role nombres
       const roleKeyToName: Record<string, string> = {
         'super_admin': 'SUPER ADMINISTRADOR',
-        'agent': 'AGENTE INMOBILIARIO',
+        'agent': 'AGENTE',
         'arxis_admin': 'ARXIS',
         'office_manager': 'ADMINISTRACIÓN',
         'supervisor': 'SUPERVISIÓN',
