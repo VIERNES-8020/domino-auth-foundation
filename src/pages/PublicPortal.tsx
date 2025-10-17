@@ -31,6 +31,7 @@ export default function PublicPortal() {
             <Route path="/nuestros-agentes" element={<AgentsPage />} />
             <Route path="/agente/:agentCode" element={<AgentPublicPage />} />
             <Route path="/clientes" element={<ClientsPage />} />
+            <Route path="/nuestros-clientes" element={<ClientsPage />} />
             <Route path="/sobre-nosotros" element={<AboutPage />} />
             <Route path="/contacto" element={<ContactPage />} />
             <Route path="/franquicia" element={<FranchiseApplicationPage />} />
