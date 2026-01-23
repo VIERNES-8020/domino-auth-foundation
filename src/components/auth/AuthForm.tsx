@@ -467,11 +467,11 @@ export default function AuthForm() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Procesando..." : "Iniciar Sesión"}
               </Button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className="w-full" 
+                  className="w-full text-sm" 
                   onClick={() => setMode("agent-signup")}
                 >
                   Crear Cuenta (Agente / Staff)
@@ -479,7 +479,7 @@ export default function AuthForm() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  className="w-full" 
+                  className="w-full text-sm" 
                   onClick={() => setMode("client-signup")}
                 >
                   Crear Cuenta (Cliente)

@@ -765,59 +765,61 @@ export default function AgentDashboard() {
           <div className="relative overflow-hidden bg-gradient-to-r from-primary/5 via-primary/10 to-secondary/5 rounded-2xl border border-primary/10 shadow-lg">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
             <div className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    {profile?.avatar_url && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/20">
-                        <img 
-                          src={profile.avatar_url} 
-                          alt="Foto de perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-pulse"></div>
-                      <h1 className="text-3xl lg:text-4xl font-bold text-primary">
+              <div className="flex flex-col gap-6">
+                {/* Header: Avatar + Título */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                  {profile?.avatar_url && (
+                    <div className="w-16 h-16 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Foto de perfil"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <div className="w-3 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-pulse hidden sm:block"></div>
+                      <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">
                         Panel de Agente
                       </h1>
                     </div>
-                  </div>
-                  {profile && (
-                    <div className="space-y-2">
-                      <p className="text-lg text-muted-foreground">
-                        Bienvenido, <span className="font-semibold text-primary">{profile.full_name || 'Agente'}</span>
+                    {profile && (
+                      <p className="text-base sm:text-lg text-muted-foreground">
+                        Bienvenido, <span className="font-semibold text-primary break-words">{profile.full_name || 'Agente'}</span>
                       </p>
-                      {profile.agent_code && (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-sm font-mono bg-primary/5 border-primary/20 text-primary">
-                            ID: {profile.agent_code}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {properties.length} Propiedades
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {propertyVisits.length} Citas
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
+
+                {/* Badges de info */}
+                {profile?.agent_code && (
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                    <Badge variant="outline" className="text-xs sm:text-sm font-mono bg-primary/5 border-primary/20 text-primary">
+                      ID: {profile.agent_code}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {properties.length} Propiedades
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {propertyVisits.length} Citas
+                    </Badge>
+                  </div>
+                )}
                 
-                <div className="flex flex-wrap gap-3">
+                {/* Botones de acción */}
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
                   <Button 
                     onClick={() => setShowPropertyForm(true)}
-                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+                    className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4" />
                     Nueva Propiedad
                   </Button>
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="w-full sm:w-auto">
                     <Link to="/">Portal Principal</Link>
                   </Button>
-                  <Button variant="outline" onClick={signOut}>
+                  <Button variant="outline" onClick={signOut} className="w-full sm:w-auto">
                     Cerrar Sesión
                   </Button>
                 </div>
@@ -829,7 +831,7 @@ export default function AgentDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg -z-10"></div>
-              <TabsList className="grid w-full grid-cols-7 h-12 bg-white/50 backdrop-blur-sm border border-primary/10">
+              <TabsList className="flex flex-wrap w-full h-auto min-h-12 bg-white/50 backdrop-blur-sm border border-primary/10 gap-1 p-1 lg:grid lg:grid-cols-7">
                 <TabsTrigger
                     value="propiedades" 
                     className="relative px-6 py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-primary hover:bg-white/50"
