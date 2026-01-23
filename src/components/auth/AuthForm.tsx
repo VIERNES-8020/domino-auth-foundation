@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
@@ -65,6 +66,7 @@ export default function AuthForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
 
   const form = useForm<AgentSignupValues | ClientSignupValues | LoginValues>({
@@ -146,7 +148,7 @@ export default function AuthForm() {
     }
 
     console.log("Usuario logueado:", session.user.id);
-    setSuccessMessage("✅ Inicio de sesión exitoso. Redirigiendo...");
+    setSuccessMessage(t('auth.successLogin'));
     
     // Determine user role and redirect accordingly
     try {
@@ -247,10 +249,9 @@ export default function AuthForm() {
             if (fxError) console.warn('Error al generar código de agente:', fxError);
           }
 
-          // Mostrar mensaje prominente de confirmación por correo
           setShowEmailConfirmation(true);
-          toast.success("Registro exitoso", {
-            description: "Revisa tu correo para verificar la cuenta.",
+          toast.success(t('success'), {
+            description: t('auth.emailConfirmationMessage'),
           });
 
           // Manejar redirección después del registro exitoso
@@ -295,14 +296,13 @@ export default function AuthForm() {
           
           if (roleError) console.warn('Error al guardar rol de cliente:', roleError);
 
-          // Mostrar mensaje prominente de confirmación por correo
           setShowEmailConfirmation(true);
-          toast.success("Registro de cliente exitoso", {
-            description: "Revisa tu correo para verificar la cuenta.",
+          toast.success(t('success'), {
+            description: t('auth.emailConfirmationMessage'),
           });
 
           // Show success message - AuthGate will handle navigation
-          setSuccessMessage("✅ Registro exitoso. Redirigiendo...");
+          setSuccessMessage(t('auth.successSignup'));
         }
       } else {
         // Proceso de login
@@ -321,8 +321,8 @@ export default function AuthForm() {
       }
     } catch (err: any) {
       console.error("Error de autenticación:", err);
-      toast.error("Error de autenticación", {
-        description: err?.message ?? "Inténtalo de nuevo",
+      toast.error(t('auth.errorAuth'), {
+        description: err?.message ?? t('auth.tryAgain'),
       });
     } finally {
       setIsLoading(false);
@@ -333,12 +333,12 @@ export default function AuthForm() {
     <Card className="w-full max-w-md border-border/60">
       <CardHeader>
         <CardTitle>
-          {mode === "login" ? "Iniciar sesión" : 
-           mode === "agent-signup" ? "Crear cuenta (Agente / Staff)" : 
-           "Crear cuenta (Cliente)"}
+          {mode === "login" ? t('auth.loginTitle') : 
+           mode === "agent-signup" ? t('auth.signupAgent') : 
+           t('auth.signupClient')}
         </CardTitle>
         <CardDescription>
-          Inmobiliaria DOMIN10 — Accede a tu panel seguro
+          {t('auth.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -346,9 +346,9 @@ export default function AuthForm() {
           <Alert className="mb-6 border-blue-200 bg-blue-50 text-blue-800 p-4">
             <CheckCircle2 className="h-5 w-5" />
             <AlertDescription className="text-base font-medium">
-              <div className="mb-2">¡Cuenta creada exitosamente! 📧</div>
+              <div className="mb-2">{t('auth.emailConfirmationTitle')}</div>
               <div className="text-sm">
-                <strong>Importante:</strong> Revisa tu correo electrónico y confirma tu registro para activar tu cuenta completamente.
+                <strong>{t('auth.emailConfirmationImportant')}</strong> {t('auth.emailConfirmationMessage')}
               </div>
             </AlertDescription>
           </Alert>
@@ -367,16 +367,16 @@ export default function AuthForm() {
           {(mode === "agent-signup" || mode === "client-signup") && (
             <>
               <div className="grid gap-2">
-                <Label htmlFor="full_name">Nombre completo</Label>
-                <Input id="full_name" placeholder="Ej. Ana Pérez" {...form.register("full_name")} />
+                <Label htmlFor="full_name">{t('auth.fullName')}</Label>
+                <Input id="full_name" placeholder={t('auth.fullNamePlaceholder')} {...form.register("full_name")} />
                 {form.formState.errors?.["full_name"] && (
                   <p className="text-sm text-destructive">{((form.formState.errors as any)["full_name"].message as string) ?? ""}</p>
                 )}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="identity_card">Carnet de Identidad</Label>
-                <Input id="identity_card" placeholder="Ej. 1234567" {...form.register("identity_card")} />
+                <Label htmlFor="identity_card">{t('auth.identityCard')}</Label>
+                <Input id="identity_card" placeholder={t('auth.identityCardPlaceholder')} {...form.register("identity_card")} />
                 {(form.formState.errors as any)?.identity_card && (
                   <p className="text-sm text-destructive">{((form.formState.errors as any).identity_card.message as string) ?? ""}</p>
                 )}
@@ -384,9 +384,9 @@ export default function AuthForm() {
 
               <div className="grid gap-2">
                 <Label htmlFor="corporate_phone">
-                  {mode === "agent-signup" ? "Celular corporativo" : "Celular"}
+                  {mode === "agent-signup" ? t('auth.corporatePhone') : t('auth.phone')}
                 </Label>
-                <Input id="corporate_phone" placeholder="Ej. 7XXXXXXXX" {...form.register("corporate_phone")} />
+                <Input id="corporate_phone" placeholder={t('auth.phonePlaceholder')} {...form.register("corporate_phone")} />
                 {(form.formState.errors as any)?.corporate_phone && (
                   <p className="text-sm text-destructive">{((form.formState.errors as any).corporate_phone.message as string) ?? ""}</p>
                 )}
@@ -394,19 +394,19 @@ export default function AuthForm() {
 
               {mode === "client-signup" && (
                 <div className="grid gap-2">
-                  <Label htmlFor="whatsapp">WhatsApp (opcional)</Label>
-                  <Input id="whatsapp" placeholder="Ej. 7XXXXXXXX" {...form.register("whatsapp")} />
+                  <Label htmlFor="whatsapp">{t('auth.whatsapp')}</Label>
+                  <Input id="whatsapp" placeholder={t('auth.phonePlaceholder')} {...form.register("whatsapp")} />
                 </div>
               )}
             </>
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="tu@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               autoComplete="email"
               {...form.register("email")}
             />
@@ -418,7 +418,7 @@ export default function AuthForm() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
@@ -435,7 +435,7 @@ export default function AuthForm() {
 
           {mode === "agent-signup" && (
             <div className="grid gap-2">
-              <Label>Rol</Label>
+              <Label>{t('auth.role')}</Label>
               <Select
                 onValueChange={(val) =>
                   form.setValue("role" as any, val as (typeof agentRoles)[number], {
@@ -444,14 +444,11 @@ export default function AuthForm() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un rol" />
+                  <SelectValue placeholder={t('auth.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {allowedSignupRoles.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="Agente Inmobiliario">{t('auth.roleAgent')}</SelectItem>
+                  <SelectItem value="Staff">{t('auth.roleStaff')}</SelectItem>
                 </SelectContent>
               </Select>
               {form.formState.errors?.["role"] && (
@@ -465,7 +462,7 @@ export default function AuthForm() {
           {mode === "login" ? (
             <div className="flex flex-col gap-3 pt-2">
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Procesando..." : "Iniciar Sesión"}
+                {isLoading ? t('auth.processing') : t('auth.submit')}
               </Button>
               <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                 <Button 
@@ -474,7 +471,7 @@ export default function AuthForm() {
                   className="w-full text-sm" 
                   onClick={() => setMode("agent-signup")}
                 >
-                  Crear Cuenta (Agente / Staff)
+                  {t('auth.signupAgent')}
                 </Button>
                 <Button 
                   type="button" 
@@ -482,14 +479,14 @@ export default function AuthForm() {
                   className="w-full text-sm" 
                   onClick={() => setMode("client-signup")}
                 >
-                  Crear Cuenta (Cliente)
+                  {t('auth.signupClient')}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-between gap-2 pt-2">
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Procesando..." : "Crear cuenta"}
+                {isLoading ? t('auth.processing') : t('auth.createAccount')}
               </Button>
             </div>
           )}
@@ -501,7 +498,7 @@ export default function AuthForm() {
                 className="underline underline-offset-4 hover:text-foreground transition-colors"
                 onClick={() => setMode("login")}
               >
-                ¿Ya tienes cuenta? Inicia sesión
+                {t('auth.hasAccount')}
               </button>
             </div>
           )}
