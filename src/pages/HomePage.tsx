@@ -197,23 +197,23 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="featured-heading">
         <h2 id="featured-heading" className="text-2xl font-semibold mb-3">{t('properties.featured')}</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
-          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.house')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.apartment')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.land')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.office')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.commercial')}</span>
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="flex flex-wrap justify-center gap-2 w-full rounded-xl shadow-lg mb-6 p-2 sm:p-3 bg-gradient-to-r from-background to-secondary/50 h-auto">
+            <TabsTrigger value="house" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.house')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="apartment" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.apartment')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="land" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.land')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="office" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.office')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="commercial" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.commercial')}</span>
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="house">
             <Carousel>
@@ -291,23 +291,23 @@ export default function HomePage() {
       <section className="container mx-auto py-10" aria-labelledby="concluded-heading">
         <h2 id="concluded-heading" className="text-2xl font-semibold mb-3">{t('properties.success')}</h2>
         <Tabs defaultValue="house">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full rounded-xl shadow-lg mb-6 p-2 bg-gradient-to-r from-background to-secondary/50">
-          <TabsTrigger value="house" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.house')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="apartment" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.apartment')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="land" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.land')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="office" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.office')}</span>
-          </TabsTrigger>
-          <TabsTrigger value="commercial" className="relative overflow-hidden rounded-lg px-4 py-3 font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-muted/50 hover:scale-[1.02]">
-            <span className="relative z-10">{t('properties.commercial')}</span>
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="flex flex-wrap justify-center gap-2 w-full rounded-xl shadow-lg mb-6 p-2 sm:p-3 bg-gradient-to-r from-background to-secondary/50 h-auto">
+            <TabsTrigger value="house" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.house')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="apartment" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.apartment')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="land" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.land')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="office" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.office')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="commercial" className="flex-1 min-w-[calc(50%-0.5rem)] sm:min-w-0 sm:flex-1 relative overflow-hidden rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-[1.02] hover:bg-muted/50">
+              <span className="relative z-10 truncate">{t('properties.commercial')}</span>
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="house">
             <Carousel>
