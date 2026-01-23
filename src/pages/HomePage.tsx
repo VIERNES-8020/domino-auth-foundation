@@ -183,7 +183,7 @@ export default function HomePage() {
             <Button size="lg" variant="outline" asChild className="bg-white text-primary border-white hover:bg-white/90">
               <Link to="/propiedades">{t('hero.explore')}</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="bg-transparent border-white text-white hover:bg-white/10">
+            <Button size="lg" asChild className="bg-gradient-to-r from-[#C76C33] to-[#E8944A] text-white border-0 shadow-lg shadow-[#C76C33]/30 hover:from-[#B55E28] hover:to-[#D4803E] hover:shadow-xl hover:shadow-[#C76C33]/40 transition-all duration-300">
               <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2">
                 <span>Solicitar servicios ARXIS</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
