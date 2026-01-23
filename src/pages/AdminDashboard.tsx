@@ -984,57 +984,61 @@ export default function AdminDashboard() {
         {/* Navigation Tabs */}
         <Card className="shadow-lg border-0 bg-background/95 backdrop-blur">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className={`grid w-full h-14 bg-muted/50 ${isSuperAdmin ? 'grid-cols-10' : 'grid-cols-9'}`}>
-              <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            {/*
+              Mobile: horizontal scroll to avoid overlap.
+              Desktop: behaves like a normal tab bar (still scrollable if needed).
+            */}
+            <TabsList className="w-full bg-muted/50 p-1 flex flex-nowrap gap-1 overflow-x-auto">
+              <TabsTrigger value="dashboard" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <LayoutDashboard className="h-4 w-4" />
                 Dashboard
               </TabsTrigger>
-              <TabsTrigger value="propiedades" className="flex items-center gap-2">
+              <TabsTrigger value="propiedades" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <Building2 className="h-4 w-4" />
                 Propiedades
               </TabsTrigger>
               {isSuperAdmin && (
-                <TabsTrigger value="usuarios" className="flex items-center gap-2">
+                <TabsTrigger value="usuarios" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                   <Users className="h-4 w-4" />
                   Usuarios
                 </TabsTrigger>
               )}
-              <TabsTrigger value="agentes" className="flex items-center gap-2">
+              <TabsTrigger value="agentes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <UserCheck className="h-4 w-4" />
                 Agentes / Staff
               </TabsTrigger>
               <TabsTrigger 
                 value="arxis" 
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm"
               >
                 <TrendingUp className="h-4 w-4" />
                 ARXIS
               </TabsTrigger>
-              <TabsTrigger value="mensajes" className="flex items-center gap-2">
+              <TabsTrigger value="mensajes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <MessageSquare className="h-4 w-4" />
                 Mensajes
                 {(() => {
                   const pendingCount = contactMessages.filter(msg => !assignedMessageIds.includes(msg.id)).length;
                   return pendingCount > 0 && (
-                    <Badge variant="destructive" className="ml-1 h-5 w-5 text-xs">
+                    <Badge variant="destructive" className="ml-1 h-5 w-5 text-[10px] leading-none">
                       {pendingCount}
                     </Badge>
                   );
                 })()}
               </TabsTrigger>
-              <TabsTrigger value="testimonios" className="flex items-center gap-2">
+              <TabsTrigger value="testimonios" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <Star className="h-4 w-4" />
                 Testimonios
               </TabsTrigger>
-              <TabsTrigger value="sobre-nosotros" className="flex items-center gap-2">
+              <TabsTrigger value="sobre-nosotros" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <FileText className="h-4 w-4" />
                 Contenido
               </TabsTrigger>
-              <TabsTrigger value="marca-agua" className="flex items-center gap-2">
+              <TabsTrigger value="marca-agua" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <Image className="h-4 w-4" />
                 Marca de Agua
               </TabsTrigger>
-              <TabsTrigger value="reportes" className="flex items-center gap-2">
+              <TabsTrigger value="reportes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
                 <BarChart3 className="h-4 w-4" />
                 Reportes
               </TabsTrigger>
