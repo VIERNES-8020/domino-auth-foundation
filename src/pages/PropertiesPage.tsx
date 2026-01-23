@@ -528,16 +528,17 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   />
                 </div>
 
-                <div className="flex items-end">
+                <div className="flex items-end md:col-span-1">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleNearMeClick}
                     disabled={nearMeLoading}
                     aria-label={t('properties.searchNearMe')}
-                    className="w-full"
+                    className="w-full whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4"
                   >
-                    <LocateFixed className="mr-2 h-4 w-4" /> {nearMeLoading ? t('properties.loading') : t('properties.searchNearMe')}
+                    <LocateFixed className="mr-1 sm:mr-2 h-4 w-4 shrink-0" />
+                    <span className="truncate">{nearMeLoading ? t('properties.loading') : t('properties.searchNearMe')}</span>
                   </Button>
                 </div>
 
