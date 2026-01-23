@@ -953,25 +953,23 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
       {/* Header */}
       <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Crown className="h-8 w-8 text-primary" />
-                <div>
-                  <h1 className="text-2xl font-bold text-primary">
-                    Super Admin Dashboard
-                  </h1>
-                  <p className="text-sm text-muted-foreground">Control total de DOMINIO</p>
-                </div>
+        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-primary truncate">
+                  Super Admin Dashboard
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">Control total de DOMINIO</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="px-3 py-1">
-                <Shield className="h-4 w-4 mr-2" />
+            <div className="flex items-center gap-2 sm:gap-4 justify-end shrink-0">
+              <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs sm:text-sm">
+                <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Administrador
               </Badge>
-              <Button variant="outline" onClick={signOut} size="sm">
+              <Button variant="outline" onClick={signOut} size="sm" className="text-xs sm:text-sm">
                 Cerrar Sesión
               </Button>
             </div>
@@ -979,7 +977,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6 space-y-6">
+      <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         
         {/* Navigation Tabs */}
         <Card className="shadow-lg border-0 bg-background/95 backdrop-blur">
