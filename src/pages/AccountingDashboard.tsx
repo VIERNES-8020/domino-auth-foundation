@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Users, Building2, Download, BarChart3 } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import * as XLSX from 'xlsx';
 
 export default function AccountingDashboard() {
@@ -289,12 +290,12 @@ export default function AccountingDashboard() {
           {/* Modern Header Section */}
           <div className="relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-indigo-500/10 to-indigo-500/5 rounded-2xl border border-indigo-500/10 shadow-lg">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-3">
+            <div className="relative p-4 sm:p-8">
+              <div className="flex flex-col gap-4 sm:gap-6">
+                <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-4">
                     {profile?.avatar_url && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 flex-shrink-0">
                         <img 
                           src={profile.avatar_url} 
                           alt="Foto de perfil"
@@ -302,29 +303,29 @@ export default function AccountingDashboard() {
                         />
                       </div>
                     )}
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full animate-pulse"></div>
-                      <h1 className="text-3xl lg:text-4xl font-bold text-indigo-600">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-indigo-500 to-indigo-400 rounded-full animate-pulse flex-shrink-0"></div>
+                      <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold text-indigo-600 truncate">
                         Panel de Contabilidad
                       </h1>
                     </div>
                   </div>
                   {profile && (
-                    <div className="space-y-2">
-                      <p className="text-lg text-muted-foreground">
-                        Bienvenido, <span className="font-semibold text-indigo-600">{profile.full_name || user?.email}</span>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <p className="text-sm sm:text-lg text-muted-foreground truncate">
+                        Bienvenido, <span className="font-semibold text-indigo-600 truncate">{profile.full_name || user?.email}</span>
                       </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm font-mono bg-indigo-500/5 border-indigo-500/20 text-indigo-600">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <Badge variant="outline" className="text-xs sm:text-sm font-mono bg-indigo-500/5 border-indigo-500/20 text-indigo-600">
                           Contabilidad
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
                           {activeOffices} Oficinas
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
                           {activeAgents} Agentes
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
                           {totalSuccessfulSales} Ventas
                         </Badge>
                       </div>
@@ -332,18 +333,19 @@ export default function AccountingDashboard() {
                   )}
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <Button 
                     onClick={handleExportReport}
-                    className="bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-600 hover:to-indigo-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2"
+                    className="bg-gradient-to-r from-indigo-500 to-indigo-400 hover:from-indigo-600 hover:to-indigo-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 gap-2 h-9 text-sm w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" />
-                    Exportar Reporte
+                    <span className="sm:hidden">Exportar</span>
+                    <span className="hidden sm:inline">Exportar Reporte</span>
                   </Button>
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="h-9 text-sm">
                     <Link to="/">Portal Principal</Link>
                   </Button>
-                  <Button variant="outline" onClick={async () => {
+                  <Button variant="outline" className="h-9 text-sm" onClick={async () => {
                     await supabase.auth.signOut();
                     window.location.href = '/';
                   }}>
@@ -356,56 +358,56 @@ export default function AccountingDashboard() {
 
           {/* Main Content */}
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Ingresos Totales</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-lg sm:text-2xl font-bold truncate">
                 ${financialReport.totalIncome.toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 De ventas validadas
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Oficinas</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Oficinas</CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeOffices}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-lg sm:text-2xl font-bold">{activeOffices}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 Oficinas activas
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Agentes Activos</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Agentes Activos</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeAgents}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-lg sm:text-2xl font-bold">{activeAgents}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 No archivados
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ventas Exitosas</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Ventas Exitosas</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalSuccessfulSales}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-lg sm:text-2xl font-bold">{totalSuccessfulSales}</div>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 Ventas validadas
               </p>
             </CardContent>
@@ -413,36 +415,39 @@ export default function AccountingDashboard() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-card border border-border">
-            <TabsTrigger value="ventas">Ventas por Oficina</TabsTrigger>
-            <TabsTrigger value="comisiones">Comisiones de Agentes</TabsTrigger>
-            <TabsTrigger value="ranking">Ranking de Asesores</TabsTrigger>
-            <TabsTrigger value="reporte">Reporte Financiero</TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="bg-card border border-border inline-flex w-max sm:w-auto">
+              <TabsTrigger value="ventas" className="text-xs sm:text-sm px-3 sm:px-4">Ventas por Oficina</TabsTrigger>
+              <TabsTrigger value="comisiones" className="text-xs sm:text-sm px-3 sm:px-4">Comisiones</TabsTrigger>
+              <TabsTrigger value="ranking" className="text-xs sm:text-sm px-3 sm:px-4">Ranking</TabsTrigger>
+              <TabsTrigger value="reporte" className="text-xs sm:text-sm px-3 sm:px-4">Reporte</TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
           {/* Ventas por Oficina */}
           <TabsContent value="ventas">
             <Card>
-              <CardHeader>
-                <CardTitle>Ventas por Oficina</CardTitle>
-                <CardDescription>Resumen de ventas por cada oficina</CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg">Ventas por Oficina</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Resumen de ventas por cada oficina</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 {officeStats.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
+                  <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                     No existen cierres validados.
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {officeStats.map((office, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div>
-                          <p className="font-semibold">{office.name}</p>
-                          <p className="text-sm text-muted-foreground">{office.salesCount} ventas</p>
+                      <div key={index} className="flex items-center justify-between p-3 sm:p-4 border border-border rounded-lg gap-3">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm sm:text-base truncate">{office.name}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{office.salesCount} ventas</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold">${office.totalSales.toLocaleString()}</p>
+                          <p className="text-lg sm:text-2xl font-bold">${office.totalSales.toLocaleString()}</p>
                         </div>
                       </div>
                     ))}
@@ -455,38 +460,38 @@ export default function AccountingDashboard() {
           {/* Comisiones de Agentes */}
           <TabsContent value="comisiones">
             <Card>
-              <CardHeader>
-                <CardTitle>Comisiones Generadas por Agentes</CardTitle>
-                <CardDescription>Detalle de comisiones por venta</CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg">Comisiones de Agentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Detalle de comisiones por venta</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 {agentCommissions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
+                  <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                     No existen cierres validados.
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {agentCommissions.slice(0, 20).map((sale) => (
-                      <div key={sale.id} className="p-4 border border-border rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-semibold">Venta #{sale.id.slice(0, 8)}</p>
-                            <p className="text-sm text-muted-foreground">
+                      <div key={sale.id} className="p-3 sm:p-4 border border-border rounded-lg">
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm sm:text-base truncate">Venta #{sale.id.slice(0, 8)}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               {new Date(sale.closure_date).toLocaleDateString('es')}
                             </p>
                           </div>
-                          <Badge>{sale.transaction_type}</Badge>
+                          <Badge className="text-[10px] sm:text-xs flex-shrink-0">{sale.transaction_type}</Badge>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-3">
                           <div>
-                            <p className="text-xs text-muted-foreground">Captador</p>
-                            <p className="font-medium">{sale.agent_captador?.full_name}</p>
-                            <p className="text-sm text-primary">${Number(sale.captador_amount || 0).toLocaleString()}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Captador</p>
+                            <p className="font-medium text-xs sm:text-sm truncate">{sale.agent_captador?.full_name}</p>
+                            <p className="text-xs sm:text-sm text-primary">${Number(sale.captador_amount || 0).toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="text-xs text-muted-foreground">Vendedor</p>
-                            <p className="font-medium">{sale.agent_vendedor?.full_name}</p>
-                            <p className="text-sm text-primary">${Number(sale.vendedor_amount || 0).toLocaleString()}</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Vendedor</p>
+                            <p className="font-medium text-xs sm:text-sm truncate">{sale.agent_vendedor?.full_name}</p>
+                            <p className="text-xs sm:text-sm text-primary">${Number(sale.vendedor_amount || 0).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
@@ -500,33 +505,33 @@ export default function AccountingDashboard() {
           {/* Ranking de Asesores */}
           <TabsContent value="ranking">
             <Card>
-              <CardHeader>
-                <CardTitle>Top 10 Asesores</CardTitle>
-                <CardDescription>Ranking por comisiones generadas</CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg">Top 10 Asesores</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Ranking por comisiones generadas</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 sm:px-6">
                 {agentRanking.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
+                  <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                     No existen registros de ventas aprobadas.
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {agentRanking.map((agent, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold">
+                      <div key={index} className="flex items-center justify-between p-3 sm:p-4 border border-border rounded-lg gap-2">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm sm:text-base flex-shrink-0">
                             {index + 1}
                           </div>
-                          <div>
-                            <p className="font-semibold">{agent.name}</p>
-                            <p className="text-sm text-muted-foreground">Código: {agent.code}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm sm:text-base truncate">{agent.name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">Código: {agent.code}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-primary">
+                          <p className="text-base sm:text-xl font-bold text-primary">
                             ${agent.totalCommission.toLocaleString()}
                           </p>
-                          <p className="text-sm text-muted-foreground">{agent.salesCount} ventas</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">{agent.salesCount} ventas</p>
                         </div>
                       </div>
                     ))}
@@ -539,45 +544,45 @@ export default function AccountingDashboard() {
           {/* Reporte Financiero */}
           <TabsContent value="reporte">
             <Card>
-              <CardHeader>
-                <CardTitle>Reporte de Ingresos y Egresos</CardTitle>
-                <CardDescription>Balance financiero general</CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-base sm:text-lg">Reporte de Ingresos y Egresos</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Balance financiero general</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Ingresos Totales</p>
-                        <p className="text-3xl font-bold text-green-600">
+              <CardContent className="px-4 sm:px-6">
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="p-4 sm:p-6 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Ingresos Totales</p>
+                        <p className="text-xl sm:text-3xl font-bold text-green-600 truncate">
                           ${financialReport.totalIncome.toLocaleString()}
                         </p>
                       </div>
-                      <TrendingUp className="h-12 w-12 text-green-600" />
+                      <TrendingUp className="h-8 w-8 sm:h-12 sm:w-12 text-green-600 flex-shrink-0" />
                     </div>
                   </div>
 
-                  <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Egresos Totales</p>
-                        <p className="text-3xl font-bold text-red-600">
+                  <div className="p-4 sm:p-6 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Egresos Totales</p>
+                        <p className="text-xl sm:text-3xl font-bold text-red-600 truncate">
                           ${financialReport.totalExpenses.toLocaleString()}
                         </p>
                       </div>
-                      <BarChart3 className="h-12 w-12 text-red-600" />
+                      <BarChart3 className="h-8 w-8 sm:h-12 sm:w-12 text-red-600 flex-shrink-0" />
                     </div>
                   </div>
 
-                  <div className="p-6 bg-primary/10 border border-primary/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Utilidad Neta</p>
-                        <p className="text-3xl font-bold text-primary">
+                  <div className="p-4 sm:p-6 bg-primary/10 border border-primary/20 rounded-lg">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Utilidad Neta</p>
+                        <p className="text-xl sm:text-3xl font-bold text-primary truncate">
                           ${financialReport.netProfit.toLocaleString()}
                         </p>
                       </div>
-                      <DollarSign className="h-12 w-12 text-primary" />
+                      <DollarSign className="h-8 w-8 sm:h-12 sm:w-12 text-primary flex-shrink-0" />
                     </div>
                   </div>
                 </div>
