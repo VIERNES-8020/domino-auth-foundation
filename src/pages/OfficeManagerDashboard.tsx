@@ -480,14 +480,14 @@ export default function OfficeManagerDashboard() {
       <div className="container mx-auto px-4 py-6">
         <div className="space-y-6">
           {/* Modern Header Section */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/5 via-amber-500/10 to-amber-500/5 rounded-2xl border border-amber-500/10 shadow-lg">
+          <div className="relative overflow-hidden bg-gradient-to-r from-amber-500/5 via-amber-500/10 to-amber-500/5 rounded-xl sm:rounded-2xl border border-amber-500/10 shadow-lg">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+                <div className="space-y-2 sm:space-y-3 w-full lg:w-auto">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     {profile?.avatar_url && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/20">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-amber-500/20 flex-shrink-0">
                         <img 
                           src={profile.avatar_url} 
                           alt="Foto de perfil"
@@ -495,35 +495,36 @@ export default function OfficeManagerDashboard() {
                         />
                       </div>
                     )}
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full animate-pulse"></div>
-                      <h1 className="text-3xl lg:text-4xl font-bold text-amber-600">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full animate-pulse flex-shrink-0"></div>
+                      <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-amber-600 truncate">
                         Panel de Administración
                       </h1>
                     </div>
                   </div>
                   {profile && (
-                    <div className="space-y-2">
-                      <p className="text-lg text-muted-foreground">
-                        Bienvenido, <span className="font-semibold text-amber-600">{profile.full_name || user?.email}</span>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
+                        Bienvenido, <span className="font-semibold text-amber-600 break-words">{profile.full_name || user?.email}</span>
                       </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm font-mono bg-amber-500/5 border-amber-500/20 text-amber-600">
-                          Administración (Encargado de Oficina)
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <Badge variant="outline" className="text-[10px] sm:text-xs lg:text-sm font-mono bg-amber-500/5 border-amber-500/20 text-amber-600 px-1.5 sm:px-2 py-0.5 sm:py-1">
+                          <span className="hidden sm:inline">Administración (Encargado de Oficina)</span>
+                          <span className="sm:hidden">Encargado de Oficina</span>
                         </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {profile?.franchises?.name || 'Sin oficina'}
+                        <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1">
+                          {profile?.franchises?.name || 'Sin asignar'}
                         </Badge>
                       </div>
                     </div>
                   )}
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" asChild>
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3 mt-2 lg:mt-0">
+                  <Button variant="outline" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm" asChild>
                     <Link to="/">Portal Principal</Link>
                   </Button>
-                  <Button variant="outline" onClick={async () => {
+                  <Button variant="outline" className="w-full sm:w-auto h-8 sm:h-9 text-xs sm:text-sm text-red-600 border-red-200 hover:bg-red-50" onClick={async () => {
                     await supabase.auth.signOut();
                     window.location.href = '/';
                   }}>
@@ -533,59 +534,70 @@ export default function OfficeManagerDashboard() {
               </div>
             </div>
           </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inmuebles Cargados</CardTitle>
-              <Home className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-[10px] sm:text-xs lg:text-sm font-medium truncate pr-2">Inmuebles Cargados</CardTitle>
+              <Home className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{approvedProperties.length}</div>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{approvedProperties.length}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendientes Aprobar</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-[10px] sm:text-xs lg:text-sm font-medium truncate pr-2">Pendientes Aprobar</CardTitle>
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingProperties.length}</div>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold">{pendingProperties.length}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Solicitudes Agentes</CardTitle>
-              <CheckCircle className="h-4 w-4 text-amber-500" />
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-[10px] sm:text-xs lg:text-sm font-medium truncate pr-2">Solicitudes Agentes</CardTitle>
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{pendingRequestsCount}</div>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">{pendingRequestsCount}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mi Oficina</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+              <CardTitle className="text-[10px] sm:text-xs lg:text-sm font-medium truncate pr-2">Mi Oficina</CardTitle>
+              <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
-            <CardContent>
-              <div className="text-sm font-semibold">{profile?.franchises?.name || 'Sin asignar'}</div>
+            <CardContent className="p-3 sm:p-4 pt-0">
+              <div className="text-xs sm:text-sm font-semibold truncate">{profile?.franchises?.name || 'Sin asignar'}</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs para diferentes secciones */}
-        <Tabs defaultValue="propiedades" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
-            <TabsTrigger value="cierres">
-              Cierres de Venta
-              {pendingClosuresCount > 0 && (
-                <Badge className="ml-2 bg-red-500">{pendingClosuresCount}</Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="propiedades" className="space-y-4 sm:space-y-6">
+          <div className="flex justify-center">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 sm:p-1.5 rounded-lg sm:rounded-xl shadow-sm">
+              <TabsTrigger 
+                value="propiedades"
+                className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-md data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+              >
+                Propiedades
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cierres"
+                className="text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-md data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md transition-all flex items-center justify-center gap-1"
+              >
+                <span className="hidden sm:inline">Cierres de Venta</span>
+                <span className="sm:hidden">Cierres</span>
+                {pendingClosuresCount > 0 && (
+                  <Badge className="ml-1 bg-red-500 text-[10px] px-1 py-0 h-4">{pendingClosuresCount}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="propiedades" className="space-y-6">
             {/* Solicitudes de Cambios de Agentes */}
