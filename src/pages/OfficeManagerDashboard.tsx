@@ -740,54 +740,55 @@ export default function OfficeManagerDashboard() {
 
           <TabsContent value="cierres" className="space-y-6">
             {/* Resumen de Cierres */}
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <DollarSign className="h-6 w-6" />
+            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 shadow-sm sm:shadow-lg">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <span className="flex items-center gap-2 text-base sm:text-lg">
+                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
                     Cierres de Venta
                   </span>
                   {validatedCount > 0 && (
-                    <Button onClick={downloadExcelReport} variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Descargar Reporte Excel
+                    <Button onClick={downloadExcelReport} variant="outline" size="sm" className="w-full sm:w-auto h-8 text-xs sm:text-sm">
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Descargar Reporte Excel</span>
+                      <span className="sm:hidden">Descargar Excel</span>
                     </Button>
                   )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Total Cierres</p>
-                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-400">{totalClosures}</p>
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                  <div className="text-center p-3 sm:p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Total Cierres</p>
+                    <p className="text-xl sm:text-3xl font-bold text-purple-700 dark:text-purple-400">{totalClosures}</p>
                   </div>
-                  <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Ventas Validadas</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-400 flex items-center justify-center gap-1">
-                      <DollarSign className="h-5 w-5" />
+                  <div className="text-center p-3 sm:p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Ventas Validadas</p>
+                    <p className="text-lg sm:text-2xl font-bold text-green-700 dark:text-green-400 flex items-center justify-center gap-0.5 sm:gap-1">
+                      <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
                       {totalSales.toLocaleString()}
                     </p>
                   </div>
-                  <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Pendientes</p>
-                    <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{pendingClosuresCount}</p>
+                  <div className="text-center p-3 sm:p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Pendientes</p>
+                    <p className="text-xl sm:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{pendingClosuresCount}</p>
                   </div>
-                  <div className="text-center p-4 bg-white/50 dark:bg-black/20 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Validados</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{validatedCount}</p>
+                  <div className="text-center p-3 sm:p-4 bg-white/50 dark:bg-black/20 rounded-lg">
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">Validados</p>
+                    <p className="text-xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{validatedCount}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Tabla de Cierres */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Historial de Cierres</CardTitle>
+            <Card className="shadow-sm sm:shadow-lg">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Historial de Cierres</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {closures.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
+                  <div className="py-6 sm:py-8 text-center text-muted-foreground text-sm">
                     No hay cierres registrados aún
                   </div>
                 ) : (
