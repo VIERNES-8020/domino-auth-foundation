@@ -244,53 +244,55 @@ export default function SupervisorDashboard() {
       <div className="container mx-auto px-4 py-6">
         <div className="space-y-6">
           {/* Modern Header Section */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-blue-500/5 via-blue-500/10 to-blue-500/5 rounded-2xl border border-blue-500/10 shadow-lg">
+          <div className="relative overflow-hidden bg-gradient-to-r from-blue-500/5 via-blue-500/10 to-blue-500/5 rounded-xl sm:rounded-2xl border border-blue-500/10 shadow-sm sm:shadow-lg">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    {profile?.avatar_url && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-500/20">
-                        <img 
-                          src={profile.avatar_url} 
-                          alt="Foto de perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full animate-pulse"></div>
-                      <h1 className="text-3xl lg:text-4xl font-bold text-blue-600">
-                        Panel de Supervisión
-                      </h1>
-                    </div>
-                  </div>
-                  {profile && (
-                    <div className="space-y-2">
-                      <p className="text-lg text-muted-foreground">
-                        Bienvenido, <span className="font-semibold text-blue-600">{profile.full_name || user?.email}</span>
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm font-mono bg-blue-500/5 border-blue-500/20 text-blue-600">
-                          Supervisión (Auxiliar)
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {agents.filter(a => !a.is_archived).length} Agentes Activos
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {archiveRequests.length} Solicitudes
-                        </Badge>
-                      </div>
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-col gap-4 sm:gap-6">
+                {/* Title and Avatar Row */}
+                <div className="flex items-center gap-3">
+                  {profile?.avatar_url && (
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-blue-500/20 flex-shrink-0">
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Foto de perfil"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full animate-pulse flex-shrink-0"></div>
+                    <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold text-blue-600 truncate">
+                      Panel de Supervisión
+                    </h1>
+                  </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" asChild>
+                {/* User Info */}
+                {profile && (
+                  <div className="space-y-2 sm:space-y-3">
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                      Bienvenido, <span className="font-semibold text-blue-600">{profile.full_name || user?.email}</span>
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <Badge variant="outline" className="text-[10px] sm:text-xs font-mono bg-blue-500/5 border-blue-500/20 text-blue-600 px-2 py-0.5">
+                        Supervisión
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs px-2 py-0.5">
+                        {agents.filter(a => !a.is_archived).length} Activos
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs px-2 py-0.5">
+                        {archiveRequests.length} Solicitudes
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="flex gap-2 sm:gap-3 pt-1">
+                  <Button variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm flex-1 sm:flex-none" asChild>
                     <Link to="/">Portal Principal</Link>
                   </Button>
-                  <Button variant="outline" onClick={async () => {
+                  <Button variant="outline" size="sm" className="h-8 sm:h-9 text-xs sm:text-sm flex-1 sm:flex-none" onClick={async () => {
                     await supabase.auth.signOut();
                     window.location.href = '/';
                   }}>
