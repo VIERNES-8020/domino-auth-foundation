@@ -145,35 +145,41 @@ export default function TestimonialManagement() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Gestión de Testimonios
-            <Button onClick={() => setIsCreating(true)} disabled={isCreating}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Testimonio
+        <CardHeader className="px-3 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <CardTitle className="text-lg sm:text-2xl">Gestión de Testimonios</CardTitle>
+            <Button 
+              onClick={() => setIsCreating(true)} 
+              disabled={isCreating}
+              size="sm"
+              className="w-full sm:w-auto text-xs sm:text-sm"
+            >
+              <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5" />
+              Agregar
             </Button>
-          </CardTitle>
-          <CardDescription>
+          </div>
+          <CardDescription className="text-xs sm:text-sm mt-1">
             Gestiona los testimonios de clientes que aparecen en la página "Nuestros Clientes"
           </CardDescription>
         </CardHeader>
         
         {isCreating && (
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-muted/50">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Nombre del Cliente</label>
+          <CardContent className="px-3 sm:px-6">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg bg-muted/50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs sm:text-sm font-medium">Nombre del Cliente</label>
                   <Input
                     value={formData.client_name}
                     onChange={(e) => setFormData({...formData, client_name: e.target.value})}
                     required
+                    className="text-sm"
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Tipo de Transacción</label>
+                <div className="space-y-1">
+                  <label className="text-xs sm:text-sm font-medium">Tipo de Transacción</label>
                   <Select value={formData.transaction_type} onValueChange={(value) => setFormData({...formData, transaction_type: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -185,10 +191,10 @@ export default function TestimonialManagement() {
                 </div>
               </div>
               
-              <div>
-                <label className="text-sm font-medium">Calificación</label>
+              <div className="space-y-1">
+                <label className="text-xs sm:text-sm font-medium">Calificación</label>
                 <Select value={formData.rating.toString()} onValueChange={(value) => setFormData({...formData, rating: parseInt(value)})}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,22 +207,23 @@ export default function TestimonialManagement() {
                 </Select>
               </div>
               
-              <div>
-                <label className="text-sm font-medium">Comentario</label>
+              <div className="space-y-1">
+                <label className="text-xs sm:text-sm font-medium">Comentario</label>
                 <Textarea
                   value={formData.comment}
                   onChange={(e) => setFormData({...formData, comment: e.target.value})}
                   placeholder="Escriba el testimonio del cliente..."
-                  rows={3}
+                  rows={2}
                   required
+                  className="text-sm"
                 />
               </div>
               
-              <div className="flex gap-2">
-                <Button type="submit">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" size="sm" className="text-xs sm:text-sm">
                   {editingId ? 'Actualizar' : 'Crear'} Testimonio
                 </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button type="button" variant="outline" size="sm" onClick={resetForm} className="text-xs sm:text-sm">
                   Cancelar
                 </Button>
               </div>
@@ -226,63 +233,66 @@ export default function TestimonialManagement() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Testimonios Existentes</CardTitle>
+        <CardHeader className="px-3 sm:px-6">
+          <CardTitle className="text-lg sm:text-2xl">Testimonios Existentes</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {testimonials.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No hay testimonios creados
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold">{testimonial.client_name}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline">{testimonial.transaction_type}</Badge>
+                <div key={testimonial.id} className="border rounded-lg p-3 sm:p-4 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-sm sm:text-base truncate">{testimonial.client_name}</h4>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
+                        <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5">{testimonial.transaction_type}</Badge>
                         <div className="flex items-center">
                           {[1,2,3,4,5].map(star => (
                             <Star
                               key={star}
-                              className={`h-4 w-4 ${star <= testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`}
+                              className={`h-3 w-3 sm:h-4 sm:w-4 ${star <= testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`}
                             />
                           ))}
                         </div>
-                        <Badge variant={testimonial.is_approved ? "default" : "secondary"}>
+                        <Badge variant={testimonial.is_approved ? "default" : "secondary"} className="text-[10px] sm:text-xs px-1.5">
                           {testimonial.is_approved ? "Aprobado" : "Pendiente"}
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5 sm:gap-2 shrink-0">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => startEdit(testimonial)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="sm"
                         variant={testimonial.is_approved ? "secondary" : "default"}
                         onClick={() => toggleApproval(testimonial.id, testimonial.is_approved)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        {testimonial.is_approved ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                        {testimonial.is_approved ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => deleteTestimonial(testimonial.id)}
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground italic">"{testimonial.comment}"</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground italic">"{testimonial.comment}"</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Creado: {new Date(testimonial.created_at).toLocaleDateString()}
+                    Creado: {new Date(testimonial.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               ))}
