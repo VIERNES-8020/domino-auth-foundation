@@ -383,11 +383,9 @@ export default function HomePage() {
       </section>
 
       {/* Metrics Section - Dynamic Counters */}
-      <main>
-        <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
-          <SuccessCounters />
-        </section>
-      </main>
+      <section className="container mx-auto py-12 md:py-16" aria-labelledby="metrics-heading">
+        <SuccessCounters />
+      </section>
 
       {/* Structured Data */}
       <script
