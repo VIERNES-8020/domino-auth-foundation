@@ -501,76 +501,74 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
         {/* Reportes Técnicos Tab */}
         <TabsContent value="reportes">
-          <Card>
-            <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-4">
-              <CardTitle className="text-base sm:text-xl leading-tight">Reportes Técnicos</CardTitle>
-              <CardDescription className="text-[10px] sm:text-sm">Proyectos finalizados</CardDescription>
+          <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+            <CardHeader className="px-0 sm:px-6 py-3 sm:py-4">
+              <CardTitle className="text-sm sm:text-xl">Reportes Técnicos</CardTitle>
+              <CardDescription className="text-[10px] sm:text-sm">Proyectos completados</CardDescription>
             </CardHeader>
-            <CardContent className="px-3 sm:px-6">
+            <CardContent className="px-0 sm:px-6 pb-3 sm:pb-6">
               {technicalReports.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No hay reportes técnicos disponibles.
                 </p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {technicalReports.map((report) => (
-                    <Card key={report.id} className="border-green-200 bg-green-50/30">
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="space-y-2 sm:space-y-3">
-                          {/* Header row with badge and date */}
-                          <div className="flex items-center justify-between gap-2">
-                            <Badge className="bg-green-600 hover:bg-green-700 text-[9px] sm:text-xs px-1.5 py-0.5 shrink-0">
-                              ✅ OK
-                            </Badge>
-                            <span className="text-[10px] sm:text-xs text-muted-foreground">
-                              {new Date(report.report_date).toLocaleDateString('es-ES', { 
-                                day: 'numeric',
-                                month: 'short',
-                                year: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                          
-                          {/* Title */}
-                          <h3 className="font-semibold text-sm sm:text-base text-green-900 line-clamp-2 leading-tight">{report.title}</h3>
-                          
-                          {/* Project reference */}
-                          {report.arxis_projects?.title && (
-                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                              🏗️ {report.arxis_projects.title}
-                            </p>
-                          )}
-                          
-                          {/* Description */}
-                          <div className="border-l-2 border-green-500 pl-2 py-1 bg-white/50 rounded-r">
-                            <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">{report.description}</p>
-                          </div>
-                          
-                          {/* Action buttons */}
-                          <div className="flex gap-2 pt-1">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 px-2"
-                              onClick={() => {
-                                setSelectedReport(report);
-                                setReportDetailOpen(true);
-                              }}
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              <span className="truncate">Detalles</span>
-                            </Button>
-                            {report.document_url && (
-                              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-[10px] sm:text-xs h-7 sm:h-8 px-2" asChild>
-                                <a href={report.document_url} target="_blank" rel="noopener noreferrer">
-                                  📄 <span className="truncate ml-1">Doc</span>
-                                </a>
-                              </Button>
-                            )}
-                          </div>
+                    <div key={report.id} className="border border-green-200 bg-green-50/50 rounded-lg p-3">
+                      {/* Header: Badge + Date inline */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center bg-green-600 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">
+                          ✓ Listo
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(report.report_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </div>
+                      
+                      {/* Title */}
+                      <h4 className="text-xs sm:text-sm font-semibold text-green-900 leading-tight mb-1 line-clamp-2">
+                        {report.title}
+                      </h4>
+                      
+                      {/* Project */}
+                      {report.arxis_projects?.title && (
+                        <p className="text-[10px] text-muted-foreground mb-2 truncate">
+                          📁 {report.arxis_projects.title}
+                        </p>
+                      )}
+                      
+                      {/* Description */}
+                      <p className="text-[10px] text-muted-foreground mb-3 line-clamp-2 border-l-2 border-green-400 pl-2">
+                        {report.description}
+                      </p>
+                      
+                      {/* Buttons */}
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="h-7 text-[10px] flex-1 px-2"
+                          onClick={() => {
+                            setSelectedReport(report);
+                            setReportDetailOpen(true);
+                          }}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Ver
+                        </Button>
+                        {report.document_url && (
+                          <Button 
+                            size="sm" 
+                            className="h-7 text-[10px] flex-1 px-2 bg-green-600 hover:bg-green-700" 
+                            asChild
+                          >
+                            <a href={report.document_url} target="_blank" rel="noopener noreferrer">
+                              📄 Doc
+                            </a>
+                          </Button>
+                        )}
                         </div>
-                      </CardContent>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               )}
