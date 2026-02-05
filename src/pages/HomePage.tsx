@@ -163,27 +163,27 @@ export default function HomePage() {
           <img
             src={heroImage}
             alt="Equipo profesional de DOMINIO planificando proyectos inmobiliarios"
-            className="h-[72vh] w-full object-cover"
+            className="h-[100vh] sm:h-[72vh] w-full object-cover object-center"
             loading="eager"
             style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
           />
         </div>
 
-        <div className="container mx-auto min-h-[72vh] flex flex-col items-center justify-center text-center animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
+        <div className="container mx-auto min-h-[100vh] sm:min-h-[72vh] flex flex-col items-center justify-center text-center px-4 py-8 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight text-white">
             {t('hero.title')}
           </h1>
-          <p className="mt-4 max-w-3xl text-white/90">
+          <p className="mt-4 max-w-3xl text-sm sm:text-base text-white/90 px-2">
             {t('hero.subtitle')}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-4">
-            <Button size="lg" asChild>
+            <Button size="lg" asChild className="w-full sm:w-auto">
               <Link to="/vende">{t('hero.sellRent')}</Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="bg-white text-primary border-white hover:bg-white/90">
+            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto bg-white text-primary border-white hover:bg-white/90">
               <Link to="/propiedades">{t('hero.explore')}</Link>
             </Button>
-            <Button size="lg" asChild className="bg-gradient-to-r from-[#C76C33] to-[#E8944A] text-white border-0 shadow-lg shadow-[#C76C33]/30 hover:from-[#B55E28] hover:to-[#D4803E] hover:shadow-xl hover:shadow-[#C76C33]/40 transition-all duration-300">
+            <Button size="lg" asChild className="w-full sm:w-auto bg-gradient-to-r from-[#C76C33] to-[#E8944A] text-white border-0 shadow-lg shadow-[#C76C33]/30 hover:from-[#B55E28] hover:to-[#D4803E] hover:shadow-xl hover:shadow-[#C76C33]/40 transition-all duration-300">
               <Link to="/solicitar-franquicia" className="inline-flex items-center gap-2">
                 <span>Solicitar servicios ARXIS</span>
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
