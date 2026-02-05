@@ -949,7 +949,7 @@ export default function AgentDashboard() {
                 ) : (
                   <Card>
                     <CardHeader>
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             <Bot className="h-5 w-5" />
@@ -960,13 +960,13 @@ export default function AgentDashboard() {
                           </CardDescription>
                         </div>
                         
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
                           {propertyTypeFilter && (
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => setPropertyTypeFilter(null)}
-                              className="gap-2"
+                              className="gap-2 w-full sm:w-auto"
                             >
                               <X className="h-4 w-4" />
                               Limpiar Filtro
@@ -976,7 +976,7 @@ export default function AgentDashboard() {
                             variant="outline"
                             size="sm"
                             onClick={() => setShowArchived(!showArchived)}
-                            className="gap-2"
+                            className="gap-2 flex-1 sm:flex-none"
                           >
                             {showArchived ? (
                               <>
@@ -992,7 +992,7 @@ export default function AgentDashboard() {
                           </Button>
                           <Button
                             onClick={() => setShowPropertyForm(true)}
-                            className="gap-2"
+                            className="gap-2 flex-1 sm:flex-none"
                           >
                             <Plus className="h-4 w-4" />
                             Nueva Propiedad
