@@ -661,46 +661,48 @@ export default function OfficeManagerDashboard() {
               </Card>
             )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Inmuebles de la Oficina</CardTitle>
-                <CardDescription>Gestiona las propiedades de tu oficina</CardDescription>
+            <Card className="shadow-sm">
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Inmuebles de la Oficina</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Gestiona las propiedades de tu oficina</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {officeProperties.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
+                  <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                     No hay inmuebles registrados
                   </p>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {officeProperties.map((property) => (
                       <div
                         key={property.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                        className="flex flex-col p-3 sm:p-4 border rounded-lg hover:bg-accent/50 transition-colors gap-2 sm:gap-3"
                       >
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{property.title}</h3>
-                            <Badge variant={property.status === 'approved' ? 'default' : 'secondary'}>
+                        {/* Header row with title and badge */}
+                        <div className="flex items-start sm:items-center justify-between gap-2">
+                          <h3 className="font-semibold text-sm sm:text-base line-clamp-2 flex-1">{property.title}</h3>
+                          <Badge 
+                            variant={property.status === 'approved' ? 'default' : 'secondary'}
+                            className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 flex-shrink-0"
+                          >
                               {property.status === 'approved' ? 'Aprobado' : 'Pendiente'}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {property.address}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-muted-foreground">
-                              Agente: {property.profiles?.full_name || 'N/A'}
-                            </span>
-                            <span className="text-muted-foreground">
-                              Código: {property.property_code || 'N/A'}
-                            </span>
+                          </Badge>
+                        </div>
+                        
+                        {/* Property details */}
+                        <div className="space-y-1 text-xs sm:text-sm text-muted-foreground">
+                          <p className="line-clamp-2">{property.address}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-3">
+                            <span className="truncate">Agente: {property.profiles?.full_name || 'N/A'}</span>
+                            <span className="text-[10px] sm:text-xs">Código: {property.property_code || 'N/A'}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
+                        
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button variant="outline" size="sm" className="h-7 sm:h-8 text-xs sm:text-sm" asChild>
                             <Link to={`/propiedad/${property.id}`}>
-                              <Eye className="h-4 w-4 mr-1" />
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                               Ver
                             </Link>
                           </Button>
@@ -709,18 +711,21 @@ export default function OfficeManagerDashboard() {
                               <Button
                                 variant="default"
                                 size="sm"
+                                className="h-7 sm:h-8 text-xs sm:text-sm flex-1 sm:flex-none"
                                 onClick={() => handleUpdatePropertyStatus(property.id, 'approved')}
                               >
-                                <CheckCircle2 className="h-4 w-4 mr-1" />
-                                Aprobar
+                                <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                <span>Aprobar</span>
                               </Button>
                               <Button
                                 variant="destructive"
                                 size="sm"
+                                className="h-7 sm:h-8 text-xs sm:text-sm flex-1 sm:flex-none"
                                 onClick={() => handleUpdatePropertyStatus(property.id, 'rejected')}
                               >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Rechazar
+                                <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                <span className="hidden sm:inline">Rechazar</span>
+                                <span className="sm:hidden">No</span>
                               </Button>
                             </>
                           )}
