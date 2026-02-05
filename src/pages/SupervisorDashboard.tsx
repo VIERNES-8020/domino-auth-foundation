@@ -342,10 +342,24 @@ export default function SupervisorDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="agentes">Agentes</TabsTrigger>
-            <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center">
+            <TabsList className="bg-muted/50 p-1 h-auto">
+              <TabsTrigger 
+                value="agentes" 
+                className="text-xs sm:text-sm px-4 sm:px-6 py-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-md transition-all"
+              >
+                <Users className="h-4 w-4 mr-1.5 sm:mr-2" />
+                Agentes
+              </TabsTrigger>
+              <TabsTrigger 
+                value="propiedades"
+                className="text-xs sm:text-sm px-4 sm:px-6 py-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-md transition-all"
+              >
+                <Home className="h-4 w-4 mr-1.5 sm:mr-2" />
+                Propiedades
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="agentes">
             <Card className="border-0 sm:border shadow-none sm:shadow-sm">
