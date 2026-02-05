@@ -415,63 +415,59 @@ export default function ARXISManagerDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-[#C76C33]/5">
-      <div className="container mx-auto px-4 py-6">
-        <div className="space-y-6">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Modern Header Section */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-[#C76C33]/5 via-[#C76C33]/10 to-[#C76C33]/5 rounded-2xl border border-[#C76C33]/10 shadow-lg">
+          <div className="relative overflow-hidden bg-gradient-to-r from-[#C76C33]/5 via-[#C76C33]/10 to-[#C76C33]/5 rounded-xl sm:rounded-2xl border border-[#C76C33]/10 shadow-lg">
             <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-            <div className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    {profile?.avatar_url && (
-                      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#C76C33]/20">
-                        <img 
-                          src={profile.avatar_url} 
-                          alt="Foto de perfil"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <HardHat className="w-8 h-8 text-[#C76C33]" />
-                      <h1 className="text-3xl lg:text-4xl font-bold" style={{ color: '#C76C33' }}>
-                        Panel de ARXIS
-                      </h1>
-                    </div>
-                  </div>
-                  {profile && (
-                    <div className="space-y-2">
-                      <p className="text-lg text-muted-foreground">
-                        Bienvenido/a, <span className="font-semibold" style={{ color: '#C76C33' }}>{profile.full_name || user?.email}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Gestión técnica y constructiva del sistema DOMINIO
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm font-mono border-[#C76C33]/20" style={{ backgroundColor: 'rgba(199, 108, 51, 0.05)', color: '#C76C33' }}>
-                          Administrador ARXIS
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {activeProjects} Proyectos activos
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {pendingRequests} Solicitudes
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-col gap-4">
+                {/* Title row */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <HardHat className="w-6 h-6 sm:w-8 sm:h-8 text-[#C76C33] shrink-0" />
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold" style={{ color: '#C76C33' }}>
+                    Panel de ARXIS
+                  </h1>
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" asChild>
-                    <Link to="/">Portal Principal</Link>
+                {/* User info */}
+                {profile && (
+                  <div className="space-y-2">
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                      Bienvenido/a, <span className="font-semibold" style={{ color: '#C76C33' }}>{profile.full_name || user?.email}</span>
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      Gestión técnica y constructiva del sistema DOMINIO
+                    </p>
+                    
+                    {/* Stats badges - grid on mobile */}
+                    <div className="grid grid-cols-3 gap-2 pt-2">
+                      <div className="text-center p-2 bg-background/50 rounded-lg border">
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground mb-0.5">Rol</p>
+                        <p className="text-[10px] sm:text-xs font-semibold text-[#C76C33] truncate">Admin ARXIS</p>
+                      </div>
+                      <div className="text-center p-2 bg-background/50 rounded-lg border">
+                        <p className="text-lg sm:text-xl font-bold text-foreground">{activeProjects}</p>
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">Activos</p>
+                      </div>
+                      <div className="text-center p-2 bg-background/50 rounded-lg border">
+                        <p className="text-lg sm:text-xl font-bold text-foreground">{pendingRequests}</p>
+                        <p className="text-[9px] sm:text-[10px] text-muted-foreground">Solicitudes</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1 h-9 text-xs sm:text-sm" asChild>
+                    <Link to="/">Portal</Link>
                   </Button>
-                  <Button variant="outline" onClick={async () => {
+                  <Button variant="outline" size="sm" className="flex-1 h-9 text-xs sm:text-sm" onClick={async () => {
                     await supabase.auth.signOut();
                     window.location.href = '/';
                   }}>
-                    Cerrar Sesión
+                    Salir
                   </Button>
                 </div>
               </div>
@@ -479,68 +475,62 @@ export default function ARXISManagerDashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Proyectos Activos</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-[10px] sm:text-sm font-medium truncate pr-1">Proyectos</CardTitle>
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  En ejecución
-                </p>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{activeProjects}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground truncate">En ejecución</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Solicitudes Recibidas</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+            <Card className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-[10px] sm:text-sm font-medium truncate pr-1">Solicitudes</CardTitle>
+                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingRequests}</div>
-                <p className="text-xs text-muted-foreground">
-                  Pendientes de revisión
-                </p>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{pendingRequests}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground truncate">Pendientes</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Proyectos Completados</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <Card className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-[10px] sm:text-sm font-medium truncate pr-1">Completados</CardTitle>
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{completedProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  Finalizados
-                </p>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{completedProjects}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground truncate">Finalizados</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Mantenimientos</CardTitle>
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <Card className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-[10px] sm:text-sm font-medium truncate pr-1">Mantenimientos</CardTitle>
+                <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{scheduledMaintenances}</div>
-                <p className="text-xs text-muted-foreground">
-                  Programados
-                </p>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{scheduledMaintenances}</div>
+                <p className="text-[9px] sm:text-xs text-muted-foreground truncate">Programados</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="bg-card border border-border">
-              <TabsTrigger value="proyectos">Proyectos Activos</TabsTrigger>
-              <TabsTrigger value="solicitudes">Solicitudes Recibidas</TabsTrigger>
-              <TabsTrigger value="reportes">Reportes Técnicos</TabsTrigger>
-              <TabsTrigger value="mantenimientos">Mantenimientos</TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+              <TabsList className="bg-card border border-border inline-flex w-max h-auto p-1 gap-1">
+                <TabsTrigger value="proyectos" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Proyectos</TabsTrigger>
+                <TabsTrigger value="solicitudes" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Solicitudes</TabsTrigger>
+                <TabsTrigger value="reportes" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Reportes</TabsTrigger>
+                <TabsTrigger value="mantenimientos" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Mantenimientos</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Proyectos Activos */}
             <TabsContent value="proyectos">
