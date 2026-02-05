@@ -55,6 +55,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { HardHat } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -980,67 +981,66 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
         
         {/* Navigation Tabs */}
-        <Card className="shadow-lg border-0 bg-background/95 backdrop-blur">
+        <Card className="shadow-lg border-0 bg-background/95 backdrop-blur overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/*
-              Mobile: horizontal scroll to avoid overlap.
-              Desktop: behaves like a normal tab bar (still scrollable if needed).
-            */}
-            <TabsList className="w-full bg-muted/50 p-1 flex flex-nowrap gap-1 overflow-x-auto">
-              <TabsTrigger value="dashboard" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+            <ScrollArea className="w-full">
+              <TabsList className="w-max bg-muted/50 p-1.5 flex flex-nowrap gap-1 m-1">
+              <TabsTrigger value="dashboard" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <LayoutDashboard className="h-4 w-4" />
-                Dashboard
+                <span className="hidden xs:inline sm:inline">Dashboard</span>
               </TabsTrigger>
-              <TabsTrigger value="propiedades" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="propiedades" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <Building2 className="h-4 w-4" />
-                Propiedades
+                <span className="hidden xs:inline sm:inline">Propiedades</span>
               </TabsTrigger>
               {isSuperAdmin && (
-                <TabsTrigger value="usuarios" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+                <TabsTrigger value="usuarios" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                   <Users className="h-4 w-4" />
-                  Usuarios
+                  <span className="hidden xs:inline sm:inline">Usuarios</span>
                 </TabsTrigger>
               )}
-              <TabsTrigger value="agentes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="agentes" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <UserCheck className="h-4 w-4" />
-                Agentes / Staff
+                <span className="hidden sm:inline">Agentes</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="arxis" 
-                className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap"
               >
                 <TrendingUp className="h-4 w-4" />
                 ARXIS
               </TabsTrigger>
-              <TabsTrigger value="mensajes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="mensajes" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <MessageSquare className="h-4 w-4" />
-                Mensajes
+                <span className="hidden sm:inline">Mensajes</span>
                 {(() => {
                   const pendingCount = contactMessages.filter(msg => !assignedMessageIds.includes(msg.id)).length;
                   return pendingCount > 0 && (
-                    <Badge variant="destructive" className="ml-1 h-5 w-5 text-[10px] leading-none">
+                    <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1 text-[10px] leading-none">
                       {pendingCount}
                     </Badge>
                   );
                 })()}
               </TabsTrigger>
-              <TabsTrigger value="testimonios" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="testimonios" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <Star className="h-4 w-4" />
-                Testimonios
+                <span className="hidden sm:inline">Testimonios</span>
               </TabsTrigger>
-              <TabsTrigger value="sobre-nosotros" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="sobre-nosotros" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <FileText className="h-4 w-4" />
-                Contenido
+                <span className="hidden sm:inline">Contenido</span>
               </TabsTrigger>
-              <TabsTrigger value="marca-agua" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="marca-agua" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <Image className="h-4 w-4" />
-                Marca de Agua
+                <span className="hidden sm:inline">Marca</span>
               </TabsTrigger>
-              <TabsTrigger value="reportes" className="flex items-center gap-2 shrink-0 px-3 py-2 text-xs sm:text-sm">
+              <TabsTrigger value="reportes" className="flex items-center gap-1.5 shrink-0 px-2.5 sm:px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
                 <BarChart3 className="h-4 w-4" />
-                Reportes
+                <span className="hidden sm:inline">Reportes</span>
               </TabsTrigger>
             </TabsList>
+              <ScrollBar orientation="horizontal" className="h-2" />
+            </ScrollArea>
 
             {/* Dashboard Tab */}
             <TabsContent value="dashboard" className="space-y-6 mt-6">
