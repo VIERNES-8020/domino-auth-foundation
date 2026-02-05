@@ -8,6 +8,7 @@ import { User, LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const { t } = useLanguage();
@@ -16,6 +17,7 @@ export default function Header() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   // Mapear roles de la base de datos a nombres de la aplicación
   const mapDatabaseRoleToAppRole = (dbRole: string): string => {
@@ -127,14 +129,20 @@ export default function Header() {
   ];
 
   return (
-    <header className="container mx-auto px-3 sm:px-4 py-3 sm:py-5">
+    <header className={cn(
+      "relative z-50 container mx-auto px-3 sm:px-4 py-3 sm:py-5",
+      isHomePage && "text-white"
+    )}>
       <nav className="flex items-center justify-between gap-2" aria-label="Principal">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 hover-scale shrink-0" aria-label="DOMINIO Inicio">
+        <Link to="/" className={cn(
+          "flex items-center gap-2 hover-scale shrink-0 rounded-lg p-1",
+          isHomePage ? "bg-white/90 backdrop-blur-sm" : "bg-white"
+        )} aria-label="DOMINIO Inicio">
           <img 
             src="/lovable-uploads/0db86b24-3da5-42a2-9780-da456242b977.png" 
             alt="DOMINIO Inmobiliaria - logotipo oficial" 
-            className="h-10 sm:h-12 lg:h-16 w-auto" 
+            className="h-8 sm:h-10 lg:h-12 w-auto" 
           />
         </Link>
 
@@ -144,7 +152,14 @@ export default function Header() {
             <Link 
               key={link.to}
               to={link.to} 
-              className={`nav-link whitespace-nowrap ${location.pathname === link.to ? 'active' : ''}`}
+              className={cn(
+                "whitespace-nowrap font-medium transition-colors",
+                isHomePage 
+                  ? "text-white hover:text-white/80 drop-shadow-md" 
+                  : "nav-link",
+                location.pathname === link.to && !isHomePage && 'active',
+                location.pathname === link.to && isHomePage && 'underline underline-offset-4'
+              )}
             >
               {link.label}
             </Link>
@@ -152,7 +167,10 @@ export default function Header() {
         </div>
         
         {/* Right side actions */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className={cn(
+          "flex items-center gap-1 sm:gap-2",
+          isHomePage && "[&_button]:border-white/50"
+        )}>
           <LanguageSelector />
           
           {session ? (
@@ -214,10 +232,16 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <>
-              <Button variant="outline" asChild size="sm" className="hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4">
+              <Button variant="outline" asChild size="sm" className={cn(
+                "hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4",
+                isHomePage && "bg-transparent border-white text-white hover:bg-white/20"
+              )}>
                 <Link to="/auth">{t('nav.login')}</Link>
               </Button>
-              <Button asChild size="sm" className="hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4">
+              <Button asChild size="sm" className={cn(
+                "hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4",
+                isHomePage && "bg-white text-primary hover:bg-white/90"
+              )}>
                 <Link to="/auth">{t('nav.register')}</Link>
               </Button>
             </>
@@ -226,7 +250,10 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8 sm:h-10 sm:w-10">
+              <Button variant="ghost" size="icon" className={cn(
+                "lg:hidden h-8 w-8 sm:h-10 sm:w-10",
+                isHomePage && "text-white hover:bg-white/20"
+              )}>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Abrir menú</span>
               </Button>

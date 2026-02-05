@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Globe, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
 const languages = [
   { code: 'es' as Language, name: 'language.spanish', flag: '🇪🇸' },
@@ -16,6 +18,8 @@ const languages = [
 export function LanguageSelector() {
   const { language, setLanguage, t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   const currentLanguage = languages.find(lang => lang.code === language);
 
@@ -30,7 +34,12 @@ export function LanguageSelector() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 border-muted-foreground/20 hover:border-muted-foreground/40 bg-background"
+          className={cn(
+            "h-8 px-3",
+            isHomePage 
+              ? "border-white/50 hover:border-white bg-transparent text-white hover:bg-white/20" 
+              : "border-muted-foreground/20 hover:border-muted-foreground/40 bg-background"
+          )}
         >
           <span className="text-sm font-medium uppercase tracking-wide">
             {currentLanguage?.code || 'ES'}
