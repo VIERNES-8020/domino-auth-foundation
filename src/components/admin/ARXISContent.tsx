@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, CheckCircle, FileText, AlertCircle, Trash2, Plus, Eye } from "lucide-react";
 import DocumentFileUpload from "@/components/DocumentFileUpload";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default function ARXISContent({ userId }: { userId: string }) {
   const [activeTab, setActiveTab] = useState("proyectos");
@@ -350,22 +351,23 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <TabsList className="bg-card border border-border inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1 gap-1">
-            <TabsTrigger value="proyectos" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+        <ScrollArea className="w-full">
+          <TabsList className="bg-card border border-border inline-flex w-max h-auto p-1 gap-1">
+            <TabsTrigger value="proyectos" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
               Proyectos Activos
             </TabsTrigger>
-            <TabsTrigger value="solicitudes" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+            <TabsTrigger value="solicitudes" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
               Solicitudes Recibidas
             </TabsTrigger>
-            <TabsTrigger value="reportes" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+            <TabsTrigger value="reportes" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
               Reportes Técnicos
             </TabsTrigger>
-            <TabsTrigger value="mantenimientos" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+            <TabsTrigger value="mantenimientos" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
               Mantenimientos
             </TabsTrigger>
           </TabsList>
-        </div>
+          <ScrollBar orientation="horizontal" className="h-2" />
+        </ScrollArea>
 
         {/* Proyectos Activos Tab */}
         <TabsContent value="proyectos">
