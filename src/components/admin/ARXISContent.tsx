@@ -349,13 +349,23 @@ export default function ARXISContent({ userId }: { userId: string }) {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="proyectos">Proyectos Activos</TabsTrigger>
-          <TabsTrigger value="solicitudes">Solicitudes Recibidas</TabsTrigger>
-          <TabsTrigger value="reportes">Reportes Técnicos</TabsTrigger>
-          <TabsTrigger value="mantenimientos">Mantenimientos</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="bg-card border border-border inline-flex w-auto min-w-full sm:min-w-0 h-auto p-1 gap-1">
+            <TabsTrigger value="proyectos" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+              Proyectos Activos
+            </TabsTrigger>
+            <TabsTrigger value="solicitudes" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+              Solicitudes Recibidas
+            </TabsTrigger>
+            <TabsTrigger value="reportes" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+              Reportes Técnicos
+            </TabsTrigger>
+            <TabsTrigger value="mantenimientos" className="whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 py-1.5">
+              Mantenimientos
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Proyectos Activos Tab */}
         <TabsContent value="proyectos">
