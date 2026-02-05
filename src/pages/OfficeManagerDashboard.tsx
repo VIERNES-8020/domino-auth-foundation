@@ -602,54 +602,56 @@ export default function OfficeManagerDashboard() {
           <TabsContent value="propiedades" className="space-y-6">
             {/* Solicitudes de Cambios de Agentes */}
             {changeRequests.length > 0 && (
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>Solicitudes de Agentes</CardTitle>
-                  <CardDescription>Revisa y aprueba las solicitudes de cambios de los agentes</CardDescription>
+              <Card className="mb-6 sm:mb-8 shadow-sm">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-base sm:text-lg">Solicitudes de Agentes</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Revisa y aprueba las solicitudes de cambios de los agentes</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <div className="space-y-3 sm:space-y-4">
                     {changeRequests.map((request) => (
                       <div
                         key={request.id}
-                        className="flex items-center justify-between p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg bg-amber-50/50 dark:bg-amber-950/20 gap-3"
                       >
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                        <div className="flex-1 space-y-1.5 sm:space-y-2 min-w-0">
+                          <div className="flex flex-wrap items-start sm:items-center gap-1.5 sm:gap-2">
+                            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 flex-shrink-0">
                               {getRequestTypeLabel(request.request_type)}
                             </Badge>
-                            <h3 className="font-semibold">{request.properties?.title}</h3>
+                            <h3 className="font-semibold text-sm sm:text-base line-clamp-2">{request.properties?.title}</h3>
                           </div>
-                          <div className="text-sm text-muted-foreground space-y-1">
-                            <p>Código: {request.properties?.property_code}</p>
-                            <p>Agente: {request.profiles?.full_name} ({request.profiles?.agent_code})</p>
-                            <p className="text-xs italic">Dirección: {request.properties?.address}</p>
+                          <div className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1">
+                            <p className="truncate">Código: {request.properties?.property_code}</p>
+                            <p className="line-clamp-1">Agente: {request.profiles?.full_name} <span className="text-[10px] sm:text-xs">({request.profiles?.agent_code})</span></p>
+                            <p className="text-[10px] sm:text-xs italic line-clamp-2">Dirección: {request.properties?.address}</p>
                             {request.request_data?.reason && (
-                              <p className="text-xs italic">Motivo: {request.request_data.reason}</p>
+                              <p className="text-[10px] sm:text-xs italic line-clamp-1">Motivo: {request.request_data.reason}</p>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
                           <Button
                             variant="default"
                             size="sm"
                             onClick={() => handleApproveRequest(request)}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="flex-1 sm:flex-none h-8 text-xs sm:text-sm bg-green-600 hover:bg-green-700"
                           >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Aprobar
+                            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                            <span>Aprobar</span>
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
+                            className="flex-1 sm:flex-none h-8 text-xs sm:text-sm"
                             onClick={() => {
                               const reason = prompt('Motivo del rechazo:');
                               if (reason) handleRejectRequest(request.id, reason);
                             }}
                           >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Rechazar
+                            <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                            <span className="hidden sm:inline">Rechazar</span>
+                            <span className="sm:hidden">No</span>
                           </Button>
                         </div>
                       </div>
