@@ -138,8 +138,8 @@ export default function AmenitiesManagement() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="text-center sm:text-left">
           <CardTitle>Gestión de Amenidades</CardTitle>
           <CardDescription>
             Administra las amenidades disponibles para las propiedades
@@ -147,7 +147,7 @@ export default function AmenitiesManagement() {
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Nueva Amenidad
             </Button>
