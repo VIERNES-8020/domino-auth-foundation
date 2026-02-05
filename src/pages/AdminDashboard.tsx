@@ -1250,7 +1250,7 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {getFilteredProperties().map((property) => (
-                    <Card key={property.id} className="shadow-lg hover:shadow-xl transition-all duration-300 group">
+                    <Card key={property.id} className="shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden">
                       <div className="relative">
                         {property.image_urls && property.image_urls[0] && (
                           <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
@@ -1261,56 +1261,64 @@ export default function AdminDashboard() {
                             />
                           </div>
                         )}
-                        <div className="absolute top-3 right-3">
-                          <Badge 
-                            variant={property.status === 'approved' ? 'default' : 
-                                   property.status === 'rejected' ? 'destructive' : 'secondary'}
-                            className="shadow-lg"
-                          >
-                            {property.status === 'approved' ? 'Aprobada' :
-                             property.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
-                          </Badge>
-                        </div>
                       </div>
                       
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div>
-                            <h3 className="font-semibold text-lg line-clamp-1">{property.title}</h3>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {property.address}
-                            </p>
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="space-y-2 sm:space-y-3">
+                          {/* Title row with badge */}
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold text-base sm:text-lg line-clamp-2 flex-1 min-w-0">
+                              {property.title}
+                            </h3>
+                            <Badge 
+                              variant={property.status === 'approved' ? 'default' : 
+                                     property.status === 'rejected' ? 'destructive' : 'secondary'}
+                              className="shrink-0 text-[10px] sm:text-xs"
+                            >
+                              {property.status === 'approved' ? 'Aprobada' :
+                               property.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
+                            </Badge>
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            <div className="text-2xl font-bold text-primary">
+                          {/* Address */}
+                          <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 truncate">
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            <span className="truncate">
+                              {property.address}
+                            </span>
+                          </p>
+                          
+                          {/* Price and type */}
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <div className="text-lg sm:text-2xl font-bold text-primary">
                               ${property.price?.toLocaleString()} 
-                              <span className="text-sm font-normal text-muted-foreground ml-1">
+                              <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-1">
                                 {property.price_currency}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Building2 className="h-4 w-4" />
-                              {property.property_type}
+                            <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                              <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                              <span className="truncate max-w-[80px]">{property.property_type}</span>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {/* Property details */}
+                          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                             <span>{property.bedrooms} hab</span>
                             <span>{property.bathrooms} baños</span>
                             <span>{property.area_m2} m²</span>
                           </div>
                           
-                          <div className="flex gap-2 pt-2">
+                          {/* Action buttons */}
+                          <div className="flex gap-2 pt-1 sm:pt-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => updatePropertyStatus(property.id, 'approved')}
                               disabled={property.status === 'approved'}
-                              className="flex-1"
+                              className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
+                              <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                               Aprobar
                             </Button>
                             <Button
@@ -1318,9 +1326,9 @@ export default function AdminDashboard() {
                               variant="destructive"
                               onClick={() => updatePropertyStatus(property.id, 'rejected')}
                               disabled={property.status === 'rejected'}
-                              className="flex-1"
+                              className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                             >
-                              <XCircle className="h-4 w-4 mr-1" />
+                              <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                               Rechazar
                             </Button>
                           </div>
