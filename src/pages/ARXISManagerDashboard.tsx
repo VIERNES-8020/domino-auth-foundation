@@ -765,98 +765,83 @@ export default function ARXISManagerDashboard() {
 
             {/* Mantenimientos Programados */}
             <TabsContent value="mantenimientos">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
+              <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+                <CardHeader className="px-0 sm:px-6 py-3 sm:py-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div>
-                      <CardTitle>Mantenimientos Programados</CardTitle>
-                      <CardDescription>Trabajos de mantenimiento solicitados por clientes</CardDescription>
+                      <CardTitle className="text-sm sm:text-xl">Mantenimientos</CardTitle>
+                      <CardDescription className="text-[10px] sm:text-sm">Trabajos programados</CardDescription>
                     </div>
                     <Button 
                       onClick={() => setMaintenanceDialogOpen(true)}
-                      className="bg-[#C76C33] hover:bg-[#C76C33]/90"
+                      className="bg-[#C76C33] hover:bg-[#C76C33]/90 h-8 text-xs sm:text-sm w-full sm:w-auto"
+                      size="sm"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Nuevo Mantenimiento
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Nuevo
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-0 sm:px-6 pb-3 sm:pb-6">
                   {maintenances.length === 0 ? (
-                    <>
-                      <p className="text-center text-muted-foreground py-8">
-                        No hay mantenimientos programados.
-                      </p>
-                      <p className="text-center text-sm text-muted-foreground">
-                        Los mantenimientos solicitados aparecerán aquí.
-                      </p>
-                    </>
+                    <p className="text-center text-muted-foreground py-8 text-sm">
+                      No hay mantenimientos programados.
+                    </p>
                   ) : (
-                     <div className="space-y-4">
+                    <div className="space-y-3">
                       {maintenances.map((maintenance) => (
-                        <Card key={maintenance.id} className="border-blue-200">
-                          <CardContent className="pt-6">
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1 space-y-3">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant={
-                                    maintenance.status === 'completed' ? 'secondary' : 
-                                    maintenance.status === 'in_progress' ? 'default' : 
-                                    'outline'
-                                  }>
-                                    {maintenance.status === 'scheduled' && '📋 Programado'}
-                                    {maintenance.status === 'in_progress' && '⚙️ En Progreso'}
-                                    {maintenance.status === 'completed' && '✅ Completado'}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    📅 {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES', { 
-                                      weekday: 'long',
-                                      year: 'numeric', 
-                                      month: 'long', 
-                                      day: 'numeric' 
-                                    })}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    🕐 {new Date(maintenance.scheduled_date).toLocaleTimeString('es-ES', { 
-                                      hour: '2-digit', 
-                                      minute: '2-digit'
-                                    })}
-                                  </Badge>
-                                </div>
+                        <div key={maintenance.id} className="border border-blue-200 bg-blue-50/30 rounded-lg p-3">
+                          {/* Header: Status badge */}
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className={`inline-flex items-center text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                              maintenance.status === 'completed' ? 'bg-green-600 text-white' : 
+                              maintenance.status === 'in_progress' ? 'bg-blue-600 text-white' : 
+                              'bg-muted text-foreground border'
+                            }`}>
+                              {maintenance.status === 'scheduled' && '📋 Programado'}
+                              {maintenance.status === 'in_progress' && '⚙️ En Progreso'}
+                              {maintenance.status === 'completed' && '✅ Completado'}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              📅 {new Date(maintenance.scheduled_date).toLocaleDateString('es-ES', { 
+                                day: '2-digit',
+                                month: 'short'
+                              })}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              🕐 {new Date(maintenance.scheduled_date).toLocaleTimeString('es-ES', { 
+                                hour: '2-digit', 
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
 
-                                <h3 className="font-semibold text-lg">{maintenance.title}</h3>
+                          {/* Title */}
+                          <h4 className="text-xs sm:text-sm font-semibold leading-tight mb-2 line-clamp-2">
+                            {maintenance.title}
+                          </h4>
 
-                                {maintenance.arxis_projects?.title && (
-                                  <p className="text-sm text-muted-foreground">
-                                    🏗️ Proyecto relacionado: <span className="font-medium">{maintenance.arxis_projects.title}</span>
-                                  </p>
-                                )}
+                          {/* Project reference */}
+                          {maintenance.arxis_projects?.title && (
+                            <p className="text-[10px] text-muted-foreground mb-2 truncate">
+                              🏗️ {maintenance.arxis_projects.title}
+                            </p>
+                          )}
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                  {maintenance.assigned_to && (
-                                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                                      <span className="font-medium text-muted-foreground">👤 Responsable:</span>
-                                      <span className="font-semibold">{maintenance.assigned_to}</span>
-                                    </div>
-                                  )}
-                                  {maintenance.arxis_projects?.location && (
-                                    <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-                                      <span className="font-medium text-muted-foreground">📍 Ubicación:</span>
-                                      <span className="font-semibold">{maintenance.arxis_projects.location}</span>
-                                    </div>
-                                  )}
-                                </div>
+                          {/* Responsible */}
+                          {maintenance.assigned_to && (
+                            <p className="text-[10px] text-muted-foreground mb-2">
+                              👤 <span className="font-medium">{maintenance.assigned_to}</span>
+                            </p>
+                          )}
 
-                                <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50/50 rounded-r">
-                                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                                    Descripción del Mantenimiento:
-                                  </p>
-                                  <p className="text-sm">{maintenance.description}</p>
-                                </div>
-                              </div>
+                          {/* Description */}
+                          <div className="border-l-2 border-blue-400 pl-2 py-1 bg-white/50 rounded-r">
+                            <p className="text-[10px] text-muted-foreground line-clamp-2">
+                              {maintenance.description}
+                            </p>
                             </div>
-                          </CardContent>
-                        </Card>
+                        </div>
                       ))}
                     </div>
                   )}
