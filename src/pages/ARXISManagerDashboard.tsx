@@ -523,12 +523,32 @@ export default function ARXISManagerDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-              <TabsList className="bg-card border border-border inline-flex w-max h-auto p-1 gap-1">
-                <TabsTrigger value="proyectos" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Proyectos</TabsTrigger>
-                <TabsTrigger value="solicitudes" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Solicitudes</TabsTrigger>
-                <TabsTrigger value="reportes" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Reportes</TabsTrigger>
-                <TabsTrigger value="mantenimientos" className="text-[10px] sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap">Mantenimientos</TabsTrigger>
+            <div className="flex justify-center">
+              <TabsList className="bg-card border border-border shadow-sm h-auto p-1.5 gap-1 rounded-xl">
+                <TabsTrigger 
+                  value="proyectos" 
+                  className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap rounded-lg data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+                >
+                  Proyectos
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="solicitudes" 
+                  className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap rounded-lg data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+                >
+                  Solicitudes
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="reportes" 
+                  className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap rounded-lg data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+                >
+                  Reportes
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="mantenimientos" 
+                  className="text-xs sm:text-sm px-3 sm:px-4 py-2 whitespace-nowrap rounded-lg data-[state=active]:bg-[#C76C33] data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+                >
+                  Manten.
+                </TabsTrigger>
               </TabsList>
             </div>
 
