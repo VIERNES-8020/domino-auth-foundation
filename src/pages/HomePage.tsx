@@ -158,20 +158,19 @@ export default function HomePage() {
     <div className="min-h-screen">
 
       {/* Hero Section */}
-      <section className="relative">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
+      <section className="relative -mt-[72px] sm:-mt-[80px]">
+        <div className="absolute inset-0 -z-10">
           <img
             src={heroImage}
             alt="Equipo profesional de DOMINIO planificando proyectos inmobiliarios"
-            className="h-[100vh] sm:h-[72vh] w-full object-cover object-center"
+            className="h-[100vh] sm:h-[calc(72vh+80px)] w-full object-cover object-[center_20%] sm:object-center"
             loading="eager"
-            style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
           />
           {/* Overlay for better text readability on mobile */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 sm:hidden" />
         </div>
 
-        <div className="container mx-auto min-h-[100vh] sm:min-h-[72vh] flex flex-col items-center justify-end sm:justify-center text-center px-6 pb-16 pt-24 sm:py-8 animate-fade-in">
+        <div className="container mx-auto min-h-[100vh] sm:min-h-[calc(72vh+80px)] flex flex-col items-center justify-end sm:justify-center text-center px-6 pb-8 pt-[100px] sm:pt-[120px] sm:pb-8 animate-fade-in">
           <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold tracking-tight text-white drop-shadow-lg">
             {t('hero.title')}
           </h1>
