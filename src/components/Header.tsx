@@ -130,14 +130,16 @@ export default function Header() {
 
   return (
     <header className={cn(
-      "relative z-50 container mx-auto px-3 sm:px-4 py-3 sm:py-5",
-      isHomePage && "text-white"
+      "relative z-50 py-3 sm:py-4 transition-all duration-300",
+      isHomePage 
+        ? "text-white bg-gradient-to-b from-black/40 via-black/20 to-transparent backdrop-blur-sm" 
+        : "bg-background/95 backdrop-blur-md border-b shadow-sm"
     )}>
-      <nav className="flex items-center justify-between gap-2" aria-label="Principal">
+      <nav className="container mx-auto px-3 sm:px-4 flex items-center justify-between gap-2" aria-label="Principal">
         {/* Logo */}
         <Link to="/" className={cn(
-          "flex items-center gap-2 hover-scale shrink-0 rounded-lg p-1",
-          isHomePage ? "bg-white/90 backdrop-blur-sm" : "bg-white"
+          "flex items-center gap-2 hover-scale shrink-0 rounded-lg p-1.5 transition-all",
+          isHomePage ? "bg-white/95 shadow-lg" : "bg-transparent"
         )} aria-label="DOMINIO Inicio">
           <img 
             src="/lovable-uploads/0db86b24-3da5-42a2-9780-da456242b977.png" 
@@ -153,12 +155,12 @@ export default function Header() {
               key={link.to}
               to={link.to} 
               className={cn(
-                "whitespace-nowrap font-medium transition-colors",
+                "whitespace-nowrap font-medium transition-all py-1.5 px-2 rounded-md",
                 isHomePage 
-                  ? "text-white hover:text-white/80 drop-shadow-md" 
+                  ? "text-white hover:bg-white/20 [text-shadow:_0_1px_8px_rgb(0_0_0_/_40%)]" 
                   : "nav-link",
                 location.pathname === link.to && !isHomePage && 'active',
-                location.pathname === link.to && isHomePage && 'underline underline-offset-4'
+                location.pathname === link.to && isHomePage && 'bg-white/20 font-semibold'
               )}
             >
               {link.label}
@@ -168,8 +170,7 @@ export default function Header() {
         
         {/* Right side actions */}
         <div className={cn(
-          "flex items-center gap-1 sm:gap-2",
-          isHomePage && "[&_button]:border-white/50"
+          "flex items-center gap-2 sm:gap-3"
         )}>
           <LanguageSelector />
           
@@ -234,13 +235,13 @@ export default function Header() {
             <>
               <Button variant="outline" asChild size="sm" className={cn(
                 "hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4",
-                isHomePage && "bg-transparent border-white text-white hover:bg-white/20"
+                isHomePage && "bg-white/10 border-white/60 text-white hover:bg-white/25 backdrop-blur-sm shadow-md"
               )}>
                 <Link to="/auth">{t('nav.login')}</Link>
               </Button>
               <Button asChild size="sm" className={cn(
                 "hidden sm:inline-flex text-xs sm:text-sm px-2 sm:px-4",
-                isHomePage && "bg-white text-primary hover:bg-white/90"
+                isHomePage && "bg-white text-primary hover:bg-white/90 shadow-lg"
               )}>
                 <Link to="/auth">{t('nav.register')}</Link>
               </Button>
@@ -252,7 +253,7 @@ export default function Header() {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className={cn(
                 "lg:hidden h-8 w-8 sm:h-10 sm:w-10",
-                isHomePage && "text-white hover:bg-white/20"
+                isHomePage && "text-white hover:bg-white/25 [text-shadow:_0_1px_4px_rgb(0_0_0_/_30%)]"
               )}>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Abrir menú</span>
