@@ -502,11 +502,11 @@ export default function ARXISContent({ userId }: { userId: string }) {
         {/* Reportes Técnicos Tab */}
         <TabsContent value="reportes">
           <Card>
-            <CardHeader>
-              <CardTitle>Reportes Técnicos - Proyectos Finalizados</CardTitle>
+            <CardHeader className="px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-2xl">Reportes Técnicos - Proyectos Finalizados</CardTitle>
               <CardDescription>Trabajos completados con éxito</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               {technicalReports.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No hay reportes técnicos disponibles.
@@ -514,47 +514,57 @@ export default function ARXISContent({ userId }: { userId: string }) {
               ) : (
                 <div className="space-y-4">
                   {technicalReports.map((report) => (
-                    <Card key={report.id} className="border-green-200 bg-green-50/30">
-                      <CardContent className="pt-6">
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="flex-1 space-y-3">
-                            <div className="flex items-center gap-2">
-                              <Badge className="bg-green-600 hover:bg-green-700">
-                                ✅ Proyecto Finalizado con Éxito
+                    <Card key={report.id} className="border-green-200 bg-green-50/30 overflow-hidden">
+                      <CardContent className="p-3 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
+                          <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
+                            {/* Badges row */}
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              <Badge className="bg-green-600 hover:bg-green-700 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                                ✅ Finalizado
                               </Badge>
-                              <Badge variant="outline">
+                              <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">
                                 {new Date(report.report_date).toLocaleDateString('es-ES', { 
-                                  year: 'numeric', 
-                                  month: 'long', 
-                                  day: 'numeric' 
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
                                 })}
                               </Badge>
                             </div>
-                            <h3 className="font-semibold text-lg text-green-900">{report.title}</h3>
+                            
+                            {/* Title */}
+                            <h3 className="font-semibold text-sm sm:text-lg text-green-900 line-clamp-2">{report.title}</h3>
+                            
+                            {/* Project reference */}
                             {report.arxis_projects?.title && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 🏗️ Proyecto: <span className="font-medium">{report.arxis_projects.title}</span>
                               </p>
                             )}
-                            <div className="border-l-4 border-green-500 pl-4 py-2 bg-white/50 rounded-r">
-                              <p className="text-sm font-medium text-muted-foreground mb-1">Trabajo Realizado:</p>
-                              <p className="text-sm line-clamp-2">{report.description}</p>
+                            
+                            {/* Description */}
+                            <div className="border-l-2 sm:border-l-4 border-green-500 pl-2 sm:pl-4 py-1.5 sm:py-2 bg-white/50 rounded-r">
+                              <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-1">Trabajo Realizado:</p>
+                              <p className="text-xs sm:text-sm line-clamp-2">{report.description}</p>
                             </div>
                           </div>
-                          <div className="flex gap-2 shrink-0">
+                          
+                          {/* Action buttons */}
+                          <div className="flex gap-2 shrink-0 w-full sm:w-auto">
                             <Button 
                               size="sm" 
                               variant="outline"
+                              className="flex-1 sm:flex-none text-xs sm:text-sm h-8"
                               onClick={() => {
                                 setSelectedReport(report);
                                 setReportDetailOpen(true);
                               }}
                             >
-                              <Eye className="h-4 w-4 mr-1" />
+                              <Eye className="h-3.5 w-3.5 mr-1" />
                               Ver Detalles
                             </Button>
                             {report.document_url && (
-                              <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
+                              <Button size="sm" className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-xs sm:text-sm h-8" asChild>
                                 <a href={report.document_url} target="_blank" rel="noopener noreferrer">
                                   📄 Documento
                                 </a>
