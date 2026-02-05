@@ -301,50 +301,50 @@ export default function ARXISContent({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Proyectos Activos</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardTitle className="text-[11px] sm:text-sm font-medium truncate pr-2">Proyectos Activos</CardTitle>
+            <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeProjects}</div>
-            <p className="text-xs text-muted-foreground">En ejecución</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{activeProjects}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">En ejecución</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Solicitudes Recibidas</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardTitle className="text-[11px] sm:text-sm font-medium truncate pr-2">Solicitudes</CardTitle>
+            <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingRequests}</div>
-            <p className="text-xs text-muted-foreground">Pendientes de revisión</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{pendingRequests}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Pendientes</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Proyectos Completados</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardTitle className="text-[11px] sm:text-sm font-medium truncate pr-2">Completados</CardTitle>
+            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedProjects}</div>
-            <p className="text-xs text-muted-foreground">Finalizados</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{completedProjects}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Finalizados</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mantenimientos</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardTitle className="text-[11px] sm:text-sm font-medium truncate pr-2">Mantenimientos</CardTitle>
+            <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{scheduledMaintenances}</div>
-            <p className="text-xs text-muted-foreground">Programados</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{scheduledMaintenances}</div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Programados</p>
           </CardContent>
         </Card>
       </div>
@@ -502,9 +502,9 @@ export default function ARXISContent({ userId }: { userId: string }) {
         {/* Reportes Técnicos Tab */}
         <TabsContent value="reportes">
           <Card>
-            <CardHeader className="px-3 sm:px-6">
-              <CardTitle className="text-lg sm:text-2xl">Reportes Técnicos - Proyectos Finalizados</CardTitle>
-              <CardDescription>Trabajos completados con éxito</CardDescription>
+            <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-xl leading-tight">Reportes Técnicos</CardTitle>
+              <CardDescription className="text-[10px] sm:text-sm">Proyectos finalizados</CardDescription>
             </CardHeader>
             <CardContent className="px-3 sm:px-6">
               {technicalReports.length === 0 ? (
@@ -514,59 +514,56 @@ export default function ARXISContent({ userId }: { userId: string }) {
               ) : (
                 <div className="space-y-4">
                   {technicalReports.map((report) => (
-                    <Card key={report.id} className="border-green-200 bg-green-50/30 overflow-hidden">
-                      <CardContent className="p-3 sm:p-6">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-4">
-                          <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
-                            {/* Badges row */}
-                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                              <Badge className="bg-green-600 hover:bg-green-700 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                                ✅ Finalizado
-                              </Badge>
-                              <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2">
-                                {new Date(report.report_date).toLocaleDateString('es-ES', { 
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })}
-                              </Badge>
-                            </div>
-                            
-                            {/* Title */}
-                            <h3 className="font-semibold text-sm sm:text-lg text-green-900 line-clamp-2">{report.title}</h3>
-                            
-                            {/* Project reference */}
-                            {report.arxis_projects?.title && (
-                              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                                🏗️ Proyecto: <span className="font-medium">{report.arxis_projects.title}</span>
-                              </p>
-                            )}
-                            
-                            {/* Description */}
-                            <div className="border-l-2 sm:border-l-4 border-green-500 pl-2 sm:pl-4 py-1.5 sm:py-2 bg-white/50 rounded-r">
-                              <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-1">Trabajo Realizado:</p>
-                              <p className="text-xs sm:text-sm line-clamp-2">{report.description}</p>
-                            </div>
+                    <Card key={report.id} className="border-green-200 bg-green-50/30">
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="space-y-2 sm:space-y-3">
+                          {/* Header row with badge and date */}
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge className="bg-green-600 hover:bg-green-700 text-[9px] sm:text-xs px-1.5 py-0.5 shrink-0">
+                              ✅ OK
+                            </Badge>
+                            <span className="text-[10px] sm:text-xs text-muted-foreground">
+                              {new Date(report.report_date).toLocaleDateString('es-ES', { 
+                                day: 'numeric',
+                                month: 'short',
+                                year: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          
+                          {/* Title */}
+                          <h3 className="font-semibold text-sm sm:text-base text-green-900 line-clamp-2 leading-tight">{report.title}</h3>
+                          
+                          {/* Project reference */}
+                          {report.arxis_projects?.title && (
+                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                              🏗️ {report.arxis_projects.title}
+                            </p>
+                          )}
+                          
+                          {/* Description */}
+                          <div className="border-l-2 border-green-500 pl-2 py-1 bg-white/50 rounded-r">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">{report.description}</p>
                           </div>
                           
                           {/* Action buttons */}
-                          <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                          <div className="flex gap-2 pt-1">
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="flex-1 sm:flex-none text-xs sm:text-sm h-8"
+                              className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 px-2"
                               onClick={() => {
                                 setSelectedReport(report);
                                 setReportDetailOpen(true);
                               }}
                             >
-                              <Eye className="h-3.5 w-3.5 mr-1" />
-                              Ver Detalles
+                              <Eye className="h-3 w-3 mr-1" />
+                              <span className="truncate">Detalles</span>
                             </Button>
                             {report.document_url && (
-                              <Button size="sm" className="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-xs sm:text-sm h-8" asChild>
+                              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-[10px] sm:text-xs h-7 sm:h-8 px-2" asChild>
                                 <a href={report.document_url} target="_blank" rel="noopener noreferrer">
-                                  📄 Documento
+                                  📄 <span className="truncate ml-1">Doc</span>
                                 </a>
                               </Button>
                             )}
