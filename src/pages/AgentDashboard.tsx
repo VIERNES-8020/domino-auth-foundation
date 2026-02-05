@@ -1403,17 +1403,19 @@ export default function AgentDashboard() {
                             <h4 className="font-semibold mb-3">Otras notificaciones ({notifications.length})</h4>
                             <div className="space-y-4">
                               {notifications.map((n) => (
-                                <div key={n.id} className="p-4 border rounded-lg">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
+                                <div key={n.id} className="p-4 border rounded-lg overflow-hidden">
+                                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
                                       <div className="font-medium mb-1">{n.title || 'Nueva notificación'}</div>
-                                      <div className="text-sm text-muted-foreground whitespace-pre-wrap">{n.message}</div>
+                                      <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{n.message}</div>
                                       <div className="text-xs text-muted-foreground mt-2">
                                         {new Date(n.created_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <Button size="sm" onClick={() => setRespondingNotification(n)}>Responder</Button>
+                                    <div className="flex sm:shrink-0">
+                                      <Button size="sm" onClick={() => setRespondingNotification(n)} className="w-full sm:w-auto">
+                                        Responder
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
