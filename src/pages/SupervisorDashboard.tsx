@@ -348,49 +348,61 @@ export default function SupervisorDashboard() {
           </TabsList>
 
           <TabsContent value="agentes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Agentes</CardTitle>
-                <CardDescription>Control de estado de agentes</CardDescription>
+            <Card className="border-0 sm:border shadow-none sm:shadow-sm">
+              <CardHeader className="px-3 sm:px-6 py-4">
+                <CardTitle className="text-base sm:text-lg">Lista de Agentes</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Control de estado de agentes</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+              <CardContent className="px-3 sm:px-6">
+                <div className="space-y-3">
                   {agents.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">No hay agentes registrados</p>
+                    <p className="text-center text-muted-foreground py-8 text-sm">No hay agentes registrados</p>
                   ) : (
                     agents.map((agent) => (
-                      <div key={agent.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users className="h-6 w-6 text-primary" />
+                      <div key={agent.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors">
+                        {/* Agent Info Row */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                           </div>
-                          <div>
-                            <p className="font-semibold">{agent.full_name || 'Sin nombre'}</p>
-                            <p className="text-sm text-muted-foreground">Código: {agent.agent_code}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-sm sm:text-base truncate max-w-[150px] sm:max-w-none">
+                                {agent.full_name || 'Sin nombre'}
+                              </p>
+                              <Badge 
+                                variant={agent.is_archived ? "destructive" : "default"}
+                                className="text-[10px] sm:text-xs px-1.5 py-0 h-5"
+                              >
+                                {agent.is_archived ? 'Inactivo' : 'Activo'}
+                              </Badge>
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                              Código: {agent.agent_code}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={agent.is_archived ? "destructive" : "default"}>
-                            {agent.is_archived ? 'Inactivo' : 'Activo'}
-                          </Badge>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openEditModal(agent)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Editar
-                            </Button>
-                            <Button
-                              variant={agent.is_archived ? "default" : "destructive"}
-                              size="sm"
-                              onClick={() => openStatusModal(agent.id, agent.is_archived)}
-                            >
-                              <Power className="h-4 w-4 mr-1" />
-                              {agent.is_archived ? 'Activar' : 'Desactivar'}
-                            </Button>
-                          </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 ml-auto sm:ml-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs px-2 sm:px-3"
+                            onClick={() => openEditModal(agent)}
+                          >
+                            <Edit className="h-3.5 w-3.5 sm:mr-1" />
+                            <span className="hidden sm:inline">Editar</span>
+                          </Button>
+                          <Button
+                            variant={agent.is_archived ? "default" : "destructive"}
+                            size="sm"
+                            className="h-8 text-xs px-2 sm:px-3"
+                            onClick={() => openStatusModal(agent.id, agent.is_archived)}
+                          >
+                            <Power className="h-3.5 w-3.5 sm:mr-1" />
+                            <span className="hidden sm:inline">{agent.is_archived ? 'Activar' : 'Desactivar'}</span>
+                          </Button>
                         </div>
                       </div>
                     ))
