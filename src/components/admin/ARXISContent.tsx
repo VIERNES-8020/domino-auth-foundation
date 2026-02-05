@@ -351,23 +351,25 @@ export default function ARXISContent({ userId }: { userId: string }) {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <ScrollArea className="w-full">
-          <TabsList className="bg-card border border-border inline-flex w-max h-auto p-1 gap-1">
-            <TabsTrigger value="proyectos" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+        <div className="relative -mx-3 sm:mx-0">
+          <ScrollArea className="w-full px-3 sm:px-0">
+            <TabsList className="bg-card border border-border inline-flex w-max h-auto p-1.5 gap-1 rounded-lg shadow-sm">
+            <TabsTrigger value="proyectos" className="whitespace-nowrap text-[11px] sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-md">
               Proyectos Activos
             </TabsTrigger>
-            <TabsTrigger value="solicitudes" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+            <TabsTrigger value="solicitudes" className="whitespace-nowrap text-[11px] sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-md">
               Solicitudes Recibidas
             </TabsTrigger>
-            <TabsTrigger value="reportes" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+            <TabsTrigger value="reportes" className="whitespace-nowrap text-[11px] sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-md">
               Reportes Técnicos
             </TabsTrigger>
-            <TabsTrigger value="mantenimientos" className="whitespace-nowrap text-xs sm:text-sm px-3 py-2">
+            <TabsTrigger value="mantenimientos" className="whitespace-nowrap text-[11px] sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 rounded-md">
               Mantenimientos
             </TabsTrigger>
           </TabsList>
-          <ScrollBar orientation="horizontal" className="h-2" />
-        </ScrollArea>
+            <ScrollBar orientation="horizontal" className="h-2.5 mt-1" />
+          </ScrollArea>
+        </div>
 
         {/* Proyectos Activos Tab */}
         <TabsContent value="proyectos">
