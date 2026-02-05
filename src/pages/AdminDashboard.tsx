@@ -1670,24 +1670,24 @@ export default function AdminDashboard() {
             {/* Messages Tab */}
             <TabsContent value="mensajes" className="space-y-6 mt-6">
               <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
+                <CardHeader className="px-3 sm:px-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-2xl">
+                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                     Mensajes de Contacto
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     Mensajes recibidos desde el formulario de contacto del sitio web
                   </CardDescription>
                   
                   {/* Filter Buttons */}
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex flex-wrap gap-2 mt-4">
                     <Button
                       variant={messageFilter === "pending" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setMessageFilter("pending")}
-                      className={messageFilter === "pending" 
+                      className={`text-xs sm:text-sm ${messageFilter === "pending" 
                         ? "bg-red-500 hover:bg-red-600 text-white border-red-500" 
-                        : "border-red-500 text-red-500 hover:bg-red-50"}
+                        : "border-red-500 text-red-500 hover:bg-red-50"}`}
                     >
                       Pendientes ({contactMessages.filter(msg => !assignedMessageIds.includes(msg.id)).length})
                     </Button>
@@ -1695,15 +1695,15 @@ export default function AdminDashboard() {
                       variant={messageFilter === "assigned" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setMessageFilter("assigned")}
-                      className={messageFilter === "assigned" 
+                      className={`text-xs sm:text-sm ${messageFilter === "assigned" 
                         ? "bg-green-500 hover:bg-green-600 text-white border-green-500" 
-                        : "border-green-500 text-green-500 hover:bg-green-50"}
+                        : "border-green-500 text-green-500 hover:bg-green-50"}`}
                     >
                       Asignada ({assignedMessageIds.length})
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-3 sm:px-6">
                   <div className="space-y-4">
                     {(() => {
                       const getFilteredMessages = () => {
@@ -1720,12 +1720,12 @@ export default function AdminDashboard() {
                       return filteredMessages.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <MessageSquare className="h-12 w-12 mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold mb-2">
                             {messageFilter === "pending" && "No hay mensajes pendientes"}
                             {messageFilter === "assigned" && "No hay mensajes asignados"}
                             {messageFilter === "all" && "No hay mensajes"}
                           </h3>
-                          <p>
+                          <p className="text-sm">
                             {messageFilter === "pending" && "Todos los mensajes han sido asignados."}
                             {messageFilter === "assigned" && "No hay mensajes asignados a agentes aún."}
                             {messageFilter === "all" && "Los mensajes de contacto aparecerán aquí cuando los usuarios se comuniquen."}
@@ -1734,64 +1734,69 @@ export default function AdminDashboard() {
                       ) : (
                         <div className="grid gap-4">
                           {filteredMessages.map((message) => (
-                            <Card key={message.id} className="hover:shadow-lg transition-all duration-300">
-                              <CardContent className="p-4">
-                                <div className="flex justify-between items-start mb-3">
-                                  <div className="flex items-start gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                                      <MessageSquare className="h-5 w-5 text-white" />
+                            <Card key={message.id} className="hover:shadow-lg transition-all duration-300 overflow-hidden">
+                              <CardContent className="p-3 sm:p-4">
+                                {/* Header with avatar and badges */}
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3 mb-3">
+                                  <div className="flex items-start gap-2 sm:gap-3 min-w-0">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shrink-0">
+                                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                                     </div>
-                                    <div>
-                                      <h4 className="font-semibold">{message.name}</h4>
-                                      <p className="text-sm text-muted-foreground">{message.email}</p>
-                                      <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                                        {message.phone && <span>Tel: {message.phone}</span>}
-                                        {message.whatsapp && <span>WhatsApp: {message.whatsapp}</span>}
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-semibold text-sm sm:text-base truncate">{message.name}</h4>
+                                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{message.email}</p>
+                                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs sm:text-sm text-muted-foreground mt-1">
+                                        {message.phone && <span className="whitespace-nowrap">Tel: {message.phone}</span>}
+                                        {message.whatsapp && <span className="whitespace-nowrap">WhatsApp: {message.whatsapp}</span>}
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                     {assignedMessageIds.includes(message.id) && (
-                                      <Badge className="bg-green-100 text-green-700 border-green-200">
+                                      <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px] sm:text-xs px-1.5 sm:px-2">
                                         Asignado
                                       </Badge>
                                     )}
-                                    <Badge variant="outline">
-                                      {new Date(message.created_at).toLocaleDateString('es-ES')}
+                                    <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 sm:px-2 whitespace-nowrap">
+                                      {new Date(message.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                     </Badge>
                                   </div>
                                 </div>
-                                 <div className="bg-muted/50 p-3 rounded-lg mb-4">
-                                   <p className="text-sm">{message.message}</p>
-                                 </div>
+                                
+                                {/* Message content */}
+                                <div className="bg-muted/50 p-2 sm:p-3 rounded-lg mb-3 sm:mb-4">
+                                  <p className="text-xs sm:text-sm">{message.message}</p>
+                                </div>
                                  
-                                 {/* Action Buttons */}
-                                 <div className="flex gap-2 pt-2 border-t">
-                                   <Button
-                                     size="sm"
-                                     variant="outline"
-                                     onClick={() => {
-                                       setSelectedContactMessage(message);
-                                       setShowResponseModal(true);
-                                     }}
-                                     className="flex items-center gap-2"
-                                   >
-                                     <Mail className="h-4 w-4" />
-                                     Responder al Cliente
-                                   </Button>
-                                   <Button
-                                     size="sm"
-                                     variant="outline"
-                                     onClick={() => {
-                                       setSelectedContactMessage(message);
-                                       setShowAssignmentModal(true);
-                                     }}
-                                     className="flex items-center gap-2"
-                                   >
-                                     <UserCheck className="h-4 w-4" />
-                                     Asignar a Agente
-                                   </Button>
-                                 </div>
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-2 pt-2 border-t">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedContactMessage(message);
+                                      setShowResponseModal(true);
+                                    }}
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs sm:text-sm h-8"
+                                  >
+                                    <Mail className="h-3.5 w-3.5" />
+                                    <span className="hidden xs:inline">Responder</span>
+                                    <span className="xs:hidden">Responder</span>
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedContactMessage(message);
+                                      setShowAssignmentModal(true);
+                                    }}
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 text-xs sm:text-sm h-8"
+                                  >
+                                    <UserCheck className="h-3.5 w-3.5" />
+                                    <span className="hidden xs:inline">Asignar</span>
+                                    <span className="xs:hidden">Asignar</span>
+                                  </Button>
+                                </div>
                                </CardContent>
                              </Card>
                           ))}
