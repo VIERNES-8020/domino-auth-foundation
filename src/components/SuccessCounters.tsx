@@ -259,21 +259,17 @@ export default function SuccessCounters() {
     onClick: () => void;
   }) => (
     <Card 
-      className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50 cursor-pointer hover:scale-[1.02] overflow-hidden"
+      className="hover:shadow-xl transition-all duration-300 border border-border/50 hover:border-primary/40 cursor-pointer hover:scale-[1.03] overflow-hidden"
       onClick={onClick}
     >
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex items-start gap-3 sm:gap-4">
-          <div className={`p-3 rounded-full shrink-0 ${color}`}>
-            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-base sm:text-lg text-foreground leading-tight mb-1 truncate">{title}</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{subtitle}</p>
-            <div className="text-2xl sm:text-3xl font-bold text-primary">
-              {isLoading ? "..." : value.toLocaleString()}
-            </div>
-          </div>
+      <CardContent className="p-6 sm:p-8 flex flex-col items-center text-center gap-3">
+        <div className={`p-4 rounded-full ${color} shadow-lg`}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        <h3 className="font-bold text-lg text-foreground leading-tight">{title}</h3>
+        <p className="text-sm text-muted-foreground leading-snug">{subtitle}</p>
+        <div className="text-4xl font-extrabold text-primary mt-1">
+          {isLoading ? "..." : value.toLocaleString()}
         </div>
       </CardContent>
     </Card>
