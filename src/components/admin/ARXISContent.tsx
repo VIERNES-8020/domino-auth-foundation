@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, CheckCircle, FileText, AlertCircle, Trash2, Plus, Eye } from "lucide-react";
+import { Clock, CheckCircle, FileText, AlertCircle, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import DocumentFileUpload from "@/components/DocumentFileUpload";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -103,7 +103,7 @@ export default function ARXISContent({ userId }: { userId: string }) {
     try {
       const { data, error } = await supabase
         .from('arxis_technical_reports')
-        .select('*, arxis_projects(title, client_name, location, project_type)')
+        .select('*, arxis_projects(id, title, client_name, location, project_type, is_archived)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       setTechnicalReports(data || []);
@@ -229,6 +229,22 @@ export default function ARXISContent({ userId }: { userId: string }) {
     } catch (error) {
       console.error('Error completing project:', error);
       toast.error('Error al finalizar proyecto');
+    }
+  };
+
+  const toggleProjectArchive = async (projectId: string, currentlyArchived: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('arxis_projects')
+        .update({ is_archived: !currentlyArchived } as any)
+        .eq('id', projectId);
+      if (error) throw error;
+      toast.success(`Proyecto ${!currentlyArchived ? 'desactivado' : 'reactivado'} exitosamente`);
+      await fetchAllData();
+      await fetchStats();
+    } catch (error) {
+      console.error('Error toggling archive:', error);
+      toast.error('Error al actualizar proyecto');
     }
   };
 
@@ -513,12 +529,14 @@ export default function ARXISContent({ userId }: { userId: string }) {
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {technicalReports.map((report) => (
-                    <div key={report.id} className="border border-green-200 bg-green-50/50 rounded-lg p-3">
+                  {technicalReports.map((report) => {
+                    const projectArchived = report.arxis_projects?.is_archived;
+                    return (
+                    <div key={report.id} className={`border rounded-lg p-3 ${projectArchived ? 'border-destructive/40 bg-muted/30 opacity-60' : 'border-green-200 bg-green-50/50'}`}>
                       {/* Header: Badge + Date inline */}
                       <div className="flex items-center gap-2 mb-2">
                         <span className="inline-flex items-center bg-green-600 text-white text-[9px] px-1.5 py-0.5 rounded font-medium">
-                          ✓ Listo
+                          {projectArchived ? '⏸ Inactivo' : '✓ Listo'}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                           {new Date(report.report_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
@@ -526,7 +544,7 @@ export default function ARXISContent({ userId }: { userId: string }) {
                       </div>
                       
                       {/* Title */}
-                      <h4 className="text-xs sm:text-sm font-semibold text-green-900 leading-tight mb-1 line-clamp-2">
+                      <h4 className="text-xs sm:text-sm font-semibold leading-tight mb-1 line-clamp-2">
                         {report.title}
                       </h4>
                       
@@ -567,9 +585,24 @@ export default function ARXISContent({ userId }: { userId: string }) {
                             </a>
                           </Button>
                         )}
-                        </div>
+                        {report.arxis_projects?.id && (
+                          <Button
+                            size="sm"
+                            variant={projectArchived ? 'outline' : 'secondary'}
+                            className="h-7 text-[10px] flex-1 px-2"
+                            onClick={() => toggleProjectArchive(report.arxis_projects.id, !!projectArchived)}
+                          >
+                            {projectArchived ? (
+                              <><Eye className="h-3 w-3 mr-1" /> Reactivar</>
+                            ) : (
+                              <><EyeOff className="h-3 w-3 mr-1" /> Desactivar</>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

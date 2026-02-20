@@ -95,11 +95,12 @@ export default function SuccessCounters() {
           }
         });
 
-        // Fetch ARXIS completed projects count
+        // Fetch ARXIS completed projects count (exclude archived)
         const { count: arxisCount } = await supabase
           .from('arxis_projects')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'completed');
+          .eq('status', 'completed')
+          .or('is_archived.is.null,is_archived.eq.false');
 
         setCounters({
           activeProperties: activePropsCount || 0,

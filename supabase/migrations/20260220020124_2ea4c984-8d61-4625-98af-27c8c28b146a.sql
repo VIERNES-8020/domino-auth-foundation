@@ -1,0 +1,1 @@
+ALTER TABLE public.arxis_projects ADD COLUMN is_archived boolean DEFAULT false;
