@@ -24,6 +24,7 @@ import {
   CheckCircle, 
   XCircle,
   Eye,
+  EyeOff,
   Filter,
   Search,
   Calendar,
@@ -427,6 +428,22 @@ export default function AdminDashboard() {
       
       await fetchAllData();
       toast.success(`Propiedad ${status === 'approved' ? 'aprobada' : 'rechazada'} exitosamente`);
+    } catch (error: any) {
+      toast.error('Error actualizando propiedad: ' + error.message);
+    }
+  };
+
+  const togglePropertyArchive = async (propertyId: string, currentlyArchived: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({ is_archived: !currentlyArchived })
+        .eq('id', propertyId);
+
+      if (error) throw error;
+      
+      await fetchAllData();
+      toast.success(`Propiedad ${!currentlyArchived ? 'desactivada' : 'reactivada'} exitosamente`);
     } catch (error: any) {
       toast.error('Error actualizando propiedad: ' + error.message);
     }
@@ -1250,7 +1267,7 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {getFilteredProperties().map((property) => (
-                    <Card key={property.id} className="shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden">
+                    <Card key={property.id} className={`shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden ${property.is_archived ? 'opacity-60 border-destructive/40' : ''}`}>
                       <div className="relative">
                         {property.image_urls && property.image_urls[0] && (
                           <div className="aspect-video bg-muted rounded-t-lg overflow-hidden">
@@ -1270,14 +1287,21 @@ export default function AdminDashboard() {
                             <h3 className="font-semibold text-base sm:text-lg line-clamp-2 flex-1 min-w-0">
                               {property.title}
                             </h3>
-                            <Badge 
-                              variant={property.status === 'approved' ? 'default' : 
-                                     property.status === 'rejected' ? 'destructive' : 'secondary'}
-                              className="shrink-0 text-[10px] sm:text-xs"
-                            >
-                              {property.status === 'approved' ? 'Aprobada' :
-                               property.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
-                            </Badge>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {property.is_archived && (
+                                <Badge variant="destructive" className="text-[10px] sm:text-xs">
+                                  Inactiva
+                                </Badge>
+                              )}
+                              <Badge 
+                                variant={property.status === 'approved' ? 'default' : 
+                                       property.status === 'rejected' ? 'destructive' : 'secondary'}
+                                className="text-[10px] sm:text-xs"
+                              >
+                                {property.status === 'approved' ? 'Aprobada' :
+                                 property.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
+                              </Badge>
+                            </div>
                           </div>
                           
                           {/* Address */}
@@ -1332,6 +1356,25 @@ export default function AdminDashboard() {
                               Rechazar
                             </Button>
                           </div>
+                          {/* Archive/Unarchive button */}
+                          <Button
+                            size="sm"
+                            variant={property.is_archived ? 'outline' : 'secondary'}
+                            onClick={() => togglePropertyArchive(property.id, !!property.is_archived)}
+                            className="w-full text-xs sm:text-sm h-8 sm:h-9"
+                          >
+                            {property.is_archived ? (
+                              <>
+                                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                                Reactivar Propiedad
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                                Desactivar Propiedad
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
