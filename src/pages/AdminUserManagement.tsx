@@ -1541,15 +1541,22 @@ const AdminUserManagement = () => {
             <AlertDialogCancel onClick={() => setArchiveReason('')}>
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={(e) => {
+            <Button 
+              onClick={() => {
+                console.log('[ARCHIVE] Button clicked, userId:', archiveDialog.userId, 'reason:', archiveReason);
                 const user = users.find(u => u.id === archiveDialog.userId);
+                console.log('[ARCHIVE] User found:', user?.full_name, 'is_archived:', user?.is_archived);
                 if (!user?.is_archived && !archiveReason.trim()) {
-                  e.preventDefault();
                   toast.error("Por favor ingresa el motivo del archivado");
                   return;
                 }
-                confirmArchiveUser();
+                if (user?.is_archived) {
+                  console.log('[ARCHIVE] Unarchiving user...');
+                  unarchiveUserMutation.mutate(archiveDialog.userId);
+                } else {
+                  console.log('[ARCHIVE] Archiving user with reason:', archiveReason.trim());
+                  archiveUserMutation.mutate({ userId: archiveDialog.userId, reason: archiveReason.trim() });
+                }
               }}
               disabled={archiveUserMutation.isPending || unarchiveUserMutation.isPending}
             >
@@ -1559,7 +1566,7 @@ const AdminUserManagement = () => {
                   ? 'Desarchivar' 
                   : 'Archivar'
               }
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
