@@ -99,26 +99,44 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
   );
 
   const markers = useMemo(() => {
-    const list: { id: string; lng: number; lat: number; title?: string; label?: string }[] = [];
+    const list: { id: string; lng: number; lat: number; title?: string; label?: string; propertyType?: string }[] = [];
+
+    // Helper: parse WKB hex (SRID 4326 Point) to [lng, lat]
+    const parseWKBHex = (hex: string): number[] | null => {
+      try {
+        if (hex.length < 42) return null;
+        const buf = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < hex.length; i += 2) buf[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+        const dv = new DataView(buf.buffer);
+        const le = buf[0] === 1; // little-endian
+        // Offset depends on whether SRID flag is set (type bytes at offset 1)
+        const typeVal = le ? dv.getUint32(1, true) : dv.getUint32(1, false);
+        const hasSRID = (typeVal & 0x20000000) !== 0;
+        const coordOffset = hasSRID ? 9 : 5; // 4 extra bytes for SRID
+        const lng = dv.getFloat64(coordOffset, le);
+        const lat = dv.getFloat64(coordOffset + 8, le);
+        if (isFinite(lng) && isFinite(lat)) return [lng, lat];
+      } catch { /* skip */ }
+      return null;
+    };
+
     for (const p of properties) {
-      // Fixed geolocation parsing for PostGIS geometry
       const g: any = (p as any).geolocation;
       let coordinates: number[] | null = null;
       
       if (g) {
-        // Handle PostGIS POINT geometry format
         if (typeof g === 'string') {
-          // Try to parse PostGIS WKT format like "POINT(-63.123 -17.456)"
-          try {
-            const match = g.match(/POINT\(([^)]+)\)/);
-            if (match) {
-              const coords = match[1].split(' ').map(Number);
-              if (coords.length >= 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-                coordinates = coords;
-              }
+          // Try WKT format "POINT(-63.123 -17.456)"
+          const match = g.match(/POINT\(([^)]+)\)/);
+          if (match) {
+            const coords = match[1].split(' ').map(Number);
+            if (coords.length >= 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+              coordinates = coords;
             }
-          } catch (e) {
-            // Skip invalid coordinates
+          }
+          // Try WKB hex format
+          if (!coordinates && /^[0-9a-fA-F]+$/.test(g)) {
+            coordinates = parseWKBHex(g);
           }
         } else if (g.coordinates && Array.isArray(g.coordinates)) {
           coordinates = g.coordinates;
@@ -129,14 +147,13 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
       
       if (coordinates && coordinates.length >= 2 && 
           typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
-        // Abbreviated price label: e.g., 144K USD
         const cur = (p.price_currency || "USD").toUpperCase();
         const priceNum = typeof p.price === "number" ? p.price : null;
         const abbr = priceNum === null ? "—" :
           priceNum >= 1_000_000 ? `${(priceNum / 1_000_000).toFixed(1).replace(/\.0$/, '')}M` :
           priceNum >= 1_000 ? `${(priceNum / 1_000).toFixed(0)}K` : `${priceNum}`;
         const label = priceNum === null ? "Consultar" : `${abbr} ${cur}`;
-        list.push({ id: p.id, lng: coordinates[0], lat: coordinates[1], title: p.title, label });
+        list.push({ id: p.id, lng: coordinates[0], lat: coordinates[1], title: p.title, label, propertyType: p.property_type || undefined });
       }
     }
     return list;
@@ -292,7 +309,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
 
         let query = supabase
           .from("properties")
-          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,geolocation,property_code", { count: "exact" })
+          .select("id,title,price,price_currency,image_urls,bedrooms,bathrooms,area_m2,address,property_type,property_code,geolocation", { count: "exact" })
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60);
