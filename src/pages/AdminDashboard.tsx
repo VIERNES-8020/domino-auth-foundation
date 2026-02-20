@@ -252,7 +252,7 @@ export default function AdminDashboard() {
           new Promise((_, reject) => setTimeout(() => reject(new Error('Leads timeout')), 8000))
         ]),
         Promise.race([
-          supabase.from('arxis_projects').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+          supabase.from('arxis_projects').select('*', { count: 'exact', head: true }).eq('status', 'completed').or('is_archived.is.null,is_archived.eq.false'),
           new Promise((_, reject) => setTimeout(() => reject(new Error('ARXIS projects timeout')), 8000))
         ])
       ];

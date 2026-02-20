@@ -279,6 +279,7 @@ export type Database = {
           description: string | null
           end_date: string | null
           id: string
+          is_archived: boolean | null
           location: string | null
           project_type: string
           start_date: string | null
@@ -296,6 +297,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          is_archived?: boolean | null
           location?: string | null
           project_type: string
           start_date?: string | null
@@ -313,6 +315,7 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           id?: string
+          is_archived?: boolean | null
           location?: string | null
           project_type?: string
           start_date?: string | null
