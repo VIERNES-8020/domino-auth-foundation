@@ -659,7 +659,7 @@ const [nearMeCenter, setNearMeCenter] = useState<{ lng: number; lat: number } | 
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.location.href = '/agentes'}
+                    onClick={() => window.location.href = '/contacto'}
                     className="flex items-center gap-2"
                   >
                     <Phone className="h-4 w-4" />
