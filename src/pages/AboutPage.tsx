@@ -239,7 +239,7 @@ export default function AboutPage() {
                 Solicitar Franquicia
               </a>
               <a 
-                href="/contact" 
+                href="/contacto" 
                 className="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 Contactar

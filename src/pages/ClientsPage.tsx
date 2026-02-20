@@ -267,7 +267,7 @@ export default function ClientsPage() {
                   <a href="/properties">Explorar Propiedades</a>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <a href="/contact">Contactar Ahora</a>
+                  <a href="/contacto">Contactar Ahora</a>
                 </Button>
               </div>
             </div>
