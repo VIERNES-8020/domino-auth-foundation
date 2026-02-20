@@ -190,11 +190,35 @@ export default function OfficeManagerDashboard() {
           .eq('id', request.property_id);
         if (error) throw error;
       } else if (request.request_type === 'edit') {
-        const { error } = await supabase
-          .from('properties')
-          .update(request.request_data)
-          .eq('id', request.property_id);
-        if (error) throw error;
+        // Map request_data fields to actual properties table columns
+        const rawData = request.request_data || {};
+        const updatePayload: Record<string, any> = {};
+        
+        if (rawData.title !== undefined) updatePayload.title = rawData.title;
+        if (rawData.description !== undefined) updatePayload.description = rawData.description;
+        if (rawData.address !== undefined) updatePayload.address = rawData.address;
+        if (rawData.price !== undefined) updatePayload.price = parseFloat(rawData.price);
+        if (rawData.currency !== undefined) updatePayload.price_currency = rawData.currency;
+        if (rawData.property_type !== undefined) updatePayload.property_type = rawData.property_type;
+        if (rawData.transaction_type !== undefined) updatePayload.transaction_type = rawData.transaction_type;
+        if (rawData.bedrooms !== undefined) updatePayload.bedrooms = parseInt(rawData.bedrooms);
+        if (rawData.bathrooms !== undefined) updatePayload.bathrooms = parseInt(rawData.bathrooms);
+        if (rawData.area !== undefined) updatePayload.area_m2 = parseFloat(rawData.area);
+        if (rawData.constructed_area_m2 !== undefined) updatePayload.constructed_area_m2 = parseFloat(rawData.constructed_area_m2);
+        if (rawData.image_urls !== undefined) updatePayload.image_urls = rawData.image_urls;
+        if (rawData.plans_url !== undefined) updatePayload.plans_url = rawData.plans_url;
+        if (rawData.video_url !== undefined) updatePayload.video_url = rawData.video_url;
+        if (rawData.latitude !== undefined && rawData.longitude !== undefined) {
+          updatePayload.geolocation = `POINT(${rawData.longitude} ${rawData.latitude})`;
+        }
+        
+        if (Object.keys(updatePayload).length > 0) {
+          const { error } = await supabase
+            .from('properties')
+            .update(updatePayload)
+            .eq('id', request.property_id);
+          if (error) throw error;
+        }
       }
 
       toast.success('Solicitud aprobada exitosamente');
