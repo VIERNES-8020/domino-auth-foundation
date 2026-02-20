@@ -449,6 +449,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleAgentArchive = async (userId: string, currentlyArchived: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          is_archived: !currentlyArchived,
+          archive_reason: !currentlyArchived ? 'Desactivado por administrador' : null
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      await fetchAllData();
+      toast.success(`Agente ${!currentlyArchived ? 'desactivado' : 'reactivado'} exitosamente`);
+    } catch (error: any) {
+      toast.error('Error actualizando agente: ' + error.message);
+    }
+  };
+
   const updateUserRole = async (userId: string, newRole: "agent" | "client") => {
     try {
       // Check if user already has a role
@@ -1511,7 +1530,7 @@ export default function AdminDashboard() {
                               const userProperties = properties.filter(p => p.agent_id === user.id);
                               
                               return (
-                                <TableRow key={user.id}>
+                                <TableRow key={user.id} className={user.is_archived ? 'opacity-50' : ''}>
                                   <TableCell>
                                      <div className="flex items-center space-x-2">
                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1532,8 +1551,8 @@ export default function AdminDashboard() {
                                     </Badge>
                                   </TableCell>
                                   <TableCell>
-                                    <Badge variant="default" className="bg-green-100 text-green-800">
-                                      Activo
+                                    <Badge variant="default" className={user.is_archived ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}>
+                                      {user.is_archived ? 'Inactivo' : 'Activo'}
                                     </Badge>
                                   </TableCell>
                                    <TableCell>
@@ -1554,17 +1573,32 @@ export default function AdminDashboard() {
                                           <Mail className="h-4 w-4" />
                                         </Button>
                                        {isSuperAdmin && (
-                                         <Button
-                                           variant="outline"
-                                           size="sm"
-                                           onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
-                                         >
-                                           {user.is_super_admin ? (
-                                             <UserX className="h-4 w-4" />
-                                           ) : (
-                                             <Crown className="h-4 w-4" />
-                                           )}
-                                         </Button>
+                                         <>
+                                           <Button
+                                             variant="outline"
+                                             size="sm"
+                                             onClick={() => toggleSuperAdmin(user.id, !user.is_super_admin)}
+                                           >
+                                             {user.is_super_admin ? (
+                                               <UserX className="h-4 w-4" />
+                                             ) : (
+                                               <Crown className="h-4 w-4" />
+                                             )}
+                                           </Button>
+                                           <Button
+                                             variant={user.is_archived ? 'outline' : 'secondary'}
+                                             size="sm"
+                                             onClick={() => toggleAgentArchive(user.id, !!user.is_archived)}
+                                             title={user.is_archived ? 'Reactivar agente' : 'Desactivar agente'}
+                                             className={user.is_archived ? 'border-green-300 text-green-700 hover:bg-green-50' : 'border-red-300 text-red-700 hover:bg-red-50'}
+                                           >
+                                             {user.is_archived ? (
+                                               <EyeOff className="h-4 w-4" />
+                                             ) : (
+                                               <Eye className="h-4 w-4" />
+                                             )}
+                                           </Button>
+                                         </>
                                        )}
                                     </div>
                                   </TableCell>
