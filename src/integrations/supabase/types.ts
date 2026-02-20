@@ -2419,6 +2419,10 @@ export type Database = {
       }
       sync_profile_with_auth: { Args: never; Returns: undefined }
       unlockrows: { Args: { "": string }; Returns: number }
+      update_property_geolocation: {
+        Args: { p_latitude: number; p_longitude: number; p_property_id: string }
+        Returns: undefined
+      }
       updategeometrysrid: {
         Args: {
           catalogn_name: string

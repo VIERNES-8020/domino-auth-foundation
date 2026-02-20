@@ -224,21 +224,18 @@ export default function OfficeManagerDashboard() {
           if (error) throw error;
         }
 
-        // Handle geolocation separately using raw SQL since PostGIS needs ST_GeomFromText
+        // Handle geolocation separately using DB function since PostGIS needs ST_MakePoint
         if (rawData.latitude !== undefined && rawData.longitude !== undefined) {
           const lat = parseFloat(rawData.latitude);
           const lng = parseFloat(rawData.longitude);
           if (!isNaN(lat) && !isNaN(lng)) {
-            const { error: geoError } = await supabase.rpc('exec_sql' as any, {
-              query: `UPDATE properties SET geolocation = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326) WHERE id = '${request.property_id}'`
+            const { error: geoError } = await supabase.rpc('update_property_geolocation' as any, {
+              p_property_id: request.property_id,
+              p_longitude: lng,
+              p_latitude: lat
             });
-            // If RPC doesn't exist, try direct update as fallback - some setups accept WKT
             if (geoError) {
-              console.warn('Geolocation RPC failed, trying direct update:', geoError);
-              await supabase
-                .from('properties')
-                .update({ geolocation: `SRID=4326;POINT(${lng} ${lat})` as any })
-                .eq('id', request.property_id);
+              console.warn('Geolocation update failed:', geoError);
             }
           }
         }
