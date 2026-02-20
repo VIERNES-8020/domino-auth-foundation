@@ -199,18 +199,22 @@ export default function OfficeManagerDashboard() {
         if (rawData.address !== undefined) updatePayload.address = rawData.address;
         if (rawData.price !== undefined) updatePayload.price = parseFloat(rawData.price);
         if (rawData.currency !== undefined) updatePayload.price_currency = rawData.currency;
+        if (rawData.price_currency !== undefined) updatePayload.price_currency = rawData.price_currency;
         if (rawData.property_type !== undefined) updatePayload.property_type = rawData.property_type;
         if (rawData.transaction_type !== undefined) updatePayload.transaction_type = rawData.transaction_type;
         if (rawData.bedrooms !== undefined) updatePayload.bedrooms = parseInt(rawData.bedrooms);
         if (rawData.bathrooms !== undefined) updatePayload.bathrooms = parseInt(rawData.bathrooms);
         if (rawData.area !== undefined) updatePayload.area_m2 = parseFloat(rawData.area);
+        if (rawData.area_m2 !== undefined) updatePayload.area_m2 = parseFloat(rawData.area_m2);
         if (rawData.constructed_area_m2 !== undefined) updatePayload.constructed_area_m2 = parseFloat(rawData.constructed_area_m2);
         if (rawData.image_urls !== undefined) updatePayload.image_urls = rawData.image_urls;
         if (rawData.plans_url !== undefined) updatePayload.plans_url = rawData.plans_url;
         if (rawData.video_url !== undefined) updatePayload.video_url = rawData.video_url;
-        if (rawData.latitude !== undefined && rawData.longitude !== undefined) {
-          updatePayload.geolocation = `POINT(${rawData.longitude} ${rawData.latitude})`;
-        }
+        if (rawData.other_amenities !== undefined) updatePayload.other_amenities = rawData.other_amenities;
+        if (rawData.has_garage !== undefined) updatePayload.has_garage = rawData.has_garage;
+        if (rawData.has_pool !== undefined) updatePayload.has_pool = rawData.has_pool;
+        if (rawData.pet_friendly !== undefined) updatePayload.pet_friendly = rawData.pet_friendly;
+        if (rawData.tags !== undefined) updatePayload.tags = rawData.tags;
         
         if (Object.keys(updatePayload).length > 0) {
           const { error } = await supabase
@@ -218,6 +222,25 @@ export default function OfficeManagerDashboard() {
             .update(updatePayload)
             .eq('id', request.property_id);
           if (error) throw error;
+        }
+
+        // Handle geolocation separately using raw SQL since PostGIS needs ST_GeomFromText
+        if (rawData.latitude !== undefined && rawData.longitude !== undefined) {
+          const lat = parseFloat(rawData.latitude);
+          const lng = parseFloat(rawData.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const { error: geoError } = await supabase.rpc('exec_sql' as any, {
+              query: `UPDATE properties SET geolocation = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326) WHERE id = '${request.property_id}'`
+            });
+            // If RPC doesn't exist, try direct update as fallback - some setups accept WKT
+            if (geoError) {
+              console.warn('Geolocation RPC failed, trying direct update:', geoError);
+              await supabase
+                .from('properties')
+                .update({ geolocation: `SRID=4326;POINT(${lng} ${lat})` as any })
+                .eq('id', request.property_id);
+            }
+          }
         }
       }
 
