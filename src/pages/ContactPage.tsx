@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SuccessMessage from "@/components/SuccessMessage";
+import { ArrowLeft } from "lucide-react";
 
 function usePageSEO(opts: { title: string; description: string; canonicalPath: string }) {
   const { title, description, canonicalPath } = opts;
@@ -25,6 +27,7 @@ function usePageSEO(opts: { title: string; description: string; canonicalPath: s
 }
 
 export default function ContactPage() {
+  const navigate = useNavigate();
   usePageSEO({ title: "Contacto | DOMINIO", description: "Contáctanos para comprar, vender o alquilar propiedades.", canonicalPath: "/contact" });
   
   const [formData, setFormData] = useState({
@@ -72,6 +75,14 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/20 to-background">
       <main className="container mx-auto px-4 py-16 sm:py-24 flex flex-col items-center">
+        {/* Back Button */}
+        <div className="w-full max-w-2xl mb-6">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/propiedades')} className="gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Volver a Propiedades
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-10 max-w-lg">
           <div className="inline-flex items-center justify-center p-3 rounded-full bg-primary/10 mb-4">
