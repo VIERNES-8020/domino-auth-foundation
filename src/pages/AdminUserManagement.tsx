@@ -1542,7 +1542,15 @@ const AdminUserManagement = () => {
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction 
-              onClick={confirmArchiveUser}
+              onClick={(e) => {
+                const user = users.find(u => u.id === archiveDialog.userId);
+                if (!user?.is_archived && !archiveReason.trim()) {
+                  e.preventDefault();
+                  toast.error("Por favor ingresa el motivo del archivado");
+                  return;
+                }
+                confirmArchiveUser();
+              }}
               disabled={archiveUserMutation.isPending || unarchiveUserMutation.isPending}
             >
               {(archiveUserMutation.isPending || unarchiveUserMutation.isPending) 
