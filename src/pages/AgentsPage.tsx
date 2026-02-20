@@ -274,7 +274,7 @@ export default function AgentsPage() {
                 {t("agents_ready_help")}
               </p>
               <Button asChild variant="outline" size="lg">
-                <Link to="/contact">{t("contact_now")}</Link>
+                <Link to="/contacto">{t("contact_now")}</Link>
               </Button>
             </div>
           </section>
