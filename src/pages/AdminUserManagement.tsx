@@ -358,10 +358,10 @@ const AdminUserManagement = () => {
 
       console.log('Role ID found:', roleData.id, 'for role:', roleName);
 
-      // Update the profile with the new rol_id
+      // Update the profile with the new rol_id and assignment_date
       const { data, error } = await supabase
         .from("profiles")
-        .update({ rol_id: roleData.id })
+        .update({ rol_id: roleData.id, assignment_date: new Date().toISOString() })
         .eq("id", userId)
         .select();
       
