@@ -80,7 +80,19 @@ export default function PropertiesPage() {
   const [lifestyle, setLifestyle] = useState<string>("");
   const [amenities, setAmenities] = useState<{ id: string; name: string }[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [transactionType, setTransactionType] = useState<string>("");
+  const [transactionType, setTransactionType] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    const param = new URLSearchParams(window.location.search).get("transaction") || "";
+    return ["venta", "alquiler", "anticretico"].includes(param) ? param : "";
+  });
+
+  // Sync filter when URL query changes (e.g. footer link clicks)
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get("transaction") || "";
+    if (["venta", "alquiler", "anticretico", ""].includes(param)) {
+      setTransactionType(param);
+    }
+  }, [typeof window !== "undefined" ? window.location.search : ""]);
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
