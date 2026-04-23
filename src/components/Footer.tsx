@@ -11,8 +11,8 @@ const Footer = () => {
           <h3 className="font-semibold mb-2">DOMINIO</h3>
           <p className="text-muted-foreground">{t('footer.description')}</p>
         </div>
-        <nav aria-label="Servicios" className="space-y-2">
-          <h3 className="text-lg font-bold mb-3">Servicios</h3>
+        <nav aria-label="Navegación" className="space-y-2">
+          <h3 className="text-lg font-bold mb-3">Navegación</h3>
           <Link className="story-link block" to="/propiedades">{t('nav.properties')}</Link>
           <Link className="story-link block" to="/nuestros-agentes">{t('nav.agents')}</Link>
           <Link className="story-link block" to="/sobre-nosotros">{t('nav.about')}</Link>
