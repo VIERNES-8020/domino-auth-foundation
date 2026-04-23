@@ -6,7 +6,7 @@ const Footer = () => {
   
   return (
     <footer className="mt-12 border-t">
-      <div className="container mx-auto py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
+      <div className="container mx-auto py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 text-sm">
         <div>
           <h3 className="font-semibold mb-2">DOMINIO</h3>
           <p className="text-muted-foreground">{t('footer.description')}</p>
@@ -17,6 +17,14 @@ const Footer = () => {
           <Link className="story-link block" to="/nuestros-agentes">{t('nav.agents')}</Link>
           <Link className="story-link block" to="/sobre-nosotros">{t('nav.about')}</Link>
           <Link className="story-link block" to="/contacto">{t('nav.contact')}</Link>
+        </nav>
+        <nav aria-label="Servicios" className="space-y-2">
+          <h3 className="text-lg font-bold mb-3">Servicios</h3>
+          <Link className="story-link block" to="/propiedades?transaction=alquiler">Alquileres</Link>
+          <Link className="story-link block" to="/propiedades?transaction=anticretico">Anticréticos</Link>
+          <Link className="story-link block" to="/propiedades?transaction=venta">Ventas</Link>
+          <Link className="story-link block" to="/servicios/arquitectura">Arquitectura</Link>
+          <Link className="story-link block" to="/servicios/construccion">Construcción</Link>
         </nav>
         <nav aria-label="Legal" className="space-y-2">
           <h3 className="text-lg font-bold mb-3">Legal</h3>
