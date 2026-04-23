@@ -23,8 +23,8 @@ const Footer = () => {
           <Link className="story-link block" to="/propiedades?transaction=alquiler">Alquileres</Link>
           <Link className="story-link block" to="/propiedades?transaction=anticretico">Anticréticos</Link>
           <Link className="story-link block" to="/propiedades?transaction=venta">Ventas</Link>
-          <Link className="story-link block" to="/servicios/arquitectura">Arquitectura</Link>
-          <Link className="story-link block" to="/servicios/construccion">Construcción</Link>
+          <Link className="story-link block" to="/contacto?servicio=arquitectura">Arquitectura</Link>
+          <Link className="story-link block" to="/contacto?servicio=construccion">Construcción</Link>
         </nav>
         <nav aria-label="Legal" className="space-y-2">
           <h3 className="text-lg font-bold mb-3">Legal</h3>
